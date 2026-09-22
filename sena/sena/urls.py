@@ -6,8 +6,7 @@ from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('principal/', include('app.urls', namespace='app')),
-    path('', include('login.urls', namespace='login')),
+    
 
     # ── Recuperación de contraseña ──
     path('password-reset/',

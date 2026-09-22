@@ -13,6 +13,7 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
 
 INSTALLED_APPS = [
+    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -20,13 +21,23 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'widget_tweaks',
-    'app',
-    'login',
-    'usuario',
-    'django.contrib.admin',
+
+    # ---- Apps nuevas de ICON LTDA ----
+    'flota',
+    'rutas',
+    'gps',
+    'inspeccion',
+    'desplazamientos',
+    'documentos',
+
+    # ---- Restos de Acerautos: pendientes de decidir ----
+    # 'app',      # Acerautos original — déjala fuera hasta que confirmes que no queda nada útil
+    # 'login',    # ya no hace falta: usamos el login integrado de Django (ver LOGIN_URL abajo)
+    # 'usuario',  # PerfilUsuario custom — ya NO se necesita, el User por defecto de Django alcanza
 ]
 
-AUTH_USER_MODEL = 'app.UsuarioSistema'
+# Sin AUTH_USER_MODEL: usamos el User por defecto de Django (django.contrib.auth.models.User).
+# Ya no hace falta ningún modelo de usuario propio.
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -36,7 +47,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'app.middleware.AlertasAutomaticasMiddleware',
+    # 'app.middleware.AlertasAutomaticasMiddleware',  # depende de 'app' (Acerautos) — reactivar solo si la adaptas a ICON LTDA
 ]
 
 ROOT_URLCONF = 'sena.urls'
@@ -62,14 +73,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'sena.wsgi.application'
 
-
 # ========== BASE DE DATOS MySQL ==========
+# IMPORTANTE: sin valores por defecto para credenciales reales.
+# Si falta el .env, esto debe fallar en vez de usar una contraseña quemada en el código.
 DATABASES = {
     'default': {
         'ENGINE':   'django.db.backends.mysql',
-        'NAME':     os.environ.get('DB_NAME', 'acerautos_proyecto'),
+        'NAME':     os.environ.get('DB_NAME', 'icon'),
         'USER':     os.environ.get('DB_USER', 'root'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'Acerautos2026*'),
+        'PASSWORD': os.environ['DB_PASSWORD'],
         'HOST':     os.environ.get('DB_HOST', 'localhost'),
         'PORT':     os.environ.get('DB_PORT', '3306'),
         'OPTIONS': {
@@ -115,10 +127,11 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # ========== CORREO GMAIL ==========
+# IMPORTANTE: sin valores por defecto para credenciales reales (ver nota de seguridad abajo).
 EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST          = 'smtp.gmail.com'
 EMAIL_PORT          = 587
 EMAIL_USE_TLS       = True
-EMAIL_HOST_USER     = os.environ.get('EMAIL_HOST_USER', 'acerautos09@gmail.com')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'ydvbowswvxangcxs')
-DEFAULT_FROM_EMAIL  = 'ACERAUTOS <acerautos09@gmail.com>'
+EMAIL_HOST_USER     = os.environ['EMAIL_HOST_USER']
+EMAIL_HOST_PASSWORD = os.environ['EMAIL_HOST_PASSWORD']
+DEFAULT_FROM_EMAIL  = 'ICON LTDA <iconltda18@gmail.com>'
