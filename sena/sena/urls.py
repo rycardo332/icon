@@ -7,6 +7,8 @@ from django.contrib.auth import views as auth_views
 urlpatterns = [
     path('admin/', admin.site.urls),
     
+    # ── Rutas de la app rutas ──
+    path('', include('rutas.urls')),
 
     # ── Recuperación de contraseña ──
     path('password-reset/',

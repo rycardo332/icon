@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Importar reporte FILPAC</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 30px auto; padding: 0 16px; color: #222; }
+    h1 { font-size: 22px; } h2 { font-size: 17px; margin-top: 32px; }
+    .caja { border: 1px solid #ccc; border-radius: 8px; padding: 16px; background: #fafafa; }
+    .msg { padding: 10px 14px; border-radius: 6px; margin: 10px 0; }
+    .msg.success { background: #e3f6e3; } .msg.error { background: #fde4e4; } .msg.info, .msg.warning { background: #fff4d6; }
+    table { border-collapse: collapse; width: 100%; font-size: 14px; }
+    th, td { border-bottom: 1px solid #ddd; padding: 6px 8px; text-align: left; }
+    button { padding: 8px 16px; font-size: 15px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Importar reporte de FILPAC</h1>
+
+  {% for m in messages %}<div class="msg {{ m.tags }}">{{ m }}</div>{% endfor %}
+
+  <div class="caja">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <p>Sube el Excel de trayectos (.xlsx) que descargas de FILPAC:</p>
+      <input type="file" name="archivo" accept=".xlsx" required>
+      <button type="submit">Importar</button>
+    </form>
+  </div>
+
+  {% if resumen %}
+  <h2>Resultado</h2>
+  <div class="caja">
+    <ul>
+      <li>Movimientos nuevos guardados: <b>{{ resumen.registros_nuevos }}</b></li>
+      <li>Ya estaban importados (se omitieron): <b>{{ resumen.registros_repetidos }}</b></li>
+      <li>Viajes creados: <b>{{ resumen.viajes_creados }}</b></li>
+      <li>Maniobras menores (menos de 150 m, no son viaje): <b>{{ resumen.maniobras_menores }}</b></li>
+      {% if resumen.viajes_sin_destino %}
+      <li>Viajes sin destino conocido (era el ultimo movimiento del archivo): <b>{{ resumen.viajes_sin_destino }}</b></li>
+      {% endif %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <h2>Ultimos viajes importados</h2>
+  {% if viajes %}
+  <table>
+    <tr><th>Vehiculo</th><th>Inicio</th><th>Fin</th><th>km</th><th>Origen</th></tr>
+    {% for v in viajes %}
+    <tr>
+      <td>{{ v.vehiculo.placa }}</td>
+      <td>{{ v.fecha_hora_inicio|date:"Y-m-d H:i" }}</td>
+      <td>{{ v.fecha_hora_fin|date:"H:i" }}</td>
+      <td>{{ v.distancia_total }}</td>
+      <td>{{ v.direccion_origen }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p>Todavia no hay viajes. Sube un Excel para empezar.</p>
+  {% endif %}
+</body>
+</html>
