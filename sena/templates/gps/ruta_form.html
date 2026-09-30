@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  .rf-wrap{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:1.25rem}
+  .rf-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+  .rf-title-box{display:flex;align-items:center;gap:.9rem}
+  .rf-title-box img{width:44px;height:44px;object-fit:contain;border-radius:10px}
+  .rf-title{font-family:'Space Mono',monospace;font-weight:700;font-size:1.7rem;color:#fff;margin:0;text-shadow:0 2px 8px rgba(0,0,0,.45)}
+  .rf-sub{color:#e2e8f0;font-size:.9rem;margin:0;text-shadow:0 1px 4px rgba(0,0,0,.4)}
+  .rf-actions{display:flex;gap:.6rem;flex-wrap:wrap}
+
+  .rf-btn{display:inline-flex;align-items:center;gap:.4rem;border-radius:999px;padding:.55rem 1.3rem;font-size:.85rem;font-weight:600;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:transform .15s,filter .15s,background .15s,color .15s}
+  .rf-btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
+  .rf-btn-sec{background:rgba(255,255,255,.88);color:#0f172a;border-color:rgba(255,255,255,.7)}
+  .rf-btn-sec:hover{background:var(--dark-2);color:#fff}
+  .rf-btn-dark{background:var(--dark);color:#fff}
+  .rf-btn-dark:hover{color:#fff}
+
+  .rf-panel{background:rgba(255,255,255,.84);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(255,255,255,.7);border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+  .rf-panel-head{display:flex;align-items:center;gap:.75rem;padding:.9rem 1.25rem;background:linear-gradient(90deg,var(--dark),var(--dark-2))}
+  .rf-step{font-family:'Space Mono',monospace;font-weight:700;color:#a3e635}
+  .rf-panel-title{font-family:'Space Mono',monospace;font-weight:700;font-size:.95rem;color:#fff;margin:0}
+  .rf-body{padding:1.25rem}
+
+  .rf-body label{display:block;font-size:.82rem;font-weight:600;color:#334155;margin-bottom:.3rem}
+  .rf-body input:not([type=checkbox]),.rf-body select,.rf-body textarea{width:100%;border-radius:10px;border:1px solid rgba(15,23,42,.15);background:rgba(255,255,255,.9);padding:.5rem .75rem;font-size:.88rem;color:#0f172a}
+  .rf-body input:not([type=checkbox]):focus,.rf-body select:focus,.rf-body textarea:focus{outline:none;border-color:var(--dark-2);box-shadow:none}
+  .rf-err{color:#b91c1c;font-size:.78rem;margin-top:.2rem}
+  .rf-err ul{list-style:none;margin:0;padding:0}
+  .rf-alert{background:#fef2f2;color:#b91c1c;border-radius:14px;padding:.7rem 1rem;font-size:.88rem;margin-bottom:1rem}
+  .rf-alert ul{list-style:none;margin:0;padding:0}
+
+  .rf-foot{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid rgba(15,23,42,.09)}
+
+  @media (max-width:767px){
+    .rf-title{font-size:1.3rem}
+    .rf-actions{width:100%}
+    .rf-foot .rf-btn{width:100%;justify-content:center}
+  }
+</style>
+
+<div class="rf-wrap">
+
+  <div class="rf-head">
+    <div class="rf-title-box">
+      <img src="{% static 'img/iconos/rutas.jpg' %}" alt="">
+      <div>
+        <h1 class="rf-title">{% if ruta %}Editar ruta {{ ruta.codigo }}{% else %}Nueva ruta{% endif %}</h1>
+        <p class="rf-sub">{% if ruta %}Actualiza los datos de la ruta{% else %}Registra una nueva ruta en el sistema{% endif %}</p>
+      </div>
+    </div>
+    <div class="rf-actions">
+      <a href="{% url 'listar_rutas' %}" class="rf-btn rf-btn-sec">Volver a Rutas</a>
+      <a href="{% url 'panel' %}" class="rf-btn rf-btn-sec">Panel</a>
+    </div>
+  </div>
+
+  <form method="post" class="rf-panel">
+    {% csrf_token %}
+
+    <div class="rf-panel-head">
+      <span class="rf-step">01</span>
+      <h2 class="rf-panel-title">Datos de la ruta</h2>
+    </div>
+
+    <div class="rf-body">
+      {% if form.non_field_errors %}
+        <div class="rf-alert">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label for="{{ form.codigo.id_for_label }}">Código</label>
+          {{ form.codigo }}
+          <div class="rf-err">{{ form.codigo.errors }}</div>
+        </div>
+        <div class="col-md-8">
+          <label for="{{ form.nombre.id_for_label }}">Nombre</label>
+          {{ form.nombre }}
+          <div class="rf-err">{{ form.nombre.errors }}</div>
+        </div>
+
+        <div class="col-md-6">
+          <label for="{{ form.origen.id_for_label }}">Origen</label>
+          {{ form.origen }}
+          <div class="rf-err">{{ form.origen.errors }}</div>
+        </div>
+        <div class="col-md-6">
+          <label for="{{ form.destino.id_for_label }}">Destino</label>
+          {{ form.destino }}
+          <div class="rf-err">{{ form.destino.errors }}</div>
+        </div>
+
+        <div class="col-md-6">
+          <label for="{{ form.distancia_km.id_for_label }}">Distancia (km)</label>
+          {{ form.distancia_km }}
+          <div class="rf-err">{{ form.distancia_km.errors }}</div>
+        </div>
+        <div class="col-md-6">
+          <label for="{{ form.tiempo_estimado.id_for_label }}">Tiempo estimado</label>
+          {{ form.tiempo_estimado }}
+          <div class="rf-err">{{ form.tiempo_estimado.errors }}</div>
+        </div>
+      </div>
+
+      <div class="rf-foot">
+        <button type="submit" class="rf-btn rf-btn-dark">Guardar ruta</button>
+        <a href="{% url 'listar_rutas' %}" class="rf-btn rf-btn-sec">Cancelar</a>
+      </div>
+    </div>
+  </form>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Bloquea el Enter en las casillas de una línea para que no guarde el formulario.
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && e.target.tagName === "INPUT") {
+      e.preventDefault();
+    }
+  }, true);
+</script>
+{% endblock %}

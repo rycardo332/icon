@@ -1,0 +1,453 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Tarjeta de Ruta - {{ ruta.codigo|default:"Ruta GPS" }}{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  .tj-wrap{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:1.25rem}
+  .tj-bar{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.6rem}
+  .tj-group{display:flex;flex-wrap:wrap;gap:.6rem}
+  .tj-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+  .tj-title-box{display:flex;align-items:center;gap:.9rem}
+  .tj-title-box img{width:44px;height:44px;object-fit:contain;border-radius:10px}
+  .tj-title{font-family:'Space Mono',monospace;font-weight:700;font-size:1.7rem;color:#fff;margin:0;text-shadow:0 2px 8px rgba(0,0,0,.45)}
+  .tj-sub{color:#e2e8f0;font-size:.9rem;margin:0;text-shadow:0 1px 4px rgba(0,0,0,.4)}
+  .tj-sub strong{color:#fff}
+
+  .tj-btn{display:inline-flex;align-items:center;gap:.45rem;border-radius:999px;padding:.5rem 1.1rem;font-size:.85rem;font-weight:600;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:transform .15s,filter .15s,background .15s,color .15s}
+  .tj-btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
+  .tj-btn img{width:18px;height:18px;object-fit:contain;border-radius:4px}
+  .tj-btn-sec{background:rgba(255,255,255,.88);color:#0f172a;border-color:rgba(255,255,255,.7)}
+  .tj-btn-sec:hover{background:var(--dark-2);color:#fff}
+  .tj-btn-main{background:var(--red);color:#fff}
+  .tj-btn-main:hover{color:#fff}
+  .tj-btn-dark{background:var(--dark);color:#fff;padding:.65rem 1.5rem}
+  .tj-btn-dark:hover{color:#fff}
+  .tj-btn-sm{padding:.3rem .85rem;font-size:.78rem}
+
+  .tj-pill{display:inline-block;border-radius:999px;padding:.25rem .8rem;font-size:.78rem;font-weight:600;border:1px solid}
+  .tj-ok{background:#f0fdf4;color:#15803d;border-color:#bbf7d0}
+  .tj-warn{background:#fffbeb;color:#b45309;border-color:#fde68a}
+
+  .tj-msg{border-radius:14px;padding:.75rem 1rem;font-size:.88rem;font-weight:500}
+  .tj-msg-success{background:#f0fdf4;color:#15803d}
+  .tj-msg-error,.tj-msg-danger{background:#fef2f2;color:#b91c1c}
+  .tj-msg-warning{background:#fffbeb;color:#b45309}
+  .tj-msg-info,.tj-msg-debug{background:#eff6ff;color:#1d4ed8}
+
+  .tj-sel{display:flex;flex-wrap:wrap;align-items:center;gap:.7rem;padding:.7rem 1.1rem;border-radius:18px;background:rgba(255,255,255,.84);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(255,255,255,.7);box-shadow:0 10px 30px rgba(0,0,0,.18)}
+  .tj-sel label{margin:0;font-size:.82rem;font-weight:600;color:#334155}
+
+  .tj-form{display:flex;flex-direction:column;gap:1.25rem}
+  .tj-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:1.25rem;align-items:stretch}
+
+  .tj-panel{display:flex;flex-direction:column;background:rgba(255,255,255,.84);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(255,255,255,.7);border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+  .tj-panel-head{display:flex;align-items:center;flex-wrap:wrap;gap:.75rem;padding:.9rem 1.25rem;background:linear-gradient(90deg,var(--dark),var(--dark-2))}
+  .tj-step{font-family:'Space Mono',monospace;font-weight:700;color:#a3e635}
+  .tj-panel-title{font-family:'Space Mono',monospace;font-weight:700;font-size:.95rem;color:#fff;margin:0}
+  .tj-panel-right{margin-left:auto;display:flex;flex-wrap:wrap;gap:.5rem}
+
+  .tj-map{position:relative;flex:1 1 auto;min-height:460px;background:#eef2f7}
+  .tj-map iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .tj-map-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:1rem;color:#64748b;font-size:.88rem}
+
+  .tj-cond{padding:1.1rem 1.3rem;max-height:620px;overflow-y:auto}
+  .tj-grp{font-family:'Space Mono',monospace;font-weight:700;font-size:.78rem;color:#64748b;text-transform:uppercase;border-bottom:1px solid rgba(15,23,42,.09);padding-bottom:.3rem;margin:1.2rem 0 .6rem}
+  .tj-grp:first-child{margin-top:0}
+  .tj-cond .form-check-label{font-size:.88rem;color:#334155}
+  .tj-cond .form-check-input:checked{background-color:var(--dark-2);border-color:var(--dark-2)}
+  .tj-cond .form-check-input:focus{border-color:var(--dark-2);box-shadow:none}
+  .tj-cond .form-control,.tj-sel .form-select{border-radius:10px;border:1px solid rgba(15,23,42,.15);background-color:rgba(255,255,255,.9);font-size:.88rem;color:#0f172a}
+  .tj-cond .form-control:focus,.tj-sel .form-select:focus{border-color:var(--dark-2);box-shadow:none}
+  .tj-cond .form-label{font-size:.82rem;font-weight:600;color:#334155}
+
+  .tj-scroll{max-height:640px;overflow:auto}
+  .tj-table{width:100%;border-collapse:collapse;font-size:.88rem;color:#334155}
+  .tj-table thead th{position:sticky;top:0;z-index:1;background:rgba(248,250,252,.92);color:#64748b;font-size:.78rem;font-weight:600;text-align:center;padding:.75rem 1rem;white-space:nowrap}
+  .tj-table td{padding:.7rem 1rem;border-top:1px solid rgba(15,23,42,.09);text-align:center;vertical-align:middle}
+  .tj-table tbody tr:hover{background:rgba(255,255,255,.6)}
+  .tj-table tbody tr.tj-actual{background:rgba(96,165,250,.14)}
+  .tj-empty{color:#64748b;padding:2rem 1rem!important}
+  .tj-submit{display:flex;justify-content:flex-end}
+
+  .tj-tools{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem;padding:.75rem 1.25rem;font-size:.82rem;color:#64748b}
+  .tj-tools[hidden]{display:none}
+  .tj-tools label{display:flex;align-items:center;gap:.5rem;margin:0}
+  .tj-tools .form-select{width:auto;border-radius:10px;border:1px solid rgba(15,23,42,.15);background-color:rgba(255,255,255,.9);font-size:.85rem;padding:.3rem 2rem .3rem .7rem}
+  .tj-tools .form-control{width:210px;border-radius:10px;border:1px solid rgba(15,23,42,.15);background:rgba(255,255,255,.9);font-size:.85rem;padding:.3rem .7rem}
+  .tj-tools .form-select:focus,.tj-tools .form-control:focus{border-color:var(--dark-2);box-shadow:none}
+  .tj-pager{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem;padding:.75rem 1.25rem;border-top:1px solid rgba(15,23,42,.09);background:rgba(248,250,252,.92)}
+  .tj-pager[hidden]{display:none}
+  .tj-pager-info{font-size:.8rem;color:#64748b}
+  .tj-pager-btns{display:flex;flex-wrap:wrap;gap:.4rem}
+  .tj-pg{min-width:34px;border-radius:999px;padding:.3rem .8rem;font-size:.78rem;font-weight:600;background:#fff;color:#0f172a;border:1px solid rgba(15,23,42,.15);cursor:pointer;transition:transform .15s,background .15s,color .15s}
+  .tj-pg:hover:not(:disabled){background:var(--dark-2);color:#fff;transform:translateY(-1px)}
+  .tj-pg.on{background:var(--dark);color:#fff;border-color:var(--dark)}
+  .tj-pg:disabled{opacity:.45;cursor:default}
+  .tj-pg-gap{align-self:center;color:#64748b;padding:0 .2rem}
+
+  @media (max-width:991px){
+    .tj-grid{grid-template-columns:1fr}
+  }
+  @media (max-width:767px){
+    .tj-title{font-size:1.3rem}
+    .tj-map{min-height:340px}
+    .tj-submit .tj-btn{width:100%;justify-content:center}
+  }
+  @media print{
+    .no-print{display:none!important}
+    .tj-panel,.tj-sel{box-shadow:none!important}
+    .tj-cond,.tj-scroll{max-height:none!important;overflow:visible!important}
+  }
+</style>
+
+<div class="tj-wrap">
+
+  {% for message in messages %}
+  <div class="tj-msg tj-msg-{{ message.tags }} no-print">{{ message }}</div>
+  {% endfor %}
+
+  <div class="tj-bar no-print">
+    <div class="tj-group">
+      <a href="{% url 'importar_gps' %}" class="tj-btn tj-btn-sec">Volver a Importaciones</a>
+      <a href="{% url 'panel' %}" class="tj-btn tj-btn-sec">Panel</a>
+    </div>
+    <div class="tj-group">
+      <a href="{% url 'exportar_tarjeta_ruta' ruta.id %}?desplazamiento={{ desplazamiento.pk|default:'' }}" class="tj-btn tj-btn-sec">
+        <img src="{% static 'img/iconos/excel.jpg' %}" alt=""> Descargar Excel
+      </a>
+    </div>
+  </div>
+
+  <div class="tj-head">
+    <div class="tj-title-box">
+      <img src="{% static 'img/iconos/ruta.jpg' %}" alt="">
+      <div>
+        <h1 class="tj-title">Tarjeta de control de ruta #{{ ruta.id }}</h1>
+        <p class="tj-sub">
+          Vehículo: <strong>{{ desplazamiento.vehiculo.placa|default:"—" }}</strong> ·
+          Conductor: <strong>{{ desplazamiento.conductor.nombre|default:"No asignado" }}</strong> ·
+          Fecha: <strong>{{ desplazamiento.fecha_desplazamiento|date:"d/m/Y"|default:"—" }}</strong>
+        </p>
+      </div>
+    </div>
+    <div>
+      {% if ruta.visibilidad %}
+        <span class="tj-pill tj-ok">Condiciones de la vía registradas</span>
+      {% else %}
+        <span class="tj-pill tj-warn">Condiciones de la vía pendientes</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <form method="get" class="tj-sel no-print">
+    <label for="sel_trazado">Fecha del trazado:</label>
+    <select id="sel_trazado" name="desplazamiento" class="form-select w-auto" onchange="this.form.submit()">
+      {% for d in desplazamientos %}
+      <option value="{{ d.pk }}" {% if d.pk == desplazamiento.pk %}selected{% endif %}>
+        {{ d.fecha_desplazamiento|date:"d/m/Y" }} · {{ d.vehiculo.placa }}
+      </option>
+      {% empty %}
+      <option value="">Sin trazados guardados</option>
+      {% endfor %}
+    </select>
+    <a href="{% url 'mapa_gps' %}?ruta={{ ruta.id }}" class="tj-btn tj-btn-sec tj-btn-sm">+ Trazar otra fecha</a>
+  </form>
+
+  <form method="POST" class="tj-form">
+    {% csrf_token %}
+    <input type="hidden" name="desplazamiento" value="{{ desplazamiento.pk }}">
+
+    <div class="tj-grid">
+
+      <div class="tj-panel">
+        <div class="tj-panel-head">
+          <span class="tj-step">01</span>
+          <h2 class="tj-panel-title">Mapa del recorrido</h2>
+          {% if desplazamiento %}
+          <div class="tj-panel-right no-print">
+            <a href="{% url 'mapa_gps_render' %}?desplazamiento={{ desplazamiento.pk }}&riesgos=1" target="_blank" class="tj-btn tj-btn-sec tj-btn-sm">Ver con puntos de riesgo</a>
+            <a href="{% url 'planificar_desplazamiento' desplazamiento.pk %}" class="tj-btn tj-btn-main tj-btn-sm">Planificar viaje</a>
+          </div>
+          {% endif %}
+        </div>
+        <div class="tj-map">
+          {% if desplazamiento %}
+          <iframe src="{% url 'mapa_gps_render' %}?desplazamiento={{ desplazamiento.pk }}" title="Mapa del recorrido"></iframe>
+          {% else %}
+          <div class="tj-map-empty">Esta ruta aún no tiene trazados. Usa "Trazar otra fecha" para guardar el primero.</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="tj-panel">
+        <div class="tj-panel-head">
+          <span class="tj-step">02</span>
+          <h2 class="tj-panel-title">Condiciones de la vía</h2>
+        </div>
+        <div class="tj-cond">
+
+          <div class="tj-grp">Visibilidad</div>
+          {% for valor, etiqueta in ruta.Visibilidad.choices %}
+          <div class="form-check mb-1">
+            <input class="form-check-input" type="checkbox" id="vis_{{ valor }}"
+                   name="visibilidad" value="{{ valor }}"
+                   {% if valor in ruta.visibilidad %}checked{% endif %}>
+            <label class="form-check-label" for="vis_{{ valor }}">{{ etiqueta }}</label>
+          </div>
+          {% endfor %}
+
+          <div class="tj-grp">Condiciones de tráfico</div>
+          {% for valor, etiqueta in ruta.Trafico.choices %}
+          <div class="form-check mb-1">
+            <input class="form-check-input" type="radio" id="traf_{{ valor }}"
+                   name="trafico" value="{{ valor }}"
+                   {% if ruta.trafico == valor %}checked{% endif %}>
+            <label class="form-check-label" for="traf_{{ valor }}">{{ etiqueta }}</label>
+          </div>
+          {% endfor %}
+
+          <div class="tj-grp">Tipo de superficie</div>
+          {% for valor, etiqueta in ruta.TipoSuperficie.choices %}
+          <div class="form-check mb-1">
+            <input class="form-check-input" type="checkbox" id="sup_{{ valor }}"
+                   name="tipo_superficie" value="{{ valor }}"
+                   {% if valor in ruta.tipo_superficie %}checked{% endif %}>
+            <label class="form-check-label" for="sup_{{ valor }}">{{ etiqueta }}</label>
+          </div>
+          {% endfor %}
+
+          <div class="tj-grp">Condiciones generales</div>
+          {% for valor, etiqueta in ruta.CondicionGeneral.choices %}
+          <div class="form-check mb-1">
+            <input class="form-check-input" type="checkbox" id="cond_{{ valor }}"
+                   name="condiciones_generales" value="{{ valor }}"
+                   {% if valor in ruta.condiciones_generales %}checked{% endif %}>
+            <label class="form-check-label" for="cond_{{ valor }}">{{ etiqueta }}</label>
+          </div>
+          {% endfor %}
+
+          <div class="tj-grp">Restricciones de horario</div>
+          <div class="d-flex gap-4 mb-2">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="tiene_restriccion"
+                     id="restr_si" value="si"
+                     {% if ruta.tiene_restriccion_horario %}checked{% endif %}>
+              <label class="form-check-label" for="restr_si">Sí</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="tiene_restriccion"
+                     id="restr_no" value="no"
+                     {% if not ruta.tiene_restriccion_horario %}checked{% endif %}>
+              <label class="form-check-label" for="restr_no">No</label>
+            </div>
+          </div>
+          <div id="restr_detalle" class="row g-2" style="display:none;">
+            <div class="col-6">
+              <label class="form-label mb-1">Desde</label>
+              <input type="time" class="form-control" name="restriccion_desde"
+                     value="{{ ruta.restriccion_desde|time:'H:i' }}">
+            </div>
+            <div class="col-6">
+              <label class="form-label mb-1">Hasta</label>
+              <input type="time" class="form-control" name="restriccion_hasta"
+                     value="{{ ruta.restriccion_hasta|time:'H:i' }}">
+            </div>
+            <div class="col-12">
+              <label class="form-label mb-1">Días</label>
+              <input type="text" class="form-control" name="restriccion_dias"
+                     placeholder="Ej: Lunes a viernes"
+                     value="{{ ruta.restriccion_dias }}">
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <div class="tj-panel">
+      <div class="tj-panel-head">
+        <span class="tj-step">03</span>
+        <h2 class="tj-panel-title">Trazados guardados en esta ruta</h2>
+        <span class="tj-panel-right" style="background:rgba(255,255,255,.12);color:#fff;border-radius:999px;padding:.2rem .75rem;font-size:.78rem;font-weight:600">{{ desplazamientos|length }}</span>
+      </div>
+      <div class="tj-tools no-print" id="tj-tools" hidden>
+        <label>Mostrar
+          <select id="tj-size" class="form-select">
+            <option value="5" selected>5</option>
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+          </select>
+          registros
+        </label>
+        <label>Buscar:
+          <input type="search" id="tj-buscar" class="form-control" autocomplete="off">
+        </label>
+      </div>
+      <div class="tj-scroll">
+        <table class="tj-table" id="tj-tabla">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Fecha</th>
+              <th>Origen</th>
+              <th>Destino</th>
+              <th>Hora salida</th>
+              <th>Hora llegada</th>
+              <th>Condiciones climáticas</th>
+              <th class="no-print"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for d in desplazamientos %}
+            <tr {% if d.pk == desplazamiento.pk %}class="tj-actual"{% endif %}>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ d.fecha_desplazamiento|date:"d/m/Y" }}</td>
+              <td>{{ d.viaje_gps.direccion_origen|default:"Punto Origen GPS" }}</td>
+              <td>{{ d.viaje_gps.direccion_destino|default:"Punto Destino GPS" }}</td>
+              <td>{{ d.hora_salida|time:"H:i" }}</td>
+              <td>{{ d.hora_llegada_real|time:"H:i"|default:"—" }}</td>
+              <td>{{ d.condiciones_climaticas_esperadas|default:"Normal" }}</td>
+              <td class="no-print">
+                {% if d.pk != desplazamiento.pk %}
+                <a href="?desplazamiento={{ d.pk }}" class="tj-btn tj-btn-sec tj-btn-sm">Ver</a>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8" class="tj-empty">No hay trazados guardados en esta ruta.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="tj-pager no-print" id="tj-pager" hidden>
+        <span class="tj-pager-info" id="tj-pager-info"></span>
+        <div class="tj-pager-btns" id="tj-pager-btns"></div>
+      </div>
+    </div>
+
+    <div class="tj-submit no-print">
+      <button type="submit" class="tj-btn tj-btn-dark">Guardar cambios en la tarjeta</button>
+    </div>
+  </form>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Muestra desde/hasta/días solo cuando marcan "Sí" en restricciones
+  (function () {
+    const si = document.getElementById('restr_si');
+    const no = document.getElementById('restr_no');
+    const det = document.getElementById('restr_detalle');
+    function actualizar() { det.style.display = si.checked ? 'flex' : 'none'; }
+    si.addEventListener('change', actualizar);
+    no.addEventListener('change', actualizar);
+    actualizar();
+  })();
+
+  // Tabla de trazados: elegir cuántos ver, buscar y pasar de página con números
+  (function () {
+    var tabla = document.getElementById('tj-tabla');
+    var tools = document.getElementById('tj-tools');
+    var pager = document.getElementById('tj-pager');
+    var info = document.getElementById('tj-pager-info');
+    var btns = document.getElementById('tj-pager-btns');
+    var sel = document.getElementById('tj-size');
+    var q = document.getElementById('tj-buscar');
+    var filas = [].slice.call(tabla.querySelectorAll('tbody tr'))
+      .filter(function (tr) { return !tr.querySelector('.tj-empty'); });
+    if (!filas.length) return;
+
+    tools.hidden = false;
+    pager.hidden = false;
+
+    var visibles = filas.slice();
+    var pagina = 0;
+    var sinRes = document.createElement('tr');
+    sinRes.innerHTML = '<td colspan="8" class="tj-empty">Sin resultados para la búsqueda.</td>';
+    sinRes.style.display = 'none';
+    tabla.tBodies[0].appendChild(sinRes);
+
+    function porPagina() { return parseInt(sel.value, 10); }
+
+    // Empieza en la página donde está el trazado que se está viendo
+    for (var i = 0; i < filas.length; i++) {
+      if (filas[i].classList.contains('tj-actual')) { pagina = Math.floor(i / porPagina()); break; }
+    }
+
+    function boton(texto, destino, activo, off) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'tj-pg' + (activo ? ' on' : '');
+      b.textContent = texto;
+      b.disabled = !!off;
+      b.addEventListener('click', function () { pagina = destino; pintar(); });
+      return b;
+    }
+
+    function paginasVisibles(total) {
+      var set = {};
+      [0, total - 1, pagina - 1, pagina, pagina + 1].forEach(function (n) {
+        if (n >= 0 && n < total) set[n] = true;
+      });
+      return Object.keys(set).map(Number).sort(function (a, b) { return a - b; });
+    }
+
+    function pintar() {
+      var pp = porPagina();
+      var total = Math.max(1, Math.ceil(visibles.length / pp));
+      if (pagina >= total) pagina = total - 1;
+      var ini = pagina * pp, fin = Math.min(ini + pp, visibles.length);
+
+      filas.forEach(function (tr) { tr.style.display = 'none'; });
+      visibles.slice(ini, fin).forEach(function (tr) { tr.style.display = ''; });
+      sinRes.style.display = visibles.length ? 'none' : '';
+
+      info.textContent = visibles.length
+        ? 'Mostrando ' + (ini + 1) + ' a ' + fin + ' de ' + visibles.length + ' registros'
+          + (visibles.length !== filas.length ? ' (filtrado de ' + filas.length + ')' : '')
+        : 'Mostrando 0 registros';
+
+      btns.innerHTML = '';
+      btns.appendChild(boton('«', 0, false, pagina === 0));
+      btns.appendChild(boton('‹', pagina - 1, false, pagina === 0));
+      var previo = -1;
+      paginasVisibles(total).forEach(function (n) {
+        if (previo >= 0 && n - previo > 1) {
+          var pts = document.createElement('span');
+          pts.className = 'tj-pg-gap';
+          pts.textContent = '…';
+          btns.appendChild(pts);
+        }
+        btns.appendChild(boton(String(n + 1), n, n === pagina));
+        previo = n;
+      });
+      btns.appendChild(boton('›', pagina + 1, false, pagina === total - 1));
+      btns.appendChild(boton('»', total - 1, false, pagina === total - 1));
+    }
+
+    sel.addEventListener('change', function () { pagina = 0; pintar(); });
+    q.addEventListener('input', function () {
+      var t = q.value.trim().toLowerCase();
+      visibles = filas.filter(function (tr) { return tr.textContent.toLowerCase().indexOf(t) !== -1; });
+      pagina = 0;
+      pintar();
+    });
+    // El Enter en el buscador no debe guardar el formulario de la tarjeta
+    q.addEventListener('keydown', function (e) { if (e.key === 'Enter') e.preventDefault(); });
+
+    window.addEventListener('beforeprint', function () {
+      filas.forEach(function (tr) { tr.style.display = ''; });
+      sinRes.style.display = 'none';
+    });
+    window.addEventListener('afterprint', pintar);
+    pintar();
+  })();
+</script>
+{% endblock %}

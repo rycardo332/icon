@@ -10,6 +10,7 @@ from django.db import models
 # ======================================================================
 
 class Vehiculo(models.Model):
+    imagen = models.ImageField(upload_to="vehiculos/", blank=True, null=True)
     placa = models.CharField(max_length=15, unique=True)
     tipo = models.CharField(max_length=150)  # "NISSAN FRONTIER - Camioneta"
 
@@ -17,6 +18,7 @@ class Vehiculo(models.Model):
     revision_tecnomecanica_hasta = models.DateField()
     seguro_carga_hasta = models.DateField(null=True, blank=True)
     licencia_transito_vigente = models.BooleanField(default=True)
+    activo = models.BooleanField(default=True)
 
     # Vincula la placa con el identificador de objeto/dispositivo en FILPAC
     id_objeto_gps = models.CharField(max_length=50, blank=True)
@@ -27,8 +29,9 @@ class Vehiculo(models.Model):
 
 class Conductor(models.Model):
     nombre = models.CharField(max_length=200)
-    cargo = models.CharField(max_length=200)  # "Ingeniero Residente – líder de cuadrilla"
+    cargo = models.CharField(max_length=200)  
     licencia_conduccion_vigente_hasta = models.DateField()
+    activo = models.BooleanField(default=True)
 
     def __str__(self):
         return self.nombre
@@ -55,9 +58,50 @@ class Ruta(models.Model):
 
     activa = models.BooleanField(default=True)
 
+    # --- Campos de la Tarjeta de Ruta (SIG.DOC-84), llenados una vez por ruta ---
+
+    class Visibilidad(models.TextChoices):
+        BUENA = "buena", "Buena"
+        NIEBLA = "niebla", "Niebla"
+        CURVAS_CERRADAS = "curvas", "Curvas cerradas"
+        MATERIAL_PARTICULADO = "material_particulado", "Material particulado suspendido"
+        ILUMINACION = "iluminacion", "Iluminación"
+
+    class Trafico(models.TextChoices):
+        CAMIONES = "camiones", "Mayoría camiones"
+        AUTOMOVILES = "automoviles", "Mayoría automóviles"
+        MIXTO = "mixto", "Mixto"
+
+    class TipoSuperficie(models.TextChoices):
+        PAVIMENTADA = "pavimentada", "Pavimentada"
+        TROCHA = "trocha", "Trocha"
+        CON_HUECOS = "con_huecos", "Con huecos"
+        SENALIZADA = "senalizada", "Señalizada"
+        DEMARCADA = "demarcada", "Demarcada"
+        AMPLIA = "amplia", "Amplia"
+        ANGOSTA = "angosta", "Angosta"
+
+    class CondicionGeneral(models.TextChoices):
+        INESTABILIDAD_GEOLOGICA = "inestabilidad", "Inestabilidad geológica"
+        CAIDA_BANCADA = "caida_bancada", "Caída de bancada"
+        HUNDIMIENTOS = "hundimientos", "Hundimientos"
+        ZONA_INUNDABLE = "zona_inundable", "Zona inundable"
+
+    visibilidad = models.JSONField(default=list, blank=True)  # lista de Visibilidad
+    trafico = models.CharField(max_length=20, choices=Trafico.choices, blank=True)
+    tipo_superficie = models.JSONField(default=list, blank=True)  # lista de TipoSuperficie
+    condiciones_generales = models.JSONField(default=list, blank=True)  # lista de CondicionGeneral
+
+    tiene_restriccion_horario = models.BooleanField(default=False)
+    restriccion_desde = models.TimeField(null=True, blank=True)
+    restriccion_hasta = models.TimeField(null=True, blank=True)
+    restriccion_dias = models.CharField(max_length=200, blank=True)
+
+    cuerpos_de_agua = models.TextField(blank=True)         # "RIO CHICAMOCHA - Puente..."
+    puntos_apoyo_emergencia = models.TextField(blank=True)  # bomberos/policía/cruz roja, texto libre
+
     def __str__(self):
         return f"{self.codigo} - {self.nombre}"
-
 
 class PuntoRuta(models.Model):
     """Entidad genérica para todo elemento de la ruta con ubicación puntual."""
@@ -146,10 +190,9 @@ class InspeccionVehiculo(models.Model):
         "Desplazamiento", related_name="inspeccion", on_delete=models.CASCADE
     )
     fecha_hora = models.DateTimeField(auto_now_add=True)
-    realizada_por = models.CharField(max_length=200, blank=True)  # quien la ejecuta físicamente
-    resultado_general = models.CharField(
-        max_length=20, choices=Resultado.choices, default=Resultado.APTO
-    )
+    realizada_por = models.CharField(max_length=200, blank=True) 
+    resultado_general = models.CharField(max_length=20, choices=Resultado.choices, default=Resultado.APTO)
+    observaciones = models.TextField(blank=True)
 
     def __str__(self):
         return f"Inspección de {self.desplazamiento}"
@@ -187,8 +230,7 @@ class Desplazamiento(models.Model):
         PENDIENTE = "pendiente", "Ambiguo — requiere revisión manual"
 
     ruta = models.ForeignKey(Ruta, related_name="desplazamientos", on_delete=models.PROTECT)
-    # FIX: related_name explícito para consistencia con el resto del archivo
-    # (antes generaba el default "desplazamiento_set")
+
     conductor = models.ForeignKey(
         Conductor, related_name="desplazamientos", on_delete=models.PROTECT
     )
@@ -224,15 +266,17 @@ class Desplazamiento(models.Model):
         on_delete=models.PROTECT,
     )
 
+    # Caché del entorno de la ruta (lugares, cuerpos de agua, curvas, puntos de riesgo)
+    # calculado con Overpass, para no repetir esa consulta lenta en cada descarga del Excel.
+    cache_entorno = models.JSONField(null=True, blank=True)
+    cache_entorno_actualizado = models.DateTimeField(null=True, blank=True)
+
     creado_en = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.ruta.codigo} - {self.fecha_desplazamiento} ({self.vehiculo.placa})"
 
-    # Documentación del vehículo/conductor (SOAT, revisión, licencias) se calcula
-    # al vuelo comparando fechas de vencimiento contra fecha_desplazamiento;
-    # no se guarda como campo porque no debe digitarse cada vez.
-
+   
 
 # ======================================================================
 # 5. GPS FILPAC: IMPORTACIÓN, REGISTROS CRUDOS Y VIAJE AGRUPADO
@@ -278,6 +322,11 @@ class Viaje(models.Model):
     tiempo_ralenti = models.DurationField(null=True, blank=True)
     tiempo_actividad = models.DurationField(null=True, blank=True)
 
+   
+    geometria_osrm = models.JSONField(null=True, blank=True)
+    distancia_osrm_km = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    pasos_osrm = models.JSONField(null=True, blank=True)
+    
     def __str__(self):
         return f"Viaje {self.vehiculo.placa} {self.fecha_hora_inicio:%Y-%m-%d %H:%M}"
 

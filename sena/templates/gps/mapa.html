@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Mapa de viajes{% endblock %}
+
+{% block content %}
+
+<!-- Fuente llamativa (la misma del panel) -->
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+    /* ============================================================
+       MAPA DE VIAJES - estilos propios (prefijo mp-)
+       Mismo diseño del panel: vidrio, encabezados oscuros
+       ============================================================ */
+
+    .mp-wrap {
+        --mp-dark: var(--dark, #0d1726);
+        --mp-dark-2: var(--dark-2, #16233a);
+        --mp-ink: #0f172a;
+        --mp-muted: #64748b;
+        --mp-fancy: 'Space Mono', 'Courier New', monospace;
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    /* ---------- Encabezado ---------- */
+    .mp-head {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+    }
+    .mp-title-row { display: flex; align-items: center; gap: .8rem; }
+    .mp-title-ico { width: 44px; height: 44px; object-fit: contain; border-radius: 10px; }
+    .mp-title {
+        font-family: var(--mp-fancy);
+        font-size: 1.7rem;
+        font-weight: 700;
+        color: #fff;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, .45);
+        margin: 0;
+        line-height: 1.1;
+    }
+    .mp-sub { color: #e2e8f0; font-size: .9rem; text-shadow: 0 1px 4px rgba(0, 0, 0, .4); }
+    .mp-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+
+    .mp-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: .5rem 1.1rem;
+        border-radius: 999px;
+        font-size: .875rem;
+        font-weight: 600;
+        text-decoration: none;
+        border: 1px solid rgba(255, 255, 255, .5);
+        background: rgba(255, 255, 255, .85);
+        color: var(--mp-ink);
+        transition: all .15s;
+    }
+    .mp-btn:hover { background: #fff; color: var(--mp-ink); transform: translateY(-1px); }
+
+    /* ---------- Mensajes ---------- */
+    .mp-msg {
+        padding: .8rem 1.1rem;
+        border-radius: 14px;
+        font-size: .9rem;
+        background: rgba(255, 255, 255, .88);
+        color: #334155;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, .15);
+    }
+    .mp-msg.success { background: rgba(240, 253, 244, .94); color: #166534; }
+    .mp-msg.error   { background: rgba(254, 242, 242, .94); color: #991b1b; }
+    .mp-msg.warning { background: rgba(255, 251, 235, .94); color: #92400e; }
+
+    /* ---------- Paneles ---------- */
+    .mp-panel {
+        background: rgba(255, 255, 255, .84);
+        -webkit-backdrop-filter: blur(14px) saturate(140%);
+        backdrop-filter: blur(14px) saturate(140%);
+        border: 1px solid rgba(255, 255, 255, .7);
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, .18);
+    }
+    .mp-panel-head {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        padding: .9rem 1.2rem;
+        background: linear-gradient(90deg, var(--mp-dark), var(--mp-dark-2));
+        border-bottom: 1px solid rgba(255, 255, 255, .08);
+    }
+    .mp-step { font-family: var(--mp-fancy); font-size: .8rem; font-weight: 700; color: #a3e635; }
+    .mp-panel-title {
+        font-family: var(--mp-fancy);
+        font-size: .95rem;
+        font-weight: 700;
+        letter-spacing: .5px;
+        color: #fff;
+        margin: 0;
+    }
+    .mp-panel-body { padding: 1.3rem 1.4rem; }
+
+    /* ---------- Formularios ---------- */
+    .mp-frm { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; }
+    .mp-frm label {
+        display: flex;
+        flex-direction: column;
+        gap: .3rem;
+        font-size: .82rem;
+        font-weight: 600;
+        color: #334155;
+    }
+    .mp-frm label.check {
+        flex-direction: row;
+        align-items: center;
+        gap: .5rem;
+        font-weight: 500;
+        font-size: .88rem;
+        padding-bottom: .55rem;
+    }
+    .mp-frm .form-control,
+    .mp-frm .form-select {
+        border-radius: 10px;
+        border: 1px solid rgba(15, 23, 42, .15);
+        background-color: rgba(255, 255, 255, .9);
+        min-width: 180px;
+    }
+    .mp-frm .form-control:focus,
+    .mp-frm .form-select:focus {
+        border-color: var(--mp-dark-2);
+        box-shadow: 0 0 0 .2rem rgba(22, 35, 58, .15);
+    }
+    .mp-frm .form-check-input { min-width: 0; margin: 0; }
+    .mp-frm .form-check-input:checked { background-color: var(--mp-dark); border-color: var(--mp-dark); }
+
+    .mp-go {
+        font-family: var(--mp-fancy);
+        font-weight: 700;
+        font-size: .82rem;
+        letter-spacing: .5px;
+        border: 0;
+        border-radius: 999px;
+        padding: .7rem 1.6rem;
+        background: var(--mp-dark);
+        color: #fff;
+        transition: all .2s;
+    }
+    .mp-go:hover { filter: brightness(1.25); transform: translateY(-2px); }
+    .mp-go.red { background: var(--red, #d31414); }
+    .mp-go.red:hover { filter: brightness(.92); }
+
+    .mp-nota { font-size: .8rem; color: var(--mp-muted); margin: .9rem 0 0; }
+    .mp-nota a { color: #2563eb; }
+
+    /* ---------- Mapa ---------- */
+    .mp-frame {
+        display: block;
+        width: 100%;
+        height: 75vh;
+        min-height: 480px;
+        border: 0;
+        background: #eef2f7;
+    }
+
+    @media (max-width: 767px) {
+        .mp-title { font-size: 1.3rem; }
+        .mp-frm .form-control, .mp-frm .form-select { min-width: 100%; }
+        .mp-frm label { width: 100%; }
+    }
+</style>
+
+<div class="mp-wrap">
+
+    <!-- Encabezado -->
+    <div class="mp-head">
+        <div>
+            <div class="mp-title-row">
+                <img class="mp-title-ico" src="{% static 'img/iconos/gps-y-mapa.jpg' %}" alt="">
+                <h1 class="mp-title">Mapa de viajes</h1>
+            </div>
+            <span class="mp-sub">Consulta el recorrido de un vehículo por fecha y guárdalo en una tarjeta de ruta</span>
+        </div>
+        <div class="mp-actions">
+            <a href="{% url 'importar_gps' %}" class="mp-btn">Importar otro reporte</a>
+            <a href="{% url 'panel' %}" class="mp-btn">Panel</a>
+        </div>
+    </div>
+
+    <!-- Mensajes del sistema -->
+    {% for message in messages %}
+    <div class="mp-msg {{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+
+    <!-- 01 CONSULTAR -->
+    <section class="mp-panel">
+        <div class="mp-panel-head">
+            <span class="mp-step">01</span>
+            <h2 class="mp-panel-title">Consultar recorrido</h2>
+        </div>
+        <div class="mp-panel-body">
+            <form method="get" class="mp-frm">
+                <label>Vehículo
+                    <select name="vehiculo" class="form-select" required>
+                        {% for v in vehiculos %}
+                        <option value="{{ v.pk }}" {% if v.pk|stringformat:"s" == vehiculo_sel %}selected{% endif %}>{{ v.placa }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>Fecha
+                    <input type="date" name="fecha" class="form-control" value="{{ fecha_sel }}" required>
+                </label>
+                {% if ruta_sel %}<input type="hidden" name="ruta" value="{{ ruta_sel }}">{% endif %}
+                <label class="check">
+                    <input type="hidden" name="riesgos" value="0">
+                    <input type="checkbox" class="form-check-input" name="riesgos" value="1" {% if riesgos_sel %}checked{% endif %}>
+                    Incluir puntos de riesgo (hospitales, colegios...; más lento)
+                </label>
+                <button type="submit" class="mp-go">Ver mapa</button>
+            </form>
+            <p class="mp-nota">La primera vez que se abre un día, la ruta de cada viaje se calcula con OSRM y se guarda; puede tardar unos segundos. Después carga rápido.</p>
+        </div>
+    </section>
+
+    {% if mostrar_mapa %}
+
+    <!-- 02 GUARDAR -->
+    <section class="mp-panel">
+        <div class="mp-panel-head">
+            <span class="mp-step">02</span>
+            <h2 class="mp-panel-title">Guardar en una tarjeta de ruta</h2>
+        </div>
+        <div class="mp-panel-body">
+            {% if rutas and conductores %}
+            <form method="post" action="{% url 'guardar_trazado' %}" class="mp-frm">
+                {% csrf_token %}
+                <input type="hidden" name="vehiculo" value="{{ vehiculo_sel }}">
+                <input type="hidden" name="fecha" value="{{ fecha_sel }}">
+                <input type="hidden" name="riesgos" value="{% if riesgos_sel %}1{% else %}0{% endif %}">
+                <label>Ruta
+                    <select name="ruta" class="form-select" required>
+                        <option value="">-- elige la ruta --</option>
+                        {% for r in rutas %}
+                        <option value="{{ r.pk }}" {% if r.pk|stringformat:"s" == ruta_sel %}selected{% endif %}>{{ r.codigo }} - {{ r.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>Conductor
+                    <select name="conductor" class="form-select" required>
+                        {% for c in conductores %}
+                        <option value="{{ c.pk }}">{{ c.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <button type="submit" class="mp-go red">Guardar trazado ({{ fecha_sel }}) y abrir la tarjeta</button>
+            </form>
+            <p class="mp-nota">La tarjeta y el Excel usarán esta fecha. Puedes guardar varios trazados (fechas distintas) en la misma ruta; el resumen mensual del Excel cuenta todos. Si ya guardaste esa fecha en la ruta, se actualiza sin duplicarse.</p>
+            {% else %}
+            <div class="mp-msg warning">Para guardar el trazado necesitas al menos una ruta y un conductor creados en el <a href="/admin/">admin</a>.</div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- 03 MAPA -->
+    <section class="mp-panel">
+        <div class="mp-panel-head">
+            <span class="mp-step">03</span>
+            <h2 class="mp-panel-title">Recorrido</h2>
+        </div>
+        <iframe class="mp-frame" src="{% url 'mapa_gps_render' %}?{{ query }}" title="Mapa de viajes"></iframe>
+    </section>
+
+    {% endif %}
+</div>
+
+{% endblock %}

@@ -1,64 +1,358 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="utf-8">
-  <title>Importar reporte FILPAC</title>
-  <style>
-    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 30px auto; padding: 0 16px; color: #222; }
-    h1 { font-size: 22px; } h2 { font-size: 17px; margin-top: 32px; }
-    .caja { border: 1px solid #ccc; border-radius: 8px; padding: 16px; background: #fafafa; }
-    .msg { padding: 10px 14px; border-radius: 6px; margin: 10px 0; }
-    .msg.success { background: #e3f6e3; } .msg.error { background: #fde4e4; } .msg.info, .msg.warning { background: #fff4d6; }
-    table { border-collapse: collapse; width: 100%; font-size: 14px; }
-    th, td { border-bottom: 1px solid #ddd; padding: 6px 8px; text-align: left; }
-    button { padding: 8px 16px; font-size: 15px; cursor: pointer; }
-  </style>
-</head>
-<body>
-  <h1>Importar reporte de FILPAC</h1>
+{% extends "base.html" %}
+{% load static %}
 
-  {% for m in messages %}<div class="msg {{ m.tags }}">{{ m }}</div>{% endfor %}
+{% block title %}Importar reporte FILPAC{% endblock %}
 
-  <div class="caja">
-    <form method="post" enctype="multipart/form-data">
-      {% csrf_token %}
-      <p>Sube el Excel de trayectos (.xlsx) que descargas de FILPAC:</p>
-      <input type="file" name="archivo" accept=".xlsx" required>
-      <button type="submit">Importar</button>
-    </form>
-  </div>
+{% block content %}
 
-  {% if resumen %}
-  <h2>Resultado</h2>
-  <div class="caja">
-    <ul>
-      <li>Movimientos nuevos guardados: <b>{{ resumen.registros_nuevos }}</b></li>
-      <li>Ya estaban importados (se omitieron): <b>{{ resumen.registros_repetidos }}</b></li>
-      <li>Viajes creados: <b>{{ resumen.viajes_creados }}</b></li>
-      <li>Maniobras menores (menos de 150 m, no son viaje): <b>{{ resumen.maniobras_menores }}</b></li>
-      {% if resumen.viajes_sin_destino %}
-      <li>Viajes sin destino conocido (era el ultimo movimiento del archivo): <b>{{ resumen.viajes_sin_destino }}</b></li>
-      {% endif %}
-    </ul>
-  </div>
-  {% endif %}
+<!-- Fuente llamativa (la misma del panel) -->
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 
-  <h2>Ultimos viajes importados</h2>
-  {% if viajes %}
-  <table>
-    <tr><th>Vehiculo</th><th>Inicio</th><th>Fin</th><th>km</th><th>Origen</th></tr>
-    {% for v in viajes %}
-    <tr>
-      <td>{{ v.vehiculo.placa }}</td>
-      <td>{{ v.fecha_hora_inicio|date:"Y-m-d H:i" }}</td>
-      <td>{{ v.fecha_hora_fin|date:"H:i" }}</td>
-      <td>{{ v.distancia_total }}</td>
-      <td>{{ v.direccion_origen }}</td>
-    </tr>
+<style>
+    /* ============================================================
+       IMPORTAR REPORTE - estilos propios (prefijo im-)
+       Mismo diseño del panel: vidrio, encabezados oscuros
+       ============================================================ */
+
+    .im-wrap {
+        --im-dark: var(--dark, #0d1726);
+        --im-dark-2: var(--dark-2, #16233a);
+        --im-ink: #0f172a;
+        --im-muted: #64748b;
+        --im-line: rgba(15, 23, 42, .09);
+        --im-fancy: 'Space Mono', 'Courier New', monospace;
+        max-width: 1100px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    /* ---------- Encabezado ---------- */
+    .im-head {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+    }
+    .im-title-row { display: flex; align-items: center; gap: .8rem; }
+    .im-title-ico { width: 44px; height: 44px; object-fit: contain; border-radius: 10px; }
+    .im-title {
+        font-family: var(--im-fancy);
+        font-size: 1.7rem;
+        font-weight: 700;
+        color: #fff;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, .45);
+        margin: 0;
+        line-height: 1.1;
+    }
+    .im-sub { color: #e2e8f0; font-size: .9rem; text-shadow: 0 1px 4px rgba(0, 0, 0, .4); }
+    .im-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+
+    .im-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: .5rem 1.1rem;
+        border-radius: 999px;
+        font-size: .875rem;
+        font-weight: 600;
+        text-decoration: none;
+        border: 1px solid rgba(255, 255, 255, .5);
+        background: rgba(255, 255, 255, .85);
+        color: var(--im-ink);
+        transition: all .15s;
+    }
+    .im-btn:hover { background: #fff; color: var(--im-ink); transform: translateY(-1px); }
+
+    /* ---------- Mensajes ---------- */
+    .im-msg {
+        padding: .8rem 1.1rem;
+        border-radius: 14px;
+        font-size: .9rem;
+        background: rgba(255, 255, 255, .88);
+        color: #334155;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, .15);
+    }
+    .im-msg.success { background: rgba(240, 253, 244, .94); color: #166534; }
+    .im-msg.error   { background: rgba(254, 242, 242, .94); color: #991b1b; }
+    .im-msg.info    { background: rgba(239, 246, 255, .94); color: #1e40af; }
+    .im-msg.warning { background: rgba(255, 251, 235, .94); color: #92400e; }
+
+    /* ---------- Paneles ---------- */
+    .im-panel {
+        background: rgba(255, 255, 255, .84);
+        -webkit-backdrop-filter: blur(14px) saturate(140%);
+        backdrop-filter: blur(14px) saturate(140%);
+        border: 1px solid rgba(255, 255, 255, .7);
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, .18);
+    }
+    .im-panel-head {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        padding: .9rem 1.2rem;
+        background: linear-gradient(90deg, var(--im-dark), var(--im-dark-2));
+        border-bottom: 1px solid rgba(255, 255, 255, .08);
+    }
+    .im-step {
+        font-family: var(--im-fancy);
+        font-size: .8rem;
+        font-weight: 700;
+        color: #a3e635;
+    }
+    .im-panel-title {
+        font-family: var(--im-fancy);
+        font-size: .95rem;
+        font-weight: 700;
+        letter-spacing: .5px;
+        color: #fff;
+        margin: 0;
+    }
+    .im-panel-body { padding: 1.3rem 1.4rem; }
+
+    /* ---------- Zona de subida ---------- */
+    .im-drop {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: .4rem;
+        text-align: center;
+        padding: 2rem 1rem;
+        border: 2px dashed rgba(15, 23, 42, .25);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, .55);
+        cursor: pointer;
+        transition: all .2s;
+    }
+    .im-drop:hover, .im-drop.on { background: rgba(255, 255, 255, .9); border-color: var(--im-dark); }
+    .im-drop-ico { width: 56px; height: 56px; object-fit: contain; border-radius: 10px; margin-bottom: .2rem; }
+    .im-drop-main { font-weight: 600; color: var(--im-ink); }
+    .im-drop-hint { font-size: .8rem; color: var(--im-muted); }
+    .im-drop input { display: none; }
+
+    .im-go {
+        font-family: var(--im-fancy);
+        font-weight: 700;
+        font-size: .85rem;
+        letter-spacing: .5px;
+        border: 0;
+        border-radius: 999px;
+        padding: .7rem 1.8rem;
+        background: var(--red, #d31414);
+        color: #fff;
+        transition: all .2s;
+    }
+    .im-go:hover { filter: brightness(.92); transform: translateY(-2px); }
+    .im-go:disabled { opacity: .6; transform: none; }
+
+    /* ---------- Resultado (tarjetas oscuras como las del panel) ---------- */
+    .im-stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1rem;
+    }
+    @media (max-width: 991px) { .im-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 575px) { .im-stats { grid-template-columns: 1fr; } }
+
+    .im-stat {
+        --mc: #a3e635;
+        display: flex;
+        flex-direction: column;
+        gap: .3rem;
+        padding: 1.1rem 1.25rem;
+        border-radius: 18px;
+        color: #cbd5e1;
+        background: linear-gradient(150deg, rgba(13, 23, 38, .90), rgba(22, 35, 58, .80));
+        -webkit-backdrop-filter: blur(14px) saturate(140%);
+        backdrop-filter: blur(14px) saturate(140%);
+        border: 1px solid rgba(255, 255, 255, .10);
+        box-shadow: 0 10px 28px rgba(0, 0, 0, .28);
+    }
+    .im-stat.c-ok    { --mc: #a3e635; }
+    .im-stat.c-gris  { --mc: #94a3b8; }
+    .im-stat.c-azul  { --mc: #60a5fa; }
+    .im-stat.c-ambar { --mc: #fbbf24; }
+    .im-stat-num {
+        font-family: var(--im-fancy);
+        font-size: 2.5rem;
+        font-weight: 700;
+        line-height: 1;
+        color: var(--mc);
+    }
+    .im-stat-label { font-size: .88rem; color: #e2e8f0; }
+    .im-stat-note { font-size: .75rem; color: #94a3b8; }
+
+    /* ---------- Tabla ---------- */
+    .im-table { width: 100%; margin: 0; border-collapse: collapse; }
+    .im-table thead th {
+        background: rgba(248, 250, 252, .70);
+        color: var(--im-muted);
+        font-size: .78rem;
+        font-weight: 600;
+        padding: .6rem 1.2rem;
+        border-bottom: 1px solid var(--im-line);
+        white-space: nowrap;
+    }
+    .im-table tbody td {
+        padding: .8rem 1.2rem;
+        border-bottom: 1px solid var(--im-line);
+        vertical-align: middle;
+        font-size: .9rem;
+        color: #334155;
+        background: transparent;
+    }
+    .im-table tbody tr:last-child td { border-bottom: 0; }
+    .im-table tbody tr:hover td { background: rgba(255, 255, 255, .6); }
+
+    .im-placa {
+        display: inline-block;
+        font-weight: 700;
+        letter-spacing: 1px;
+        padding: .1rem .6rem;
+        border-radius: 999px;
+        background: #fef3c7;
+        border: 1px solid #fcd34d;
+        color: #78350f;
+    }
+    .im-empty { padding: 2rem 1.2rem; text-align: center; color: var(--im-muted); }
+</style>
+
+<div class="im-wrap">
+
+    <!-- Encabezado -->
+    <div class="im-head">
+        <div>
+            <div class="im-title-row">
+                <img class="im-title-ico" src="{% static 'img/iconos/importar.jpg' %}" alt="">
+                <h1 class="im-title">Importar reporte FILPAC</h1>
+            </div>
+            <span class="im-sub">Carga el Excel de trayectos para crear los viajes</span>
+        </div>
+        <div class="im-actions">
+            <a href="{% url 'panel' %}" class="im-btn">Panel</a>
+            <a href="{% url 'mapa_gps' %}" class="im-btn">Mapa</a>
+        </div>
+    </div>
+
+    <!-- Mensajes del sistema -->
+    {% for m in messages %}
+    <div class="im-msg {{ m.tags }}">{{ m }}</div>
     {% endfor %}
-  </table>
-  {% else %}
-  <p>Todavia no hay viajes. Sube un Excel para empezar.</p>
-  {% endif %}
-</body>
-</html>
+
+    <!-- 01 SUBIR -->
+    <section class="im-panel">
+        <div class="im-panel-head">
+            <span class="im-step">01</span>
+            <h2 class="im-panel-title">Subir reporte</h2>
+        </div>
+        <div class="im-panel-body">
+            <form method="post" enctype="multipart/form-data" id="form-import">
+                {% csrf_token %}
+                <label class="im-drop" id="drop">
+                    <img class="im-drop-ico" src="{% static 'img/iconos/excel.jpg' %}" alt="">
+                    <span class="im-drop-main" id="drop-nombre">Elige el Excel de trayectos (.xlsx)</span>
+                    <span class="im-drop-hint">El que descargas de FILPAC. Haz clic aquí o arrastra el archivo.</span>
+                    <input type="file" name="archivo_excel" id="archivo" accept=".xlsx" required>
+                </label>
+                <div class="text-end mt-3">
+                    <button type="submit" class="im-go" id="btn-import">Importar</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- 02 RESULTADO -->
+    {% if resumen %}
+    <section class="im-panel">
+        <div class="im-panel-head">
+            <span class="im-step">02</span>
+            <h2 class="im-panel-title">Resultado</h2>
+        </div>
+        <div class="im-panel-body">
+            <div class="im-stats">
+                <div class="im-stat c-ok">
+                    <div class="im-stat-num">{{ resumen.registros_nuevos }}</div>
+                    <div class="im-stat-label">Movimientos nuevos guardados</div>
+                </div>
+                <div class="im-stat c-gris">
+                    <div class="im-stat-num">{{ resumen.registros_repetidos }}</div>
+                    <div class="im-stat-label">Ya estaban importados</div>
+                    <div class="im-stat-note">Se omitieron</div>
+                </div>
+                <div class="im-stat c-azul">
+                    <div class="im-stat-num">{{ resumen.viajes_creados }}</div>
+                    <div class="im-stat-label">Viajes creados</div>
+                </div>
+                <div class="im-stat c-ambar">
+                    <div class="im-stat-num">{{ resumen.maniobras_menores }}</div>
+                    <div class="im-stat-label">Maniobras menores</div>
+                    <div class="im-stat-note">Menos de 150 m, no son viaje</div>
+                </div>
+            </div>
+
+            {% if resumen.viajes_sin_destino %}
+            <div class="im-msg warning mt-3">
+                <b>{{ resumen.viajes_sin_destino }}</b> viaje(s) sin destino conocido: era el último movimiento del archivo.
+            </div>
+            {% endif %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- ÚLTIMOS VIAJES -->
+    <section class="im-panel">
+        <div class="im-panel-head">
+            <span class="im-step">{% if resumen %}03{% else %}02{% endif %}</span>
+            <h2 class="im-panel-title">Últimos viajes importados</h2>
+        </div>
+        {% if ultimos_viajes %}
+        <div class="table-responsive">
+            <table class="im-table">
+                <thead>
+                    <tr><th>Vehículo</th><th>Inicio</th><th>Fin</th><th>km</th><th>Origen</th></tr>
+                </thead>
+                <tbody>
+                    {% for v in ultimos_viajes %}
+                    <tr>
+                        <td><span class="im-placa">{{ v.vehiculo.placa }}</span></td>
+                        <td class="text-nowrap">{{ v.fecha_hora_inicio|date:"Y-m-d H:i" }}</td>
+                        <td>{{ v.fecha_hora_fin|date:"H:i" }}</td>
+                        <td>{{ v.distancia_total }}</td>
+                        <td>{{ v.direccion_origen }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="im-empty">Todavía no hay viajes. Sube un Excel para empezar.</div>
+        {% endif %}
+    </section>
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+    // Muestra el nombre del archivo elegido y avisa que está importando
+    const input = document.getElementById('archivo');
+    const nombre = document.getElementById('drop-nombre');
+    const drop = document.getElementById('drop');
+    input.addEventListener('change', () => {
+        nombre.textContent = input.files.length ? input.files[0].name : 'Elige el Excel de trayectos (.xlsx)';
+    });
+    ['dragenter', 'dragover'].forEach(e => drop.addEventListener(e, () => drop.classList.add('on')));
+    ['dragleave', 'drop'].forEach(e => drop.addEventListener(e, () => drop.classList.remove('on')));
+    document.getElementById('form-import').addEventListener('submit', () => {
+        const b = document.getElementById('btn-import');
+        b.disabled = true;
+        b.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Importando...';
+    });
+</script>
+{% endblock %}

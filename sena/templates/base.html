@@ -1,0 +1,611 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema de gestión{% endblock %}</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+
+    <style>
+
+        /* Fondo de la página */
+        body {
+            background-image: url("{% static 'img/fondo.jpg' %}");
+        }
+
+        /* =========================================================
+           BASE.CSS  ·  Sistema de gestión
+           Índice:
+           1. Variables (paleta y medidas)
+           2. Cuerpo y fondo
+           3. Barra superior
+           4. Encabezado de página
+           5. Divisor de sección
+           6. Colores de acento
+           7. Tarjetas de módulo (.dc)
+           8. Paneles y tablas (.pn)
+           9. Etiquetas, botones, alertas
+           10. Formularios
+           11. Responsive
+           ========================================================= */
+
+
+        /* 1. VARIABLES ------------------------------------------- */
+        :root {
+            /* Marca */
+            --red: #d31414;
+
+            /* Barras oscuras (topbar + sidebar). Cambia este HEX para igualarlo al sidebar */
+            --dark: #0d1726;
+            --dark-2: #16233a;
+
+            /* Texto */
+            --ink: #1e293b;
+            --muted: #64748b;
+
+            /* Superficies "vidrio" (combinan con el fondo) */
+            --glass: rgba(255, 255, 255, .74);
+            --glass-strong: rgba(255, 255, 255, .88);
+            --glass-soft: rgba(255, 255, 255, .55);
+            --blur: blur(14px) saturate(140%);
+
+            /* Bordes y sombras */
+            --border: rgba(15, 23, 42, .08);
+            --shadow-sm: 0 2px 8px rgba(15, 23, 42, .06);
+            --shadow-md: 0 10px 30px rgba(15, 23, 42, .10);
+
+            /* Radios */
+            --r-sm: 10px;
+            --r-md: 16px;
+            --r-lg: 22px;
+        }
+
+
+        /* 2. CUERPO Y FONDO -------------------------------------- */
+        body {
+            font-family: 'DM Sans', sans-serif;
+            color: var(--ink);
+            min-height: 100vh;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            /* la imagen de fondo se define arriba */
+        }
+
+        /* Velo suave sobre la foto: mejora la lectura sin taparla */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: linear-gradient(
+                180deg,
+                rgba(13, 23, 38, .45) 0%,
+                rgba(13, 23, 38, .10) 35%,
+                rgba(13, 23, 38, .05) 60%,
+                rgba(13, 23, 38, .35) 100%
+            );
+        }
+
+
+        /* 3. BARRA SUPERIOR (oscura, igual que el sidebar) ------ */
+        .topbar {
+            height: 72px;
+            width: 100%;
+            padding: 0 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: var(--dark);
+            border-bottom: 1px solid rgba(255, 255, 255, .06);
+            box-shadow: 0 4px 18px rgba(0, 0, 0, .25);
+        }
+
+        .topbar-page { display: flex; align-items: center; }
+
+        .topbar-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: .9rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: #e2e8f0;
+            text-transform: uppercase;
+            line-height: 1;
+        }
+
+        .topbar-date { font-size: .74rem; color: #94a3b8; margin-top: 5px; }
+
+        .topbar-right { display: flex; align-items: center; gap: 14px; }
+
+        /* Notificaciones */
+        .topbar-notification {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, .07);
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .topbar-notification:hover { background: rgba(255, 255, 255, .14); color: #fff; }
+
+        .notification-dot {
+            position: absolute;
+            top: 9px;
+            right: 10px;
+            width: 8px;
+            height: 8px;
+            background: var(--red);
+            border-radius: 50%;
+            border: 2px solid var(--dark);
+        }
+
+        /* Perfil */
+        .topbar-profile {
+            min-width: 160px;
+            height: 52px;
+            padding: 6px 12px 6px 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, .07);
+            border: 1px solid rgba(255, 255, 255, .10);
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .topbar-profile:hover { background: rgba(255, 255, 255, .13); }
+
+        .profile-avatar {
+            width: 36px;
+            height: 36px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ef4444, var(--red));
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 900;
+        }
+
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            line-height: 1;
+            flex: 1;
+        }
+        .profile-name {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: .85rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+            color: #fff;
+        }
+        .profile-role { font-size: .64rem; color: #94a3b8; margin-top: 4px; }
+        .profile-arrow { font-size: .65rem; color: #94a3b8; }
+
+
+        /* 4. ENCABEZADO DE PÁGINA -------------------------------- */
+        .ph-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #fff;
+            margin: 0;
+            line-height: 1;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, .45);
+        }
+
+        .ph-date { font-size: .8rem; color: #e2e8f0; text-shadow: 0 1px 4px rgba(0,0,0,.4); }
+
+        .btn-ph {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            font-size: .8rem;
+            border-radius: 999px;
+            padding: .55rem 1.2rem;
+            background: var(--glass-strong);
+            color: #111827;
+            border: 1px solid color-mix(in srgb, var(--accent, #3b82f6) 45%, white);
+            box-shadow: var(--shadow-sm);
+            transition: all .25s;
+        }
+        .btn-ph:hover {
+            color: #111827;
+            background: color-mix(in srgb, var(--accent, #3b82f6) 12%, white);
+            border-color: var(--accent, #3b82f6);
+            box-shadow: 0 8px 18px color-mix(in srgb, var(--accent, #3b82f6) 25%, transparent);
+            transform: translateY(-2px);
+        }
+
+
+        /* 5. DIVISOR DE SECCIÓN ---------------------------------- */
+        .sdiv {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 1.8rem 0 1rem;
+        }
+        .sdiv-num {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--red);
+            line-height: 1;
+        }
+        .sdiv-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: .8rem;
+            font-weight: 800;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #fff;
+            text-shadow: 0 1px 4px rgba(0,0,0,.45);
+        }
+        .sdiv-line {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(255,255,255,.55), rgba(255,255,255,.03));
+        }
+
+
+        /* 6. COLORES DE ACENTO ----------------------------------- */
+        .c-primary   { --accent: #3b82f6; }
+        .c-success   { --accent: #65a30d; }   /* verde campo */
+        .c-warning   { --accent: #f59e0b; }   /* trigo */
+        .c-danger    { --accent: #ef4444; }
+        .c-info      { --accent: #14b8a6; }
+        .c-secondary { --accent: #64748b; }
+        .c-dark      { --accent: #7c3aed; }
+
+
+        /* 7. TARJETAS DE MÓDULO (.dc) ---------------------------- */
+        .dc {
+            --ink-accent: color-mix(in srgb, var(--accent, #c30a0a) 72%, black);
+
+            position: relative;
+            height: 100%;
+            min-height: 170px;
+            overflow: hidden;
+            border-radius: var(--r-lg);
+            background: var(--glass);
+            -webkit-backdrop-filter: var(--blur);
+            backdrop-filter: var(--blur);
+            border: 1px solid rgba(255, 255, 255, .8);
+            box-shadow: var(--shadow-sm);
+            transition: transform .25s ease, box-shadow .25s ease;
+        }
+        .dc:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 16px 34px color-mix(in srgb, var(--accent, #c30a0a) 22%, transparent);
+        }
+
+        /* Barra de color a la izquierda (reemplaza la esquina) */
+        .dc::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 18px;
+            bottom: 18px;
+            width: 4px;
+            border-radius: 0 4px 4px 0;
+            background: var(--accent, #c30a0a);
+        }
+
+        .dc-corner { display: none; }   /* se mantiene por compatibilidad */
+
+        .dc-bg-icon {
+            position: absolute;
+            right: 16px;
+            bottom: 10px;
+            font-size: 3.4rem;
+            color: var(--accent);
+            opacity: .12;
+            pointer-events: none;
+            transition: opacity .25s, transform .25s;
+        }
+        .dc:hover .dc-bg-icon { opacity: .25; transform: scale(1.1) rotate(-5deg); }
+
+        .dc-inner {
+            position: relative;
+            z-index: 2;
+            height: 100%;
+            padding: 1rem 1.2rem 1rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: .35rem;
+        }
+
+        .dc-step {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: .65rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: var(--ink-accent);
+            text-transform: uppercase;
+        }
+        .dc-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1.45rem;
+            font-weight: 800;
+            letter-spacing: .5px;
+            color: #111827;
+            margin: 0;
+            line-height: 1.1;
+            text-transform: uppercase;
+        }
+        .dc-cifra {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 2.6rem;
+            font-weight: 900;
+            line-height: 1;
+            color: var(--ink-accent);
+        }
+        .dc-sub { font-size: .75rem; color: var(--muted); margin: 0; }
+
+        .dc-links { margin-top: auto; display: flex; flex-wrap: wrap; gap: .9rem; }
+        .dc-cta {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: .75rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: var(--ink-accent);
+            text-transform: uppercase;
+            text-decoration: none;
+            transition: letter-spacing .2s;
+        }
+        .dc-cta:hover { letter-spacing: 2.5px; color: #111827; }
+
+
+        /* 8. PANELES Y TABLAS (.pn) ------------------------------ */
+        .pn {
+            height: 100%;
+            overflow: hidden;
+            border-radius: var(--r-lg);
+            background: var(--glass);
+            -webkit-backdrop-filter: var(--blur);
+            backdrop-filter: var(--blur);
+            border: 1px solid rgba(255, 255, 255, .8);
+            box-shadow: var(--shadow-md);
+        }
+
+        .pn-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: .9rem 1.3rem;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-size: .9rem;
+            color: #111827;
+            background: color-mix(in srgb, var(--accent, #3b82f6) 8%, white);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .pn table {
+            --bs-table-bg: transparent;
+            --bs-table-color: var(--ink);
+            --bs-table-hover-bg: rgba(15, 23, 42, .035);
+            --bs-table-hover-color: #111827;
+            --bs-table-border-color: var(--border);
+            margin: 0;
+        }
+        .pn thead th {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: .72rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: 700;
+            border-bottom: 1px solid var(--border);
+            background: rgba(248, 250, 252, .55);
+        }
+        .pn .muted { color: var(--muted); font-size: .8rem; }
+
+
+        /* 9. ETIQUETAS, BOTONES, ALERTAS ------------------------- */
+        .tag {
+            display: inline-block;
+            font-size: .68rem;
+            font-weight: 600;
+            padding: .15rem .6rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            background: #f3f4f6;
+        }
+        .tag.ok   { color: #3f6212; border-color: rgba(101, 163, 13, .45); background: rgba(132, 204, 22, .18); }
+        .tag.warn { color: #92400e; border-color: rgba(245, 158, 11, .5);  background: rgba(245, 158, 11, .16); }
+        .tag.bad  { color: #991b1b; border-color: rgba(239, 68, 68, .45);  background: rgba(239, 68, 68, .12); }
+
+        .ibtn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            color: #374151;
+            text-decoration: none;
+            border: 1px solid var(--border);
+            background: #fff;
+            transition: all .2s;
+        }
+        .ibtn:hover {
+            color: #111827;
+            transform: translateY(-2px);
+            border-color: var(--c);
+            background: color-mix(in srgb, var(--c) 10%, white);
+            box-shadow: 0 4px 10px color-mix(in srgb, var(--c) 30%, transparent);
+        }
+
+        .alert-item { padding: .85rem 1.3rem; border-bottom: 1px solid var(--border); }
+        .alert-item:last-child { border-bottom: 0; }
+        .alert-item a { color: #2563eb; font-size: .78rem; }
+
+        .empty { padding: 1.6rem; text-align: center; color: var(--muted); }
+
+
+        /* 10. FORMULARIOS ---------------------------------------- */
+        .pn-form { padding: 1.4rem 1.4rem 1.6rem; }
+
+        .pn-form label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #374151;
+            margin-bottom: .25rem;
+        }
+        .pn-form .form-control,
+        .pn-form .form-select {
+            border-radius: var(--r-sm);
+            border: 1px solid var(--border);
+            font-size: .9rem;
+        }
+        .pn-form .form-control:focus,
+        .pn-form .form-select:focus {
+            border-color: var(--accent, #3b82f6);
+            box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--accent, #3b82f6) 18%, transparent);
+        }
+        .pn-form .invalid-feedback { display: block; }
+
+        .btn-guardar {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            font-size: .85rem;
+            border-radius: 999px;
+            padding: .6rem 1.6rem;
+            background: var(--accent, #3b82f6);
+            color: #fff;
+            border: none;
+            transition: all .2s;
+        }
+        .btn-guardar:hover { color: #fff; filter: brightness(.92); transform: translateY(-2px); }
+
+
+        /* 11. RESPONSIVE ----------------------------------------- */
+        @media (max-width: 767px) {
+            .topbar { padding: 0 12px; }
+            .topbar-date { display: none; }
+            .topbar-right { gap: 6px; }
+
+            .topbar-profile { min-width: auto; width: 48px; padding: 6px; justify-content: center; }
+            .profile-info,
+            .profile-arrow { display: none; }
+
+            .ph-title { font-size: 1.7rem; }
+            .sdiv { margin: 1.2rem 0 .8rem; }
+            .sdiv-num { font-size: 1.5rem; }
+            .sdiv-label { font-size: .7rem; letter-spacing: 2px; }
+        }
+
+    </style>
+
+    {% block extra_css %}{% endblock %}
+
+</head>
+
+
+<body>
+
+    <!-- BARRA SUPERIOR -->
+    <header class="topbar">
+
+        <!-- Izquierda -->
+        <div class="topbar-page">
+            <div>
+                <div class="topbar-title">PANEL DE CONTROL</div>
+                <div class="topbar-date">Hoy es {% now "d/m/Y" %}</div>
+            </div>
+        </div>
+
+        <!-- Derecha -->
+        <div class="topbar-right">
+
+            <button class="topbar-notification" type="button" title="Notificaciones">
+                <i class="fa-solid fa-bell"></i>
+                <span class="notification-dot"></span>
+            </button>
+
+            <div class="topbar-profile">
+                <div class="profile-avatar">A</div>
+
+                <div class="profile-info">
+                    <span class="profile-name">ADMIN</span>
+                    <span class="profile-role">Administrador</span>
+                </div>
+
+                <i class="fa-solid fa-chevron-down profile-arrow"></i>
+            </div>
+
+        </div>
+    </header>
+
+
+    <!-- =====================================================
+         SIDEBAR
+    ===================================================== -->
+
+    {% include "gps/sidebar.html" %}
+
+
+    <!-- =====================================================
+         CONTENIDO
+    ===================================================== -->
+
+    <div class="container-fluid py-4 px-4">
+
+        {% block content %}{% endblock %}
+
+        <div style="height:2rem;"></div>
+
+    </div>
+
+
+    <!-- Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- SweetAlert2 y estilo de alertas -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+    {% include "_alertas.html" %}
+
+    {% block extra_js %}{% endblock %}
+
+</body>
+
+</html>

@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  .rt-wrap{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:1.25rem}
+  .rt-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+  .rt-title-box{display:flex;align-items:center;gap:.9rem}
+  .rt-title-box img{width:44px;height:44px;object-fit:contain;border-radius:10px}
+  .rt-title{font-family:'Space Mono',monospace;font-weight:700;font-size:1.7rem;color:#fff;margin:0;text-shadow:0 2px 8px rgba(0,0,0,.45)}
+  .rt-sub{color:#e2e8f0;font-size:.9rem;margin:0;text-shadow:0 1px 4px rgba(0,0,0,.4)}
+  .rt-actions{display:flex;gap:.6rem;flex-wrap:wrap}
+
+  .rt-btn{display:inline-flex;align-items:center;gap:.4rem;border-radius:999px;padding:.5rem 1.1rem;font-size:.85rem;font-weight:600;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:transform .15s,filter .15s,background .15s,color .15s}
+  .rt-btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
+  .rt-btn-sec{background:rgba(255,255,255,.88);color:#0f172a;border-color:rgba(255,255,255,.7)}
+  .rt-btn-sec:hover{background:var(--dark-2);color:#fff}
+  .rt-btn-main{background:var(--red);color:#fff}
+  .rt-btn-main:hover{color:#fff}
+  .rt-btn-dark{background:var(--dark);color:#fff}
+  .rt-btn-dark:hover{color:#fff}
+  .rt-btn-sm{padding:.3rem .85rem;font-size:.78rem}
+
+  .rt-panel{background:rgba(255,255,255,.84);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(255,255,255,.7);border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+  .rt-panel-head{display:flex;align-items:center;gap:.75rem;padding:.9rem 1.25rem;background:linear-gradient(90deg,var(--dark),var(--dark-2))}
+  .rt-step{font-family:'Space Mono',monospace;font-weight:700;color:#a3e635}
+  .rt-panel-title{font-family:'Space Mono',monospace;font-weight:700;font-size:.95rem;color:#fff;margin:0}
+  .rt-count{margin-left:auto;background:rgba(255,255,255,.12);color:#fff;border-radius:999px;padding:.2rem .75rem;font-size:.78rem;font-weight:600}
+
+  .rt-scroll{max-height:640px;overflow:auto}
+  .rt-table{width:100%;border-collapse:collapse;font-size:.88rem;color:#334155}
+  .rt-table thead th{position:sticky;top:0;z-index:1;background:rgba(248,250,252,.92);color:#64748b;font-size:.78rem;font-weight:600;text-align:left;padding:.75rem 1rem;white-space:nowrap}
+  .rt-table td{padding:.7rem 1rem;border-top:1px solid rgba(15,23,42,.09);vertical-align:middle}
+  .rt-table tbody tr:hover{background:rgba(255,255,255,.6)}
+  .rt-right{text-align:right!important}
+  .rt-code{font-family:'Space Mono',monospace;font-weight:700;color:#0f172a}
+  .rt-name{color:#0f172a;font-weight:600}
+  .rt-row-actions{display:flex;gap:.4rem;justify-content:flex-end;align-items:center}
+  .rt-row-actions form{margin:0}
+  .rt-empty{text-align:center;color:#64748b;padding:2rem 1rem!important}
+
+  .rt-pill{display:inline-block;border-radius:999px;padding:.2rem .7rem;font-size:.75rem;font-weight:600;border:1px solid}
+  .rt-ok{background:#f0fdf4;color:#15803d;border-color:#bbf7d0}
+  .rt-neutral{background:#f1f5f9;color:#475569;border-color:#e2e8f0}
+
+  .rt-msg{border-radius:14px;padding:.75rem 1rem;font-size:.88rem;font-weight:500;backdrop-filter:blur(10px)}
+  .rt-msg-success{background:#f0fdf4;color:#15803d}
+  .rt-msg-error,.rt-msg-danger{background:#fef2f2;color:#b91c1c}
+  .rt-msg-warning{background:#fffbeb;color:#b45309}
+  .rt-msg-info,.rt-msg-debug{background:#eff6ff;color:#1d4ed8}
+
+  @media (max-width:767px){
+    .rt-title{font-size:1.3rem}
+    .rt-actions{width:100%}
+  }
+</style>
+
+<div class="rt-wrap">
+
+  <div class="rt-head">
+    <div class="rt-title-box">
+      <img src="{% static 'img/iconos/rutas.jpg' %}" alt="">
+      <div>
+        <h1 class="rt-title">Rutas</h1>
+        <p class="rt-sub">Administra las rutas registradas en el sistema</p>
+      </div>
+    </div>
+    <div class="rt-actions">
+      <a href="{% url 'panel' %}" class="rt-btn rt-btn-sec">Volver al panel</a>
+      <a href="{% url 'crear_ruta' %}" class="rt-btn rt-btn-main">+ Nueva ruta</a>
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="rt-msg rt-msg-{{ message.tags|default:'info' }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="rt-panel">
+    <div class="rt-panel-head">
+      <span class="rt-step">01</span>
+      <h2 class="rt-panel-title">Listado de rutas</h2>
+      <span class="rt-count">{{ rutas|length }}</span>
+    </div>
+    <div class="rt-scroll">
+      <table class="rt-table">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Origen</th>
+            <th>Destino</th>
+            <th class="rt-right">Distancia (km)</th>
+            <th>Tiempo</th>
+            <th>Estado</th>
+            <th class="rt-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ruta in rutas %}
+          <tr>
+            <td class="rt-code">{{ ruta.codigo }}</td>
+            <td class="rt-name">{{ ruta.nombre }}</td>
+            <td>{{ ruta.origen }}</td>
+            <td>{{ ruta.destino }}</td>
+            <td class="rt-right">{{ ruta.distancia_km|default_if_none:"—" }}</td>
+            <td>{{ ruta.tiempo_estimado|default_if_none:"—" }}</td>
+            <td>
+              {% if ruta.activa %}<span class="rt-pill rt-ok">Activa</span>
+              {% else %}<span class="rt-pill rt-neutral">Inactiva</span>{% endif %}
+            </td>
+            <td class="rt-right">
+              <div class="rt-row-actions">
+                <a href="{% url 'editar_ruta' ruta.id %}" class="rt-btn rt-btn-sec rt-btn-sm">Editar</a>
+                <form method="post" action="{% url 'alternar_ruta' ruta.id %}"
+                      data-titulo="{% if ruta.activa %}¿Desactivar ruta?{% else %}¿Activar ruta?{% endif %}"
+                      data-confirmar="¿Seguro que quieres {% if ruta.activa %}desactivar{% else %}activar{% endif %} la ruta {{ ruta.codigo }}?"
+                      data-si="{% if ruta.activa %}Sí, desactivar{% else %}Sí, activar{% endif %}"
+                      data-no="Cancelar"{% if ruta.activa %} data-peligro{% endif %}>
+                  {% csrf_token %}
+                  {% if ruta.activa %}
+                    <button type="submit" class="rt-btn rt-btn-sec rt-btn-sm">Desactivar</button>
+                  {% else %}
+                    <button type="submit" class="rt-btn rt-btn-dark rt-btn-sm">Activar</button>
+                  {% endif %}
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="rt-empty">
+              Aún no hay rutas registradas. Crea la primera con «Nueva ruta».
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

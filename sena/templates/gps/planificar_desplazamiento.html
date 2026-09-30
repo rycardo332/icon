@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  .pl-wrap{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:1.25rem}
+  .pl-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+  .pl-title-box{display:flex;align-items:center;gap:.9rem}
+  .pl-title-box img{width:44px;height:44px;object-fit:contain;border-radius:10px}
+  .pl-title{font-family:'Space Mono',monospace;font-weight:700;font-size:1.7rem;color:#fff;margin:0;text-shadow:0 2px 8px rgba(0,0,0,.45)}
+  .pl-sub{color:#e2e8f0;font-size:.9rem;margin:0;text-shadow:0 1px 4px rgba(0,0,0,.4)}
+  .pl-sub strong{color:#fff}
+  .pl-actions{display:flex;gap:.6rem;flex-wrap:wrap}
+
+  .pl-btn{display:inline-flex;align-items:center;gap:.45rem;border-radius:999px;padding:.5rem 1.1rem;font-size:.85rem;font-weight:600;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:transform .15s,filter .15s,background .15s,color .15s}
+  .pl-btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
+  .pl-btn img{width:18px;height:18px;object-fit:contain;border-radius:4px}
+  .pl-btn-sec{background:rgba(255,255,255,.88);color:#0f172a;border-color:rgba(255,255,255,.7)}
+  .pl-btn-sec:hover{background:var(--dark-2);color:#fff}
+  .pl-btn-main{background:var(--red);color:#fff}
+  .pl-btn-main:hover{color:#fff}
+  .pl-btn-dark{background:var(--dark);color:#fff;padding:.65rem 1.5rem}
+  .pl-btn-dark:hover{color:#fff}
+  .pl-btn-sm{padding:.3rem .85rem;font-size:.78rem}
+  .pl-btn-ghost{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.25)}
+  .pl-btn-ghost:hover{background:rgba(255,255,255,.22);color:#fff}
+
+  .pl-panel{background:rgba(255,255,255,.84);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(255,255,255,.7);border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+  .pl-panel-head{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;padding:.9rem 1.25rem;background:linear-gradient(90deg,var(--dark),var(--dark-2))}
+  .pl-step{font-family:'Space Mono',monospace;font-weight:700;color:#a3e635}
+  .pl-panel-title{font-family:'Space Mono',monospace;font-weight:700;font-size:.95rem;color:#fff;margin:0}
+  .pl-panel-right{margin-left:auto}
+  .pl-body{padding:1.25rem}
+  .pl-note{color:#64748b;font-size:.82rem;margin:0 0 .9rem}
+
+  .pl-body label{font-size:.82rem;font-weight:600;color:#334155;margin-bottom:.3rem;display:block}
+  .pl-body input:not([type=radio]):not([type=checkbox]),.pl-body select,.pl-body textarea{width:100%;border-radius:10px;border:1px solid rgba(15,23,42,.15);background:rgba(255,255,255,.9);padding:.5rem .75rem;font-size:.88rem;color:#0f172a}
+  .pl-body input:not([type=radio]):not([type=checkbox]):focus,.pl-body select:focus,.pl-body textarea:focus{outline:none;border-color:var(--dark-2);box-shadow:none}
+  .pl-err{color:#b91c1c;font-size:.78rem;margin-top:.2rem}
+  .pl-alert{background:#fef2f2;color:#b91c1c;border-radius:14px;padding:.7rem 1rem;font-size:.88rem;margin-bottom:.9rem}
+
+  .pl-docs{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
+  .pl-doc{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;font-size:.88rem;color:#334155}
+  .pl-doc small{color:#64748b}
+  .pl-pill{display:inline-block;border-radius:999px;padding:.2rem .7rem;font-size:.75rem;font-weight:600;border:1px solid}
+  .pl-ok{background:#f0fdf4;color:#15803d;border-color:#bbf7d0}
+  .pl-bad{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
+  .pl-neutral{background:#f1f5f9;color:#475569;border-color:#e2e8f0}
+
+  .pl-cat{font-family:'Space Mono',monospace;font-weight:700;font-size:.8rem;color:#64748b;text-transform:uppercase;margin:1.1rem 0 .5rem}
+  .pl-cat:first-of-type{margin-top:0}
+  .pl-item{display:grid;grid-template-columns:220px auto 1fr;gap:.75rem;align-items:center;padding:.55rem 0;border-top:1px solid rgba(15,23,42,.09)}
+  .pl-item-name{font-weight:600;color:#0f172a;font-size:.88rem}
+  .pl-seg{display:inline-flex;background:rgba(255,255,255,.9);border:1px solid rgba(15,23,42,.15);border-radius:999px;padding:3px;gap:2px}
+  .pl-seg input{position:absolute;opacity:0;pointer-events:none}
+  .pl-seg label{margin:0;cursor:pointer;border-radius:999px;border:1px solid transparent;padding:.3rem .8rem;font-size:.76rem;font-weight:600;color:#475569;white-space:nowrap;transition:background .15s,color .15s}
+  .pl-seg label:hover{background:rgba(15,23,42,.05)}
+  .pl-seg input:checked + label.pl-l-ok{background:#f0fdf4;color:#15803d;border-color:#bbf7d0}
+  .pl-seg input:checked + label.pl-l-bad{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
+  .pl-seg input:checked + label.pl-l-na{background:#e2e8f0;color:#334155;border-color:#cbd5e1}
+  .pl-seg input:focus-visible + label{outline:2px solid #60a5fa}
+  .pl-empty{background:#fffbeb;color:#b45309;border-radius:14px;padding:.75rem 1rem;font-size:.88rem}
+  .pl-foot{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid rgba(15,23,42,.09)}
+  .pl-foot .pl-full{grid-column:1/-1}
+  .pl-submit{display:flex;justify-content:flex-end}
+
+  .pl-msg{display:flex;justify-content:space-between;align-items:center;gap:1rem;border-radius:14px;padding:.75rem 1rem;font-size:.88rem;font-weight:500}
+  .pl-msg button{background:none;border:0;color:inherit;font-size:1.1rem;line-height:1;cursor:pointer;opacity:.7}
+  .pl-msg-success{background:#f0fdf4;color:#15803d}
+  .pl-msg-error,.pl-msg-danger{background:#fef2f2;color:#b91c1c}
+  .pl-msg-warning{background:#fffbeb;color:#b45309}
+  .pl-msg-info,.pl-msg-debug{background:#eff6ff;color:#1d4ed8}
+
+  @media (max-width:767px){
+    .pl-title{font-size:1.3rem}
+    .pl-actions{width:100%}
+    .pl-docs{grid-template-columns:1fr}
+    .pl-item{grid-template-columns:1fr}
+    .pl-foot{grid-template-columns:1fr}
+    .pl-submit .pl-btn{width:100%;justify-content:center}
+  }
+</style>
+
+<div class="pl-wrap">
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="pl-msg pl-msg-{{ message.tags }}" role="alert">
+        <span>{{ message }}</span>
+        <button type="button" onclick="this.parentNode.remove()" aria-label="Cerrar">&times;</button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="pl-head">
+    <div class="pl-title-box">
+      <img src="{% static 'img/iconos/desplazamientos.jpg' %}" alt="">
+      <div>
+        <h1 class="pl-title">Planificación del desplazamiento</h1>
+        <p class="pl-sub">
+          Ruta: <strong>{{ desplazamiento.ruta.codigo }}</strong> ·
+          Vehículo: <strong>{{ desplazamiento.vehiculo.placa }}</strong> ·
+          Fecha: <strong>{{ desplazamiento.fecha_desplazamiento|date:"d/m/Y" }}</strong>
+        </p>
+      </div>
+    </div>
+    <div class="pl-actions">
+      <a href="{% url 'panel' %}" class="pl-btn pl-btn-sec">Panel</a>
+      <a href="{% url 'ver_tarjeta_ruta' desplazamiento.ruta_id %}?desplazamiento={{ desplazamiento.pk }}" class="pl-btn pl-btn-sec">Volver a la tarjeta de ruta</a>
+      <a href="{% url 'exportar_word_control_planificacion' desplazamiento.pk %}" class="pl-btn pl-btn-sec">
+        <img src="{% static 'img/iconos/word.jpg' %}" alt=""> Descargar Word
+      </a>
+    </div>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="pl-wrap">
+
+      <div class="pl-panel">
+        <div class="pl-panel-head">
+          <span class="pl-step">01</span>
+          <h2 class="pl-panel-title">Datos del desplazamiento</h2>
+        </div>
+        <div class="pl-body">
+          {% if form.non_field_errors %}
+            <div class="pl-alert">{{ form.non_field_errors }}</div>
+          {% endif %}
+          <div class="row g-3">
+            {% for field in form %}
+            <div class="{% if field.field.widget.attrs.rows %}col-12{% else %}col-md-4{% endif %}">
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% for e in field.errors %}<div class="pl-err">{{ e }}</div>{% endfor %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="pl-panel">
+        <div class="pl-panel-head">
+          <span class="pl-step">02</span>
+          <h2 class="pl-panel-title">Documentación (se calcula sola)</h2>
+        </div>
+        <div class="pl-body">
+          <p class="pl-note">
+            Se compara la fecha de vencimiento con el día del desplazamiento. Para cambiarla, edita el vehículo o el conductor en el admin.
+          </p>
+          <div class="pl-docs">
+            {% for doc in documentos %}
+            <div class="pl-doc">
+              <span class="pl-pill {% if doc.estado == 'ok' %}pl-ok{% elif doc.estado == 'na' %}pl-neutral{% else %}pl-bad{% endif %}">
+                {% if doc.estado == 'ok' %}Vigente{% elif doc.estado == 'na' %}N/A{% else %}Vencido{% endif %}
+              </span>
+              <span>{{ doc.nombre }}{% if doc.hasta %} <small>({{ doc.hasta|date:"d/m/Y" }})</small>{% endif %}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="pl-panel">
+        <div class="pl-panel-head">
+          <span class="pl-step">03</span>
+          <h2 class="pl-panel-title">Inspección del vehículo</h2>
+          <button type="button" class="pl-btn pl-btn-ghost pl-btn-sm pl-panel-right" id="marcar-todo">Marcar todo como "Cumple"</button>
+        </div>
+        <div class="pl-body">
+
+          {% if not filas %}
+            <div class="pl-empty">
+              No hay ítems en el catálogo de inspección. Créalos en el admin (Catálogo items inspección).
+            </div>
+          {% endif %}
+
+          {% regroup filas by item.get_categoria_display as grupos %}
+          {% for g in grupos %}
+            <div class="pl-cat">{{ g.grouper }}</div>
+            {% for f in g.list %}
+            <div class="pl-item">
+              <div class="pl-item-name">{{ f.item.nombre }}</div>
+              <div class="pl-seg" role="group">
+                <input type="radio" name="estado_{{ f.item.id }}" id="c{{ f.item.id }}" value="cumple" {% if f.estado == 'cumple' %}checked{% endif %}>
+                <label class="pl-l-ok" for="c{{ f.item.id }}">Cumple</label>
+                <input type="radio" name="estado_{{ f.item.id }}" id="n{{ f.item.id }}" value="no_cumple" {% if f.estado == 'no_cumple' %}checked{% endif %}>
+                <label class="pl-l-bad" for="n{{ f.item.id }}">No cumple</label>
+                <input type="radio" name="estado_{{ f.item.id }}" id="a{{ f.item.id }}" value="no_aplica" {% if f.estado == 'no_aplica' %}checked{% endif %}>
+                <label class="pl-l-na" for="a{{ f.item.id }}">No aplica</label>
+              </div>
+              <div>
+                <input type="text" name="obs_{{ f.item.id }}" value="{{ f.obs }}" placeholder="Observación (obligatoria si no cumple)">
+              </div>
+            </div>
+            {% endfor %}
+          {% endfor %}
+
+          <div class="pl-foot">
+            <div>
+              <label>Realizada por</label>
+              <input type="text" name="insp_realizada_por" value="{{ insp_datos.realizada_por }}">
+            </div>
+            <div>
+              <label>Resultado general</label>
+              <select name="insp_resultado">
+                {% for valor, etiqueta in resultados %}
+                <option value="{{ valor }}" {% if insp_datos.resultado == valor %}selected{% endif %}>{{ etiqueta }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="pl-full">
+              <label>Observaciones generales</label>
+              <textarea name="insp_observaciones" rows="2">{{ insp_datos.observaciones }}</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pl-submit">
+        <button type="submit" class="pl-btn pl-btn-dark">Guardar planificación</button>
+      </div>
+
+    </div>
+  </form>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.getElementById('marcar-todo').addEventListener('click', function () {
+    document.querySelectorAll('input[type=radio][value=cumple]').forEach(function (r) { r.checked = true; });
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && e.target.tagName === "INPUT") {
+      e.preventDefault();
+    }
+  }, true);
+</script>
+{% endblock %}

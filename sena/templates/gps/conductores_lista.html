@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  .cd-wrap{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:1.25rem}
+  .cd-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+  .cd-title-box{display:flex;align-items:center;gap:.9rem}
+  .cd-title-box img{width:44px;height:44px;object-fit:contain;border-radius:10px}
+  .cd-title{font-family:'Space Mono',monospace;font-weight:700;font-size:1.7rem;color:#fff;margin:0;text-shadow:0 2px 8px rgba(0,0,0,.45)}
+  .cd-sub{color:#e2e8f0;font-size:.9rem;margin:0;text-shadow:0 1px 4px rgba(0,0,0,.4)}
+  .cd-actions{display:flex;gap:.6rem;flex-wrap:wrap}
+
+  .cd-btn{display:inline-flex;align-items:center;gap:.4rem;border-radius:999px;padding:.5rem 1.1rem;font-size:.85rem;font-weight:600;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:transform .15s,filter .15s,background .15s,color .15s}
+  .cd-btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
+  .cd-btn-sec{background:rgba(255,255,255,.88);color:#0f172a;border-color:rgba(255,255,255,.7)}
+  .cd-btn-sec:hover{background:var(--dark-2);color:#fff}
+  .cd-btn-main{background:var(--red);color:#fff}
+  .cd-btn-main:hover{color:#fff}
+  .cd-btn-dark{background:var(--dark);color:#fff}
+  .cd-btn-dark:hover{color:#fff}
+  .cd-btn-sm{padding:.3rem .85rem;font-size:.78rem}
+
+  .cd-panel{background:rgba(255,255,255,.84);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(255,255,255,.7);border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+  .cd-panel-head{display:flex;align-items:center;gap:.75rem;padding:.9rem 1.25rem;background:linear-gradient(90deg,var(--dark),var(--dark-2))}
+  .cd-step{font-family:'Space Mono',monospace;font-weight:700;color:#a3e635}
+  .cd-panel-title{font-family:'Space Mono',monospace;font-weight:700;font-size:.95rem;color:#fff;margin:0}
+  .cd-count{margin-left:auto;background:rgba(255,255,255,.12);color:#fff;border-radius:999px;padding:.2rem .75rem;font-size:.78rem;font-weight:600}
+
+  .cd-scroll{max-height:640px;overflow:auto}
+  .cd-table{width:100%;border-collapse:collapse;font-size:.88rem;color:#334155}
+  .cd-table thead th{position:sticky;top:0;z-index:1;background:rgba(248,250,252,.92);color:#64748b;font-size:.78rem;font-weight:600;text-align:left;padding:.75rem 1rem;white-space:nowrap}
+  .cd-table td{padding:.7rem 1rem;border-top:1px solid rgba(15,23,42,.09);vertical-align:middle}
+  .cd-table tbody tr:hover{background:rgba(255,255,255,.6)}
+  .cd-off td{color:#64748b}
+  .cd-right{text-align:right!important}
+  .cd-name{color:#0f172a;font-weight:600}
+  .cd-off .cd-name{color:#64748b}
+  .cd-date{font-size:.78rem;color:#64748b;margin-bottom:.2rem}
+  .cd-row-actions{display:flex;gap:.4rem;justify-content:flex-end;align-items:center}
+  .cd-row-actions form{margin:0}
+  .cd-empty{text-align:center;color:#64748b;padding:2rem 1rem!important}
+
+  .cd-pill{display:inline-block;border-radius:999px;padding:.2rem .7rem;font-size:.75rem;font-weight:600;border:1px solid;background:#f1f5f9;color:#475569;border-color:#e2e8f0}
+  .cd-pill-success{background:#f0fdf4;color:#15803d;border-color:#bbf7d0}
+  .cd-pill-warning{background:#fffbeb;color:#b45309;border-color:#fde68a}
+  .cd-pill-danger{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
+  .cd-pill-info,.cd-pill-primary{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
+  .cd-pill-secondary,.cd-pill-light,.cd-pill-dark{background:#f1f5f9;color:#475569;border-color:#e2e8f0}
+
+  .cd-msg{border-radius:14px;padding:.75rem 1rem;font-size:.88rem;font-weight:500;backdrop-filter:blur(10px)}
+  .cd-msg-success{background:#f0fdf4;color:#15803d}
+  .cd-msg-error,.cd-msg-danger{background:#fef2f2;color:#b91c1c}
+  .cd-msg-warning{background:#fffbeb;color:#b45309}
+  .cd-msg-info,.cd-msg-debug{background:#eff6ff;color:#1d4ed8}
+
+  @media (max-width:767px){
+    .cd-title{font-size:1.3rem}
+    .cd-actions{width:100%}
+  }
+</style>
+
+<div class="cd-wrap">
+
+  <div class="cd-head">
+    <div class="cd-title-box">
+      <img src="{% static 'img/iconos/conductores.jpg' %}" alt="">
+      <div>
+        <h1 class="cd-title">Conductores</h1>
+        <p class="cd-sub">Administra los conductores y el estado de su licencia</p>
+      </div>
+    </div>
+    <div class="cd-actions">
+      <a href="{% url 'panel' %}" class="cd-btn cd-btn-sec">Volver al panel</a>
+      <a href="{% url 'crear_conductor' %}" class="cd-btn cd-btn-main">+ Nuevo conductor</a>
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="cd-msg cd-msg-{{ message.tags|default:'info' }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="cd-panel">
+    <div class="cd-panel-head">
+      <span class="cd-step">01</span>
+      <h2 class="cd-panel-title">Listado de conductores</h2>
+      <span class="cd-count">{{ filas|length }}</span>
+    </div>
+    <div class="cd-scroll">
+      <table class="cd-table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Cargo</th>
+            <th>Licencia de conducción</th>
+            <th class="cd-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in filas %}
+          <tr{% if not f.c.activo %} class="cd-off"{% endif %}>
+            <td class="cd-name">{{ f.c.nombre }}{% if not f.c.activo %} <span class="cd-pill cd-pill-secondary">Inactivo</span>{% endif %}</td>
+            <td>{{ f.c.cargo }}</td>
+            <td>
+              {% if f.licencia.fecha %}<div class="cd-date">{{ f.licencia.fecha|date:"d/m/Y" }}</div>{% endif %}
+              <span class="cd-pill cd-pill-{{ f.licencia.color }}">{{ f.licencia.texto }}</span>
+            </td>
+            <td class="cd-right">
+              <div class="cd-row-actions">
+                <a href="{% url 'editar_conductor' f.c.id %}" class="cd-btn cd-btn-sec cd-btn-sm">Editar</a>
+                <form method="post" action="{% url 'alternar_conductor' f.c.id %}"
+                      data-titulo="{% if f.c.activo %}¿Desactivar conductor?{% else %}¿Activar conductor?{% endif %}"
+                      data-confirmar="¿Seguro que quieres {% if f.c.activo %}desactivar{% else %}activar{% endif %} al conductor {{ f.c.nombre }}?"
+                      data-si="{% if f.c.activo %}Sí, desactivar{% else %}Sí, activar{% endif %}"
+                      data-no="Cancelar"{% if f.c.activo %} data-peligro{% endif %}>
+                  {% csrf_token %}
+                  {% if f.c.activo %}
+                    <button type="submit" class="cd-btn cd-btn-sec cd-btn-sm">Desactivar</button>
+                  {% else %}
+                    <button type="submit" class="cd-btn cd-btn-dark cd-btn-sm">Activar</button>
+                  {% endif %}
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="cd-empty">
+              Aún no hay conductores registrados. Crea el primero con «Nuevo conductor».
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

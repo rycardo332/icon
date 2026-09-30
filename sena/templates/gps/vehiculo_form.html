@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  .vf-wrap{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:1.25rem}
+  .vf-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+  .vf-title-box{display:flex;align-items:center;gap:.9rem}
+  .vf-title-box img{width:44px;height:44px;object-fit:contain;border-radius:10px}
+  .vf-title{font-family:'Space Mono',monospace;font-weight:700;font-size:1.7rem;color:#fff;margin:0;text-shadow:0 2px 8px rgba(0,0,0,.45)}
+  .vf-sub{color:#e2e8f0;font-size:.9rem;margin:0;text-shadow:0 1px 4px rgba(0,0,0,.4)}
+  .vf-actions{display:flex;gap:.6rem;flex-wrap:wrap}
+
+  .vf-btn{display:inline-flex;align-items:center;gap:.4rem;border-radius:999px;padding:.55rem 1.3rem;font-size:.85rem;font-weight:600;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:transform .15s,filter .15s,background .15s,color .15s}
+  .vf-btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
+  .vf-btn-sec{background:rgba(255,255,255,.88);color:#0f172a;border-color:rgba(255,255,255,.7)}
+  .vf-btn-sec:hover{background:var(--dark-2);color:#fff}
+  .vf-btn-dark{background:var(--dark);color:#fff}
+  .vf-btn-dark:hover{color:#fff}
+
+  .vf-panel{background:rgba(255,255,255,.84);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(255,255,255,.7);border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+  .vf-panel-head{display:flex;align-items:center;gap:.75rem;padding:.9rem 1.25rem;background:linear-gradient(90deg,var(--dark),var(--dark-2))}
+  .vf-step{font-family:'Space Mono',monospace;font-weight:700;color:#a3e635}
+  .vf-panel-title{font-family:'Space Mono',monospace;font-weight:700;font-size:.95rem;color:#fff;margin:0}
+  .vf-body{padding:1.25rem}
+
+  .vf-body label:not(.form-check-label){display:block;font-size:.82rem;font-weight:600;color:#334155;margin-bottom:.3rem}
+  .vf-body input:not([type=checkbox]),.vf-body select,.vf-body textarea{width:100%;border-radius:10px;border:1px solid rgba(15,23,42,.15);background:rgba(255,255,255,.9);padding:.5rem .75rem;font-size:.88rem;color:#0f172a}
+  .vf-body input:not([type=checkbox]):focus,.vf-body select:focus,.vf-body textarea:focus{outline:none;border-color:var(--dark-2);box-shadow:none}
+  .vf-body .form-check{display:flex;align-items:center;gap:.6rem;padding-left:0;margin:0}
+  .vf-body .form-check-input{float:none;margin:0;width:1.1rem;height:1.1rem;border:1px solid rgba(15,23,42,.3);cursor:pointer;flex-shrink:0}
+  .vf-body .form-check-input:checked{background-color:var(--dark-2);border-color:var(--dark-2)}
+  .vf-body .form-check-input:focus{box-shadow:none;border-color:var(--dark-2)}
+  .vf-body .form-check-label{font-size:.88rem;color:#334155;cursor:pointer}
+  .vf-hint{color:#64748b;font-size:.78rem;margin-top:.2rem}
+  .vf-err{color:#b91c1c;font-size:.78rem;margin-top:.2rem}
+  .vf-err ul{list-style:none;margin:0;padding:0}
+  .vf-alert{background:#fef2f2;color:#b91c1c;border-radius:14px;padding:.7rem 1rem;font-size:.88rem;margin-bottom:1rem}
+  .vf-alert ul{list-style:none;margin:0;padding:0}
+
+  .vf-img-preview{width:100%;aspect-ratio:4/3;border-radius:16px;overflow:hidden;background:rgba(15,23,42,.06);border:1px solid rgba(15,23,42,.12);display:flex;align-items:center;justify-content:center;margin-bottom:.75rem}
+  .vf-img-preview img{width:100%;height:100%;object-fit:cover}
+  .vf-img-preview img.vf-img-vacia{width:72px;height:72px;object-fit:contain;opacity:.55;border-radius:14px}
+
+  .vf-foot{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid rgba(15,23,42,.09)}
+
+  @media (max-width:767px){
+    .vf-title{font-size:1.3rem}
+    .vf-actions{width:100%}
+    .vf-foot .vf-btn{width:100%;justify-content:center}
+  }
+</style>
+
+<div class="vf-wrap">
+
+  <div class="vf-head">
+    <div class="vf-title-box">
+      <img src="{% static 'img/iconos/vehiculos.jpg' %}" alt="">
+      <div>
+        <h1 class="vf-title">{% if vehiculo %}Editar vehículo {{ vehiculo.placa }}{% else %}Nuevo vehículo{% endif %}</h1>
+        <p class="vf-sub">{% if vehiculo %}Actualiza los datos y documentos del vehículo{% else %}Registra un nuevo vehículo en el sistema{% endif %}</p>
+      </div>
+    </div>
+    <div class="vf-actions">
+      <a href="{% url 'listar_vehiculos' %}" class="vf-btn vf-btn-sec">Volver a Vehículos</a>
+      <a href="{% url 'panel' %}" class="vf-btn vf-btn-sec">Panel</a>
+    </div>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" class="vf-panel">
+    {% csrf_token %}
+
+    <div class="vf-panel-head">
+      <span class="vf-step">01</span>
+      <h2 class="vf-panel-title">Datos del vehículo</h2>
+    </div>
+
+    <div class="vf-body">
+      {% if form.non_field_errors %}
+        <div class="vf-alert">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="row g-4">
+
+        <div class="col-md-5">
+          <label for="{{ form.imagen.id_for_label }}">Imagen del vehículo</label>
+          <div class="vf-img-preview">
+            {% if vehiculo and vehiculo.imagen %}
+              <img id="vf-preview-img" src="{{ vehiculo.imagen.url }}" alt="">
+            {% else %}
+              <img id="vf-preview-img" class="vf-img-vacia" src="{% static 'img/iconos/camion.jpg' %}" alt="">
+            {% endif %}
+          </div>
+          <input type="file" name="{{ form.imagen.html_name }}" id="{{ form.imagen.id_for_label }}" accept="image/*">
+          <div class="vf-hint">Opcional. JPG o PNG. Al elegir una nueva se reemplaza la actual.</div>
+          <div class="vf-err">{{ form.imagen.errors }}</div>
+        </div>
+
+        <div class="col-md-7">
+          <div class="row g-3">
+            <div class="col-sm-5">
+              <label for="{{ form.placa.id_for_label }}">Placa</label>
+              {{ form.placa }}
+              <div class="vf-err">{{ form.placa.errors }}</div>
+            </div>
+            <div class="col-sm-7">
+              <label for="{{ form.tipo.id_for_label }}">Marca, modelo y tipo</label>
+              {{ form.tipo }}
+              <div class="vf-err">{{ form.tipo.errors }}</div>
+            </div>
+
+            <div class="col-sm-6">
+              <label for="{{ form.soat_vigente_hasta.id_for_label }}">SOAT vigente hasta</label>
+              {{ form.soat_vigente_hasta }}
+              <div class="vf-err">{{ form.soat_vigente_hasta.errors }}</div>
+            </div>
+            <div class="col-sm-6">
+              <label for="{{ form.revision_tecnomecanica_hasta.id_for_label }}">Tecnomecánica hasta</label>
+              {{ form.revision_tecnomecanica_hasta }}
+              <div class="vf-err">{{ form.revision_tecnomecanica_hasta.errors }}</div>
+            </div>
+
+            <div class="col-sm-6">
+              <label for="{{ form.seguro_carga_hasta.id_for_label }}">Seguro de carga hasta</label>
+              {{ form.seguro_carga_hasta }}
+              <div class="vf-hint">Déjalo vacío si no aplica.</div>
+              <div class="vf-err">{{ form.seguro_carga_hasta.errors }}</div>
+            </div>
+            <div class="col-sm-6 d-flex align-items-center">
+              <div class="form-check">
+                {{ form.licencia_transito_vigente }}
+                <label class="form-check-label" for="{{ form.licencia_transito_vigente.id_for_label }}">Licencia de tránsito (tarjeta de propiedad) vigente</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="vf-foot">
+        <button type="submit" class="vf-btn vf-btn-dark">Guardar vehículo</button>
+        <a href="{% url 'listar_vehiculos' %}" class="vf-btn vf-btn-sec">Cancelar</a>
+      </div>
+    </div>
+  </form>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Bloquea el Enter en las casillas de una línea para que no guarde el formulario.
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && e.target.tagName === "INPUT") {
+      e.preventDefault();
+    }
+  }, true);
+
+  // Vista previa de la imagen elegida.
+  (function () {
+    var input = document.getElementById("{{ form.imagen.id_for_label }}");
+    var img = document.getElementById("vf-preview-img");
+    if (!input || !img) return;
+    input.addEventListener("change", function () {
+      var f = input.files && input.files[0];
+      if (!f) return;
+      img.classList.remove("vf-img-vacia");
+      img.src = URL.createObjectURL(f);
+    });
+  })();
+</script>
+{% endblock %}

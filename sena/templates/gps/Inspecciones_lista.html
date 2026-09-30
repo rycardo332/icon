@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Inspecciones{% endblock %}
+
+{% block content %}
+
+<!-- Fuente llamativa (la misma del panel) -->
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+    /* ============================================================
+       INSPECCIONES - estilos propios (prefijo in-)
+       Mismo diseño del panel: vidrio, encabezados oscuros
+       ============================================================ */
+
+    .in-wrap {
+        --in-dark: var(--dark, #0d1726);
+        --in-dark-2: var(--dark-2, #16233a);
+        --in-ink: #0f172a;
+        --in-muted: #64748b;
+        --in-line: rgba(15, 23, 42, .09);
+        --in-fancy: 'Space Mono', 'Courier New', monospace;
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    /* ---------- Encabezado ---------- */
+    .in-head {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+    }
+    .in-title-row { display: flex; align-items: center; gap: .8rem; }
+    .in-title-ico { width: 44px; height: 44px; object-fit: contain; border-radius: 10px; }
+    .in-title {
+        font-family: var(--in-fancy);
+        font-size: 1.7rem;
+        font-weight: 700;
+        color: #fff;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, .45);
+        margin: 0;
+        line-height: 1.1;
+    }
+    .in-sub { color: #e2e8f0; font-size: .9rem; text-shadow: 0 1px 4px rgba(0, 0, 0, .4); }
+
+    .in-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: .5rem 1.1rem;
+        border-radius: 999px;
+        font-size: .875rem;
+        font-weight: 600;
+        text-decoration: none;
+        border: 1px solid rgba(255, 255, 255, .5);
+        background: rgba(255, 255, 255, .85);
+        color: var(--in-ink);
+        transition: all .15s;
+    }
+    .in-btn:hover { background: #fff; color: var(--in-ink); transform: translateY(-1px); }
+
+    /* ---------- Mensajes ---------- */
+    .in-msg {
+        padding: .8rem 1.1rem;
+        border-radius: 14px;
+        font-size: .9rem;
+        background: rgba(255, 255, 255, .88);
+        color: #334155;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, .15);
+    }
+    .in-msg.success { background: rgba(240, 253, 244, .94); color: #166534; }
+    .in-msg.error   { background: rgba(254, 242, 242, .94); color: #991b1b; }
+    .in-msg.info    { background: rgba(239, 246, 255, .94); color: #1e40af; }
+    .in-msg.warning { background: rgba(255, 251, 235, .94); color: #92400e; }
+
+    /* ---------- Filtro (Todos / Sin inspección) ---------- */
+    .in-filter {
+        display: inline-flex;
+        padding: 4px;
+        gap: 4px;
+        border-radius: 999px;
+        background: rgba(13, 23, 38, .70);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+        align-self: flex-start;
+    }
+    .in-filter a {
+        padding: .4rem 1.1rem;
+        border-radius: 999px;
+        font-size: .85rem;
+        font-weight: 600;
+        text-decoration: none;
+        color: #cbd5e1;
+        transition: all .15s;
+    }
+    .in-filter a:hover { color: #fff; }
+    .in-filter a.on { background: #fff; color: var(--in-ink); }
+
+    /* ---------- Panel ---------- */
+    .in-panel {
+        background: rgba(255, 255, 255, .84);
+        -webkit-backdrop-filter: blur(14px) saturate(140%);
+        backdrop-filter: blur(14px) saturate(140%);
+        border: 1px solid rgba(255, 255, 255, .7);
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, .18);
+    }
+    .in-panel-head {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        padding: .9rem 1.2rem;
+        background: linear-gradient(90deg, var(--in-dark), var(--in-dark-2));
+        border-bottom: 1px solid rgba(255, 255, 255, .08);
+    }
+    .in-step { font-family: var(--in-fancy); font-size: .8rem; font-weight: 700; color: #a3e635; }
+    .in-panel-title {
+        font-family: var(--in-fancy);
+        font-size: .95rem;
+        font-weight: 700;
+        letter-spacing: .5px;
+        color: #fff;
+        margin: 0;
+    }
+    .in-count {
+        margin-left: auto;
+        font-size: .75rem;
+        font-weight: 600;
+        color: #e2e8f0;
+        padding: .15rem .7rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, .12);
+    }
+
+    /* ---------- Tabla ---------- */
+    .in-scroll { max-height: 640px; overflow-y: auto; }
+    .in-table { width: 100%; margin: 0; border-collapse: collapse; }
+    .in-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: rgba(248, 250, 252, .92);
+        color: var(--in-muted);
+        font-size: .78rem;
+        font-weight: 600;
+        padding: .6rem 1.2rem;
+        border-bottom: 1px solid var(--in-line);
+        white-space: nowrap;
+    }
+    .in-table tbody td {
+        padding: .8rem 1.2rem;
+        border-bottom: 1px solid var(--in-line);
+        vertical-align: middle;
+        font-size: .9rem;
+        color: #334155;
+        background: transparent;
+    }
+    .in-table tbody tr:last-child td { border-bottom: 0; }
+    .in-table tbody tr:hover td { background: rgba(255, 255, 255, .6); }
+    .in-plate { font-weight: 700; color: var(--in-ink); letter-spacing: .03em; }
+
+    /* ---------- Chips de estado ---------- */
+    .in-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: .15rem .65rem;
+        border-radius: 999px;
+        font-size: .76rem;
+        font-weight: 600;
+        background: rgba(248, 250, 252, .9);
+        color: var(--in-muted);
+        border: 1px solid var(--in-line);
+        white-space: nowrap;
+    }
+    .in-tag.ok   { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+    .in-tag.warn { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+    .in-tag.bad  { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+
+    /* ---------- Botones de acción ---------- */
+    .in-act {
+        display: inline-flex;
+        align-items: center;
+        padding: .35rem .95rem;
+        border-radius: 999px;
+        font-size: .8rem;
+        font-weight: 600;
+        text-decoration: none;
+        border: 1px solid var(--in-line);
+        background: rgba(255, 255, 255, .9);
+        color: var(--in-ink);
+        transition: all .15s;
+    }
+    .in-act:hover { background: var(--in-dark); border-color: var(--in-dark); color: #fff; transform: translateY(-1px); }
+    .in-act.primary { background: var(--red, #d31414); border-color: var(--red, #d31414); color: #fff; }
+    .in-act.primary:hover { background: var(--red, #d31414); filter: brightness(.92); }
+
+    .in-empty { padding: 2rem 1.2rem; text-align: center; color: var(--in-muted); font-size: .9rem; }
+</style>
+
+<div class="in-wrap">
+
+    <!-- Encabezado -->
+    <div class="in-head">
+        <div>
+            <div class="in-title-row">
+                <img class="in-title-ico" src="{% static 'img/iconos/inspeccion.jpg' %}" alt="">
+                <h1 class="in-title">Inspecciones</h1>
+            </div>
+            <span class="in-sub">Revisión de los vehículos antes de cada desplazamiento</span>
+        </div>
+        <a href="{% url 'panel' %}" class="in-btn">Volver al panel</a>
+    </div>
+
+    <!-- Mensajes del sistema -->
+    {% for message in messages %}
+    <div class="in-msg {{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+
+    <!-- Filtro -->
+    <div class="in-filter">
+        <a href="{% url 'listar_inspecciones' %}" class="{% if not solo_pendientes %}on{% endif %}">Todos</a>
+        <a href="{% url 'listar_inspecciones' %}?ver=pendientes" class="{% if solo_pendientes %}on{% endif %}">Sin inspección</a>
+    </div>
+
+    <!-- 01 LISTA -->
+    <section class="in-panel">
+        <div class="in-panel-head">
+            <span class="in-step">01</span>
+            <h2 class="in-panel-title">{% if solo_pendientes %}Desplazamientos sin inspección{% else %}Todos los desplazamientos{% endif %}</h2>
+            <span class="in-count">{{ desplazamientos|length }}</span>
+        </div>
+        <div class="table-responsive in-scroll">
+            <table class="in-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Ruta</th>
+                        <th>Vehículo</th>
+                        <th>Conductor</th>
+                        <th>Inspección</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in desplazamientos %}
+                    <tr>
+                        <td class="text-nowrap">{{ d.fecha_desplazamiento|date:"d/m/Y" }}</td>
+                        <td><strong>{{ d.ruta.codigo }}</strong></td>
+                        <td><span class="in-plate">{{ d.vehiculo.placa }}</span></td>
+                        <td>{{ d.conductor.nombre }}</td>
+                        <td>
+                            {% if d.inspeccion %}
+                                {% if d.inspeccion.resultado_general == 'apto' %}
+                                    <span class="in-tag ok">{{ d.inspeccion.get_resultado_general_display }}</span>
+                                {% elif d.inspeccion.resultado_general == 'no_apto' %}
+                                    <span class="in-tag bad">{{ d.inspeccion.get_resultado_general_display }}</span>
+                                {% else %}
+                                    <span class="in-tag warn">{{ d.inspeccion.get_resultado_general_display }}</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="in-tag">Pendiente</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end text-nowrap">
+                            {% if d.inspeccion %}
+                                <a href="{% url 'planificar_desplazamiento' d.id %}" class="in-act">Ver / editar</a>
+                            {% else %}
+                                <a href="{% url 'planificar_desplazamiento' d.id %}" class="in-act primary">Hacer inspección</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="in-empty">
+                            {% if solo_pendientes %}Todos los desplazamientos ya tienen inspección.
+                            {% else %}Aún no hay desplazamientos registrados.{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
+
+{% endblock %}

@@ -29,15 +29,9 @@ INSTALLED_APPS = [
     'inspeccion',
     'desplazamientos',
     'documentos',
-
-    # ---- Restos de Acerautos: pendientes de decidir ----
-    # 'app',      # Acerautos original — déjala fuera hasta que confirmes que no queda nada útil
-    # 'login',    # ya no hace falta: usamos el login integrado de Django (ver LOGIN_URL abajo)
-    # 'usuario',  # PerfilUsuario custom — ya NO se necesita, el User por defecto de Django alcanza
 ]
 
 # Sin AUTH_USER_MODEL: usamos el User por defecto de Django (django.contrib.auth.models.User).
-# Ya no hace falta ningún modelo de usuario propio.
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -47,7 +41,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'app.middleware.AlertasAutomaticasMiddleware',  # depende de 'app' (Acerautos) — reactivar solo si la adaptas a ICON LTDA
 ]
 
 ROOT_URLCONF = 'sena.urls'
@@ -74,8 +67,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'sena.wsgi.application'
 
 # ========== BASE DE DATOS MySQL ==========
-# IMPORTANTE: sin valores por defecto para credenciales reales.
-# Si falta el .env, esto debe fallar en vez de usar una contraseña quemada en el código.
+# Sin valor por defecto para la contraseña: si falta en el .env, falla en vez de usar una quemada.
 DATABASES = {
     'default': {
         'ENGINE':   'django.db.backends.mysql',
@@ -110,9 +102,10 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ========== REDIRECCION LOGIN/LOGOUT ==========
-LOGIN_REDIRECT_URL = '/principal/dashboard/'
-LOGOUT_REDIRECT_URL = '/'
-LOGIN_URL = '/login/'
+# Nombres de URL (no rutas fijas): 'panel' viene de gps/urls.py, 'login' de sena/urls.py
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'panel'
+LOGOUT_REDIRECT_URL = 'login'
 
 # ========== MESSAGES + SWEETALERT2 ==========
 MESSAGE_TAGS = {
@@ -127,7 +120,6 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # ========== CORREO GMAIL ==========
-# IMPORTANTE: sin valores por defecto para credenciales reales (ver nota de seguridad abajo).
 EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST          = 'smtp.gmail.com'
 EMAIL_PORT          = 587

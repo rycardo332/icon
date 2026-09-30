@@ -120,7 +120,7 @@ def importar_reporte(archivo, usuario):
         raise ErrorImportacion(
             "Estos vehiculos del Excel no existen en el sistema: "
             + ", ".join(faltantes)
-            + ". Crealos en el admin (Rutas > Vehiculos) con esa placa e intenta de nuevo."
+            + ". Crealos en Vehiculos (desde el panel) con esa placa e intenta de nuevo."
         )
 
     if hasattr(archivo, "seek"):

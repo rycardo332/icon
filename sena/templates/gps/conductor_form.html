@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  .cf-wrap{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:1.25rem}
+  .cf-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+  .cf-title-box{display:flex;align-items:center;gap:.9rem}
+  .cf-title-box img{width:44px;height:44px;object-fit:contain;border-radius:10px}
+  .cf-title{font-family:'Space Mono',monospace;font-weight:700;font-size:1.7rem;color:#fff;margin:0;text-shadow:0 2px 8px rgba(0,0,0,.45)}
+  .cf-sub{color:#e2e8f0;font-size:.9rem;margin:0;text-shadow:0 1px 4px rgba(0,0,0,.4)}
+  .cf-actions{display:flex;gap:.6rem;flex-wrap:wrap}
+
+  .cf-btn{display:inline-flex;align-items:center;gap:.4rem;border-radius:999px;padding:.55rem 1.3rem;font-size:.85rem;font-weight:600;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:transform .15s,filter .15s,background .15s,color .15s}
+  .cf-btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
+  .cf-btn-sec{background:rgba(255,255,255,.88);color:#0f172a;border-color:rgba(255,255,255,.7)}
+  .cf-btn-sec:hover{background:var(--dark-2);color:#fff}
+  .cf-btn-dark{background:var(--dark);color:#fff}
+  .cf-btn-dark:hover{color:#fff}
+
+  .cf-panel{background:rgba(255,255,255,.84);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(255,255,255,.7);border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+  .cf-panel-head{display:flex;align-items:center;gap:.75rem;padding:.9rem 1.25rem;background:linear-gradient(90deg,var(--dark),var(--dark-2))}
+  .cf-step{font-family:'Space Mono',monospace;font-weight:700;color:#a3e635}
+  .cf-panel-title{font-family:'Space Mono',monospace;font-weight:700;font-size:.95rem;color:#fff;margin:0}
+  .cf-body{padding:1.25rem}
+
+  .cf-body label{display:block;font-size:.82rem;font-weight:600;color:#334155;margin-bottom:.3rem}
+  .cf-body input:not([type=checkbox]),.cf-body select,.cf-body textarea{width:100%;border-radius:10px;border:1px solid rgba(15,23,42,.15);background:rgba(255,255,255,.9);padding:.5rem .75rem;font-size:.88rem;color:#0f172a}
+  .cf-body input:not([type=checkbox]):focus,.cf-body select:focus,.cf-body textarea:focus{outline:none;border-color:var(--dark-2);box-shadow:none}
+  .cf-err{color:#b91c1c;font-size:.78rem;margin-top:.2rem}
+  .cf-err ul{list-style:none;margin:0;padding:0}
+  .cf-alert{background:#fef2f2;color:#b91c1c;border-radius:14px;padding:.7rem 1rem;font-size:.88rem;margin-bottom:1rem}
+  .cf-alert ul{list-style:none;margin:0;padding:0}
+
+  .cf-foot{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid rgba(15,23,42,.09)}
+
+  @media (max-width:767px){
+    .cf-title{font-size:1.3rem}
+    .cf-actions{width:100%}
+    .cf-foot .cf-btn{width:100%;justify-content:center}
+  }
+</style>
+
+<div class="cf-wrap">
+
+  <div class="cf-head">
+    <div class="cf-title-box">
+      <img src="{% static 'img/iconos/conductores.jpg' %}" alt="">
+      <div>
+        <h1 class="cf-title">{% if conductor %}Editar conductor {{ conductor.nombre }}{% else %}Nuevo conductor{% endif %}</h1>
+        <p class="cf-sub">{% if conductor %}Actualiza los datos del conductor{% else %}Registra un nuevo conductor en el sistema{% endif %}</p>
+      </div>
+    </div>
+    <div class="cf-actions">
+      <a href="{% url 'listar_conductores' %}" class="cf-btn cf-btn-sec">Volver a Conductores</a>
+      <a href="{% url 'panel' %}" class="cf-btn cf-btn-sec">Panel</a>
+    </div>
+  </div>
+
+  <form method="post" class="cf-panel">
+    {% csrf_token %}
+
+    <div class="cf-panel-head">
+      <span class="cf-step">01</span>
+      <h2 class="cf-panel-title">Datos del conductor</h2>
+    </div>
+
+    <div class="cf-body">
+      {% if form.non_field_errors %}
+        <div class="cf-alert">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="row g-3">
+        <div class="col-md-8">
+          <label for="{{ form.nombre.id_for_label }}">Nombre completo</label>
+          {{ form.nombre }}
+          <div class="cf-err">{{ form.nombre.errors }}</div>
+        </div>
+        <div class="col-md-4">
+          <label for="{{ form.cargo.id_for_label }}">Cargo</label>
+          {{ form.cargo }}
+          <div class="cf-err">{{ form.cargo.errors }}</div>
+        </div>
+
+        <div class="col-md-6">
+          <label for="{{ form.licencia_conduccion_vigente_hasta.id_for_label }}">Licencia de conducción vigente hasta</label>
+          {{ form.licencia_conduccion_vigente_hasta }}
+          <div class="cf-err">{{ form.licencia_conduccion_vigente_hasta.errors }}</div>
+        </div>
+      </div>
+
+      <div class="cf-foot">
+        <button type="submit" class="cf-btn cf-btn-dark">Guardar conductor</button>
+        <a href="{% url 'listar_conductores' %}" class="cf-btn cf-btn-sec">Cancelar</a>
+      </div>
+    </div>
+  </form>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Bloquea el Enter en las casillas de una línea para que no guarde el formulario.
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && e.target.tagName === "INPUT") {
+      e.preventDefault();
+    }
+  }, true);
+</script>
+{% endblock %}

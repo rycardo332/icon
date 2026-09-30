@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  .vl-wrap{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:1.25rem}
+  .vl-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+  .vl-title-box{display:flex;align-items:center;gap:.9rem}
+  .vl-title-box img{width:44px;height:44px;object-fit:contain;border-radius:10px}
+  .vl-title{font-family:'Space Mono',monospace;font-weight:700;font-size:1.7rem;color:#fff;margin:0;text-shadow:0 2px 8px rgba(0,0,0,.45)}
+  .vl-sub{color:#e2e8f0;font-size:.9rem;margin:0;text-shadow:0 1px 4px rgba(0,0,0,.4)}
+  .vl-actions{display:flex;gap:.6rem;flex-wrap:wrap}
+
+  .vl-btn{display:inline-flex;align-items:center;gap:.4rem;border-radius:999px;padding:.5rem 1.1rem;font-size:.85rem;font-weight:600;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:transform .15s,filter .15s,background .15s,color .15s}
+  .vl-btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
+  .vl-btn-sec{background:rgba(255,255,255,.88);color:#0f172a;border-color:rgba(255,255,255,.7)}
+  .vl-btn-sec:hover{background:var(--dark-2);color:#fff}
+  .vl-btn-main{background:var(--red);color:#fff}
+  .vl-btn-main:hover{color:#fff}
+  .vl-btn-dark{background:var(--dark);color:#fff}
+  .vl-btn-dark:hover{color:#fff}
+  .vl-btn-sm{padding:.3rem .85rem;font-size:.78rem}
+
+  .vl-panel{background:rgba(255,255,255,.84);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(255,255,255,.7);border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+  .vl-panel-head{display:flex;align-items:center;gap:.75rem;padding:.9rem 1.25rem;background:linear-gradient(90deg,var(--dark),var(--dark-2))}
+  .vl-step{font-family:'Space Mono',monospace;font-weight:700;color:#a3e635}
+  .vl-panel-title{font-family:'Space Mono',monospace;font-weight:700;font-size:.95rem;color:#fff;margin:0}
+  .vl-count{margin-left:auto;background:rgba(255,255,255,.12);color:#fff;border-radius:999px;padding:.2rem .75rem;font-size:.78rem;font-weight:600}
+
+  .vl-scroll{max-height:640px;overflow:auto}
+  .vl-table{width:100%;border-collapse:collapse;font-size:.88rem;color:#334155}
+  .vl-table thead th{position:sticky;top:0;z-index:1;background:rgba(248,250,252,.92);color:#64748b;font-size:.78rem;font-weight:600;text-align:left;padding:.75rem 1rem;white-space:nowrap}
+  .vl-table td{padding:.7rem 1rem;border-top:1px solid rgba(15,23,42,.09);vertical-align:middle}
+  .vl-table tbody tr:hover{background:rgba(255,255,255,.6)}
+  .vl-off td{color:#64748b}
+  .vl-right{text-align:right!important}
+  .vl-plate{font-family:'Space Mono',monospace;font-weight:700;color:#0f172a}
+  .vl-off .vl-plate{color:#64748b}
+  .vl-thumb{width:72px;height:48px;border-radius:10px;object-fit:cover;display:block;background:#eef2f7}
+  .vl-thumb-ph{object-fit:contain;padding:6px}
+  .vl-thumb-btn{display:block;padding:0;border:0;background:none;border-radius:10px;cursor:zoom-in;transition:transform .15s,filter .15s}
+  .vl-thumb-btn:hover{transform:scale(1.06);filter:brightness(1.05)}
+  .vl-date{font-size:.78rem;color:#64748b;margin-bottom:.2rem}
+  .vl-row-actions{display:flex;gap:.4rem;justify-content:flex-end;align-items:center}
+  .vl-row-actions form{margin:0}
+  .vl-empty{text-align:center;color:#64748b;padding:2rem 1rem!important}
+
+  .vl-pill{display:inline-block;border-radius:999px;padding:.2rem .7rem;font-size:.75rem;font-weight:600;border:1px solid;background:#f1f5f9;color:#475569;border-color:#e2e8f0}
+  .vl-pill-success{background:#f0fdf4;color:#15803d;border-color:#bbf7d0}
+  .vl-pill-warning{background:#fffbeb;color:#b45309;border-color:#fde68a}
+  .vl-pill-danger{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
+  .vl-pill-secondary,.vl-pill-info,.vl-pill-primary,.vl-pill-light,.vl-pill-dark{background:#f1f5f9;color:#475569;border-color:#e2e8f0}
+
+  .vl-msg{border-radius:14px;padding:.75rem 1rem;font-size:.88rem;font-weight:500}
+  .vl-msg-success{background:#f0fdf4;color:#15803d}
+  .vl-msg-error,.vl-msg-danger{background:#fef2f2;color:#b91c1c}
+  .vl-msg-warning{background:#fffbeb;color:#b45309}
+  .vl-msg-info,.vl-msg-debug{background:#eff6ff;color:#1d4ed8}
+
+  .vl-lb{position:fixed;inset:0;z-index:3000;display:none;align-items:center;justify-content:center;padding:1.5rem;background:rgba(13,23,38,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  .vl-lb.vl-open{display:flex}
+  .vl-lb-card{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35);max-width:min(92vw,1000px);display:flex;flex-direction:column}
+  .vl-lb-card img{display:block;max-width:100%;max-height:72vh;object-fit:contain;background:var(--dark)}
+  .vl-lb-foot{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.8rem 1.1rem}
+  .vl-lb-title{font-family:'Space Mono',monospace;font-weight:700;font-size:.95rem;color:#0f172a;margin:0}
+  .vl-lb-sub{font-size:.82rem;color:#64748b;margin:0}
+
+  @media (max-width:767px){
+    .vl-title{font-size:1.3rem}
+    .vl-actions{width:100%}
+  }
+</style>
+
+<div class="vl-wrap">
+
+  <div class="vl-head">
+    <div class="vl-title-box">
+      <img src="{% static 'img/iconos/vehiculos.jpg' %}" alt="">
+      <div>
+        <h1 class="vl-title">Vehículos</h1>
+        <p class="vl-sub">Administra la flota y el estado de sus documentos</p>
+      </div>
+    </div>
+    <div class="vl-actions">
+      <a href="{% url 'panel' %}" class="vl-btn vl-btn-sec">Volver al panel</a>
+      <a href="{% url 'crear_vehiculo' %}" class="vl-btn vl-btn-main">+ Nuevo vehículo</a>
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="vl-msg vl-msg-{{ message.tags|default:'info' }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="vl-panel">
+    <div class="vl-panel-head">
+      <span class="vl-step">01</span>
+      <h2 class="vl-panel-title">Listado de vehículos</h2>
+      <span class="vl-count">{{ filas|length }}</span>
+    </div>
+    <div class="vl-scroll">
+      <table class="vl-table">
+        <thead>
+          <tr>
+            <th>Foto</th>
+            <th>Placa</th>
+            <th>Tipo</th>
+            <th>SOAT</th>
+            <th>Tecnomecánica</th>
+            <th>Seguro de carga</th>
+            <th>Lic. tránsito</th>
+            <th class="vl-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in filas %}
+          <tr{% if not f.v.activo %} class="vl-off"{% endif %}>
+            <td>
+              {% if f.v.imagen %}
+                <button type="button" class="vl-thumb-btn"
+                        data-zoom-src="{{ f.v.imagen.url }}"
+                        data-zoom-titulo="{{ f.v.placa }}"
+                        data-zoom-sub="{{ f.v.tipo }}"
+                        aria-label="Ampliar foto de {{ f.v.placa }}">
+                  <img src="{{ f.v.imagen.url }}" alt="Foto de {{ f.v.placa }}" class="vl-thumb">
+                </button>
+              {% else %}
+                <img src="{% static 'img/iconos/vehiculos.jpg' %}" alt="Sin foto" class="vl-thumb vl-thumb-ph">
+              {% endif %}
+            </td>
+            <td>
+              <span class="vl-plate">{{ f.v.placa }}</span>{% if not f.v.activo %} <span class="vl-pill vl-pill-secondary">Inactivo</span>{% endif %}
+            </td>
+            <td>{{ f.v.tipo }}</td>
+            {% for doc in f.docs %}
+            <td>
+              {% if doc.fecha %}<div class="vl-date">{{ doc.fecha|date:"d/m/Y" }}</div>{% endif %}
+              <span class="vl-pill vl-pill-{{ doc.color }}">{{ doc.texto }}</span>
+            </td>
+            {% endfor %}
+            <td>
+              {% if f.v.licencia_transito_vigente %}<span class="vl-pill vl-pill-success">Vigente</span>
+              {% else %}<span class="vl-pill vl-pill-danger">No vigente</span>{% endif %}
+            </td>
+            <td class="vl-right">
+              <div class="vl-row-actions">
+                <a href="{% url 'editar_vehiculo' f.v.id %}" class="vl-btn vl-btn-sec vl-btn-sm">Editar</a>
+                <form method="post" action="{% url 'alternar_vehiculo' f.v.id %}"
+                      data-titulo="{% if f.v.activo %}¿Desactivar vehículo?{% else %}¿Activar vehículo?{% endif %}"
+                      data-confirmar="¿Seguro que quieres {% if f.v.activo %}desactivar{% else %}activar{% endif %} el vehículo {{ f.v.placa }}?"
+                      data-si="{% if f.v.activo %}Sí, desactivar{% else %}Sí, activar{% endif %}"
+                      data-no="Cancelar"{% if f.v.activo %} data-peligro{% endif %}>
+                  {% csrf_token %}
+                  {% if f.v.activo %}
+                    <button type="submit" class="vl-btn vl-btn-sec vl-btn-sm">Desactivar</button>
+                  {% else %}
+                    <button type="submit" class="vl-btn vl-btn-dark vl-btn-sm">Activar</button>
+                  {% endif %}
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="vl-empty">
+              Aún no hay vehículos registrados. Crea el primero con «Nuevo vehículo».
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Ampliar la foto del vehículo al hacer clic en la miniatura.
+  (function () {
+    var lb = document.createElement("div");
+    lb.className = "vl-lb";
+    lb.innerHTML =
+      '<div class="vl-lb-card" role="dialog" aria-modal="true">' +
+        '<img id="vl-lb-img" src="" alt="">' +
+        '<div class="vl-lb-foot">' +
+          '<div><p class="vl-lb-title" id="vl-lb-titulo"></p><p class="vl-lb-sub" id="vl-lb-sub"></p></div>' +
+          '<button type="button" class="vl-btn vl-btn-sec vl-btn-sm" id="vl-lb-cerrar">Cerrar</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(lb);
+
+    var img = lb.querySelector("#vl-lb-img");
+    var titulo = lb.querySelector("#vl-lb-titulo");
+    var sub = lb.querySelector("#vl-lb-sub");
+
+    function abrir(btn) {
+      img.src = btn.dataset.zoomSrc;
+      img.alt = "Foto de " + btn.dataset.zoomTitulo;
+      titulo.textContent = btn.dataset.zoomTitulo;
+      sub.textContent = btn.dataset.zoomSub || "";
+      lb.classList.add("vl-open");
+    }
+    function cerrar() {
+      lb.classList.remove("vl-open");
+      img.src = "";
+    }
+
+    document.querySelectorAll(".vl-thumb-btn").forEach(function (b) {
+      b.addEventListener("click", function () { abrir(b); });
+    });
+    lb.addEventListener("click", function (e) {
+      if (e.target === lb || e.target.id === "vl-lb-cerrar") cerrar();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && lb.classList.contains("vl-open")) cerrar();
+    });
+  })();
+</script>
+{% endblock %}

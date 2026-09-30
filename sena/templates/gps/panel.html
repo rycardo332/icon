@@ -1,0 +1,461 @@
+﻿{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Panel de control{% endblock %}
+
+{% block content %}
+
+<!-- Fuente llamativa (estilo máquina de escribir) -->
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+    /* ============================================================
+       PANEL DE CONTROL - estilos propios (prefijo ic-)
+       Índice:
+       1. Variables
+       2. Encabezado y botones
+       3. Tarjetas de módulo (oscuras, un color por módulo)
+       4. Paneles (vidrio claro + encabezado oscuro)
+       5. Tablas
+       6. Chips de estado
+       7. Botones de acción y alertas
+       8. Vacíos
+       ============================================================ */
+
+
+    /* 1. VARIABLES ------------------------------------------- */
+    .ic-dash {
+        --ic-accent: var(--red, #dc2626);
+        --ic-dark: var(--dark, #0d1726);
+        --ic-dark-2: var(--dark-2, #16233a);
+        --ic-ink: #0f172a;
+        --ic-text: #334155;
+        --ic-muted: #64748b;
+        --ic-line: rgba(15, 23, 42, .09);
+        --ic-surface: rgba(255, 255, 255, .84);
+        --ic-bg-soft: rgba(248, 250, 252, .70);
+        --ic-ok: #15803d;
+        --ic-ok-soft: #f0fdf4;
+        --ic-warn: #b45309;
+        --ic-warn-soft: #fffbeb;
+        --ic-bad: #b91c1c;
+        --ic-bad-soft: #fef2f2;
+        --ic-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+        --ic-fancy: 'Space Mono', 'Courier New', monospace;
+        color: var(--ic-text);
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+
+    /* 2. ENCABEZADO Y BOTONES -------------------------------- */
+    .ic-head {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 1rem;
+    }
+    .ic-title {
+        font-family: var(--ic-fancy);
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: .01em;
+        color: #fff;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, .45);
+        margin: 0;
+        line-height: 1.1;
+    }
+    .ic-date { color: #e2e8f0; font-size: .9rem; }
+    .ic-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+
+    .ic-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .5rem 1rem;
+        border-radius: 999px;
+        font-size: .875rem;
+        font-weight: 600;
+        text-decoration: none;
+        border: 1px solid rgba(255, 255, 255, .5);
+        background: rgba(255, 255, 255, .85);
+        color: var(--ic-ink);
+        transition: all .15s;
+    }
+    .ic-btn:hover { background: #fff; color: var(--ic-ink); transform: translateY(-1px); }
+    .ic-btn-primary { background: var(--ic-accent); border-color: var(--ic-accent); color: #fff; }
+    .ic-btn-primary:hover { filter: brightness(.92); background: var(--ic-accent); color: #fff; }
+    .ic-btn-ghost { border-color: transparent; background: transparent; color: #e2e8f0; }
+    .ic-btn:focus-visible, .ic-link:focus-visible, .ic-ibtn:focus-visible {
+        outline: 2px solid var(--ic-accent);
+        outline-offset: 2px;
+    }
+
+
+    /* 3. TARJETAS DE MÓDULO ---------------------------------- */
+    /* 3 arriba + 3 abajo, todas del mismo alto */
+    .ic-modules {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-auto-rows: 1fr;
+        gap: 1rem;
+    }
+    @media (max-width: 991px) { .ic-modules { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 575px) { .ic-modules { grid-template-columns: 1fr; } }
+
+    /* Un color por tarjeta (por orden). Cambia los HEX a tu gusto */
+    .ic-module:nth-child(6n+1) { --mc: #a3e635; }  /* verde campo  */
+    .ic-module:nth-child(6n+2) { --mc: #2dd4bf; }  /* turquesa     */
+    .ic-module:nth-child(6n+3) { --mc: #fbbf24; }  /* trigo        */
+    .ic-module:nth-child(6n+4) { --mc: #fb7185; }  /* coral        */
+    .ic-module:nth-child(6n+5) { --mc: #60a5fa; }  /* azul cielo   */
+    .ic-module:nth-child(6n+6) { --mc: #c4b5fd; }  /* lila         */
+
+    .ic-module {
+        --mc: #a3e635;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        gap: .35rem;
+        padding: 1.2rem 1.25rem 1.1rem;
+        border-radius: 18px;
+        color: #cbd5e1;
+        background: linear-gradient(150deg, rgba(13, 23, 38, .90), rgba(22, 35, 58, .80));
+        -webkit-backdrop-filter: blur(14px) saturate(140%);
+        backdrop-filter: blur(14px) saturate(140%);
+        border: 1px solid rgba(255, 255, 255, .10);
+        box-shadow: 0 10px 28px rgba(0, 0, 0, .28);
+        transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+    }
+    .ic-module:hover {
+        transform: translateY(-5px);
+        border-color: rgba(255, 255, 255, .22);
+        box-shadow: 0 16px 34px rgba(0, 0, 0, .35);
+    }
+
+    .ic-module > * { position: relative; z-index: 1; }
+
+    .ic-module-top { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+    .ic-module-name {
+        font-family: var(--ic-fancy);
+        font-size: .82rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #e2e8f0;
+        margin: 0;
+    }
+    .ic-module-icon {
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+    }
+    .ic-module-num {
+        font-family: var(--ic-fancy);
+        font-size: 2.7rem;
+        font-weight: 700;
+        line-height: 1;
+        color: var(--mc);
+        margin-top: .2rem;
+    }
+    .ic-module-detail { font-size: .85rem; color: #94a3b8; margin: 0; min-height: 2.6em; }
+    .ic-module-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .25rem 1rem;
+        margin-top: auto;
+        padding-top: .65rem;
+        border-top: 1px solid rgba(255, 255, 255, .10);
+    }
+    .ic-module .ic-link { color: var(--mc); }
+    .ic-module .ic-link:hover { color: #fff; }
+
+    .ic-link { font-size: .85rem; font-weight: 600; color: var(--ic-accent); text-decoration: none; }
+    .ic-link:hover { text-decoration: underline; }
+
+
+    /* 4. PANELES --------------------------------------------- */
+    .ic-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+        gap: 1rem;
+        align-items: stretch;   /* los dos paneles miden lo mismo */
+    }
+    @media (max-width: 991px) { .ic-grid { grid-template-columns: 1fr; } }
+
+    /* Los paneles llenan todo el alto y reparten su contenido */
+    .ic-grid .ic-panel { display: flex; flex-direction: column; }
+    .ic-grid .ic-panel > .table-responsive { flex: 1; }
+    .ic-grid .ic-alert { flex: 1; justify-content: center; }
+    .ic-grid .ic-empty { flex: 1; display: flex; align-items: center; justify-content: center; }
+
+    .ic-panel {
+        background: var(--ic-surface);
+        -webkit-backdrop-filter: blur(14px) saturate(140%);
+        backdrop-filter: blur(14px) saturate(140%);
+        border: 1px solid rgba(255, 255, 255, .7);
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, .18);
+    }
+    .ic-panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem;
+        padding: .9rem 1.2rem;
+        background: linear-gradient(90deg, var(--ic-dark), var(--ic-dark-2));
+        border-bottom: 1px solid rgba(255, 255, 255, .08);
+    }
+    .ic-panel-title { font-family: var(--ic-fancy); font-size: .95rem; font-weight: 700; letter-spacing: .5px; color: #fff; margin: 0; }
+    
+
+
+    /* 5. TABLAS ---------------------------------------------- */
+    .ic-table { width: 100%; margin: 0; border-collapse: collapse; }
+    .ic-table thead th {
+        background: var(--ic-bg-soft);
+        color: var(--ic-muted);
+        font-size: .78rem;
+        font-weight: 600;
+        padding: .6rem 1.2rem;
+        border-bottom: 1px solid var(--ic-line);
+        white-space: nowrap;
+    }
+    .ic-table tbody td {
+        padding: .8rem 1.2rem;
+        border-bottom: 1px solid var(--ic-line);
+        vertical-align: middle;
+        font-size: .9rem;
+        background: transparent;
+    }
+    .ic-table tbody tr:last-child td { border-bottom: 0; }
+    .ic-table tbody tr:hover td { background: rgba(255, 255, 255, .6); }
+    .ic-plate { font-weight: 700; color: var(--ic-ink); letter-spacing: .03em; }
+    .ic-sub { display: block; color: var(--ic-muted); font-size: .82rem; }
+
+
+    /* 6. CHIPS DE ESTADO ------------------------------------- */
+    .ic-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+        padding: .15rem .6rem;
+        border-radius: 999px;
+        font-size: .76rem;
+        font-weight: 600;
+        background: rgba(248, 250, 252, .9);
+        color: var(--ic-muted);
+        border: 1px solid var(--ic-line);
+        white-space: nowrap;
+    }
+    .ic-tag.ok   { background: var(--ic-ok-soft);   color: var(--ic-ok);   border-color: #bbf7d0; }
+    .ic-tag.warn { background: var(--ic-warn-soft); color: var(--ic-warn); border-color: #fde68a; }
+    .ic-tag.bad  { background: var(--ic-bad-soft);  color: var(--ic-bad);  border-color: #fecaca; }
+
+    /* Avance: 3 barritas + estado */
+    .ic-progress { display: flex; align-items: center; gap: .75rem; }
+    .ic-seg { display: flex; gap: 4px; }
+    .ic-seg i {
+        display: block;
+        width: 28px;
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, .15);
+    }
+    .ic-seg i.ok { background: #22c55e; }
+
+
+
+    /* 7. BOTONES DE ACCIÓN Y ALERTAS ------------------------- */
+    .ic-ibtn {
+        display: inline-grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        border: 1px solid var(--ic-line);
+        background: rgba(255, 255, 255, .9);
+        color: var(--ic-muted);
+        text-decoration: none;
+        transition: all .15s;
+    }
+    .ic-ibtn:hover { background: var(--ic-dark); color: #fff; border-color: var(--ic-dark); transform: translateY(-1px); }
+
+    .ic-alert {
+        display: flex;
+        flex-direction: column;
+        gap: .2rem;
+        padding: .85rem 1.2rem .85rem 1rem;
+        border-bottom: 1px solid var(--ic-line);
+    }
+    .ic-alert.vencido { background: rgba(254, 242, 242, .45); }
+    .ic-alert:last-child { border-bottom: 0; }
+    .ic-alert-row { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+    .ic-alert-who { font-weight: 700; color: var(--ic-ink); font-size: .92rem; }
+    .ic-alert-doc { color: var(--ic-muted); font-size: .84rem; }
+
+
+    /* ÍCONOS (imágenes JPG en static/img/iconos/) */
+    .ic-ico { width: 18px; height: 18px; object-fit: contain; display: inline-block; }
+    .ic-module-icon .ic-ico { width: 48px; height: 48px; object-fit: contain; border-radius: 10px; }
+    .ic-panel-title .ic-ico { width: 24px; height: 24px; vertical-align: -6px; margin-right: .6rem; border-radius: 6px; }
+    .ic-ibtn .ic-ico { width: 22px; height: 22px; border-radius: 4px; }
+    .ic-empty .ic-ico { width: 16px; height: 16px; vertical-align: -3px; margin-right: .3rem; }
+
+
+    /* 8. VACÍOS ---------------------------------------------- */
+    .ic-empty { padding: 1.6rem 1.2rem; text-align: center; color: var(--ic-muted); font-size: .9rem; }
+    .ic-empty.ok { color: var(--ic-ok); }
+    .ic-dim { opacity: .55; }
+</style>
+
+<div class="ic-dash">
+
+    <!-- Encabezado -->
+    <div class="ic-head">
+        
+       
+    </div>
+
+    <!-- Módulos -->
+    <section class="ic-modules" aria-label="Módulos">
+        {% for m in modulos %}
+        <article class="ic-module">
+            <div class="ic-module-top">
+                <h2 class="ic-module-name">{{ m.nombre }}</h2>
+                {% with f=m.nombre|slugify %}<span class="ic-module-icon"><img class="ic-ico" src="{% static 'img/iconos/'|add:f|add:'.jpg' %}" alt=""></span>{% endwith %}
+            </div>
+            <div class="ic-module-num">{{ m.cifra }}</div>
+            <p class="ic-module-detail">{{ m.detalle }}</p>
+            {% if m.enlaces %}
+            <div class="ic-module-links">
+                {% for texto, url in m.enlaces %}
+                <a href="{{ url }}" class="ic-link">{{ texto }}</a>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </article>
+        {% endfor %}
+    </section>
+
+    <!-- Desplazamientos y documentos -->
+    <section class="ic-grid">
+        <div class="ic-panel">
+            <div class="ic-panel-head">
+                <h2 class="ic-panel-title"><img class="ic-ico" src="{% static 'img/iconos/camion.jpg' %}" alt="">Desplazamientos recientes</h2>
+                {% if n_pendientes %}<span class="ic-tag warn">{{ n_pendientes }} por completar</span>{% endif %}
+            </div>
+            <div class="table-responsive">
+                <table class="ic-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Ruta</th>
+                            <th>Vehículo y conductor</th>
+                            <th>Avance</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in recientes %}
+                        <tr>
+                            <td class="text-nowrap">{{ r.d.fecha_desplazamiento|date:"d/m/Y" }}</td>
+                            <td><strong>{{ r.d.ruta.codigo }}</strong></td>
+                            <td>
+                                <span class="ic-plate">{{ r.d.vehiculo.placa }}</span>
+                                <span class="ic-sub">{{ r.d.conductor.nombre }}</span>
+                            </td>
+                            <td>
+                                <div class="ic-progress" title="Inspección: {% if r.insp %}listo{% else %}pendiente{% endif %} · Clima: {% if r.clima %}listo{% else %}pendiente{% endif %} · Alcoholemia: {% if r.alco %}listo{% else %}pendiente{% endif %}">
+                                    <span class="ic-seg">
+                                        <i class="{% if r.insp %}ok{% endif %}"></i>
+                                        <i class="{% if r.clima %}ok{% endif %}"></i>
+                                        <i class="{% if r.alco %}ok{% endif %}"></i>
+                                    </span>
+                                    {% if r.insp and r.clima and r.alco %}<span class="ic-tag ok">Completo</span>{% else %}<span class="ic-tag warn">Pendiente</span>{% endif %}
+                                </div>
+                            </td>
+                            <td class="text-end text-nowrap">
+                                <a href="{% url 'ver_tarjeta_ruta' r.d.ruta_id %}?desplazamiento={{ r.d.pk }}" class="ic-ibtn" title="Tarjeta de ruta" aria-label="Tarjeta de ruta"><img class="ic-ico" src="{% static 'img/iconos/excel.jpg' %}" alt="Excel"></a>
+                                <a href="{% url 'planificar_desplazamiento' r.d.pk %}" class="ic-ibtn" title="Planificar" aria-label="Planificar"><img class="ic-ico" src="{% static 'img/iconos/word.jpg' %}" alt=""></a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="ic-empty">Aún no hay desplazamientos. Crea el primero con "Trazar recorrido".</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="ic-panel">
+            <div class="ic-panel-head">
+                <h2 class="ic-panel-title"><img class="ic-ico" src="{% static 'img/iconos/documento-alerta.jpg' %}" alt="">Documentos por vencer</h2>
+            </div>
+            {% for a in alertas %}
+            <div class="ic-alert {% if a.vencido %}vencido{% endif %}">
+                <div class="ic-alert-row">
+                    <span class="ic-alert-who">{{ a.quien }}</span>
+                    <span class="ic-tag {% if a.vencido %}bad{% else %}warn{% endif %}">
+                        {% if a.vencido %}Vencido hace {{ a.dias }} d{% else %}Vence en {{ a.dias }} d{% endif %}
+                    </span>
+                </div>
+                <span class="ic-alert-doc">
+                    {{ a.doc }}, {{ a.fecha|date:"d/m/Y" }}
+                    {% if a.url %}<a href="{{ a.url }}" class="ic-link ms-2">Editar</a>{% endif %}
+                </span>
+            </div>
+            {% empty %}
+            <div class="ic-empty ok">Todo vigente por los próximos 30 días.</div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Rutas -->
+    <section class="ic-panel">
+        <div class="ic-panel-head">
+            <h2 class="ic-panel-title"><img class="ic-ico" src="{% static 'img/iconos/ruta.jpg' %}" alt="">Rutas</h2>
+        </div>
+        <div class="table-responsive">
+            <table class="ic-table">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th class="text-center">Trazados</th>
+                        <th class="text-center">Puntos</th>
+                        <th class="text-center">Riesgos</th>
+                        <th>Condiciones de la vía</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in rutas %}
+                    <tr {% if not r.activa %}class="ic-dim"{% endif %}>
+                        <td>
+                            <strong>{{ r.codigo }}</strong>
+                            {% if not r.activa %}<span class="ic-tag ms-1">Inactiva</span>{% endif %}
+                        </td>
+                        <td>{{ r.nombre }}</td>
+                        <td class="text-center">{{ r.n_desp }}</td>
+                        <td class="text-center">{{ r.n_puntos }}</td>
+                        <td class="text-center">{{ r.n_riesgos }}</td>
+                        <td>
+                            {% if r.visibilidad %}<span class="ic-tag ok">Registradas</span>
+                            {% else %}<span class="ic-tag warn">Pendientes</span>{% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="ic-empty">Aún no hay rutas. Créalas desde el admin.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
+
+{% endblock %}

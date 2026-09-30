@@ -1,0 +1,70 @@
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  .swal2-container.swal2-backdrop-show,.swal2-container.swal2-noanimation{background:rgba(13,23,38,.55)!important;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+  .ic-swal{width:26em;max-width:92vw;padding:0 0 1.5rem!important;border-radius:18px!important;background:rgba(255,255,255,.94)!important;border:1px solid rgba(255,255,255,.7);box-shadow:0 10px 30px rgba(0,0,0,.28)!important;overflow:hidden}
+  .ic-swal-icon{transform:scale(.62);margin:.75rem auto -.25rem!important}
+  .ic-swal-icon.swal2-question{border-color:#cbd5e1!important;color:#64748b!important}
+  .ic-swal-title{font-family:'Space Mono',monospace!important;font-weight:700!important;font-size:1.1rem!important;color:#0f172a!important;padding:1.4rem 1.5rem .25rem!important}
+  .ic-swal-icon ~ .ic-swal-title{padding-top:0!important}
+  .ic-swal-text{font-family:'DM Sans',sans-serif;font-size:.92rem!important;color:#334155!important;margin:.4rem 1.5rem 0!important}
+  .ic-swal-actions{margin-top:1.4rem!important;gap:.6rem}
+  .ic-swal-ok,.ic-swal-cancel{border-radius:999px!important;padding:.55rem 1.4rem!important;font-size:.85rem!important;font-weight:600!important;font-family:'DM Sans',sans-serif;cursor:pointer;border:1px solid transparent!important;transition:transform .15s,filter .15s,background .15s,color .15s}
+  .ic-swal-ok:hover,.ic-swal-cancel:hover{transform:translateY(-1px);filter:brightness(1.06)}
+  .ic-swal-ok{background:var(--dark,#0d1726)!important;color:#fff!important}
+  .ic-swal-danger{background:var(--red,#d31414)!important}
+  .ic-swal-cancel{background:#fff!important;color:#0f172a!important;border-color:rgba(15,23,42,.15)!important}
+  .ic-swal-cancel:hover{background:var(--dark-2,#16233a)!important;color:#fff!important}
+  .ic-swal-ok:focus,.ic-swal-cancel:focus{box-shadow:none!important}
+  .ic-swal-ok:focus-visible,.ic-swal-cancel:focus-visible{outline:2px solid #60a5fa;outline-offset:2px}
+
+  .swal2-popup.swal2-toast{background:var(--dark,#0d1726)!important;color:#fff!important;border-radius:14px!important;box-shadow:0 10px 30px rgba(0,0,0,.28)!important}
+  .swal2-popup.swal2-toast .swal2-title{color:#fff!important;font-family:'DM Sans',sans-serif!important;font-size:.88rem!important;font-weight:500!important}
+</style>
+<script>
+(function () {
+  if (!window.Swal) return;
+
+  function clases(peligro) {
+    return {
+      popup: 'ic-swal', icon: 'ic-swal-icon', title: 'ic-swal-title',
+      htmlContainer: 'ic-swal-text', actions: 'ic-swal-actions',
+      confirmButton: 'ic-swal-ok' + (peligro ? ' ic-swal-danger' : ''),
+      cancelButton: 'ic-swal-cancel'
+    };
+  }
+
+  window.Swal = Swal.mixin({
+    buttonsStyling: false,
+    reverseButtons: true,
+    heightAuto: false,
+    customClass: clases(false)
+  });
+
+  // Uso: icConfirmar({titulo, texto, si, no, peligro}).then(function (ok) { ... })
+  window.icConfirmar = function (o) {
+    o = o || {};
+    return Swal.fire({
+      icon: o.peligro ? 'warning' : 'question',
+      title: o.titulo || '¿Confirmar acción?',
+      text: o.texto || '',
+      showCancelButton: true,
+      confirmButtonText: o.si || 'Sí, continuar',
+      cancelButtonText: o.no || 'Cancelar',
+      customClass: clases(!!o.peligro)
+    }).then(function (r) { return r.isConfirmed; });
+  };
+
+  // Formularios con data-confirmar="texto" piden confirmación antes de enviarse.
+  document.addEventListener('submit', function (e) {
+    var f = e.target;
+    if (!f.hasAttribute || !f.hasAttribute('data-confirmar') || f.dataset.ok === '1') return;
+    e.preventDefault();
+    icConfirmar({
+      titulo: f.dataset.titulo, texto: f.dataset.confirmar,
+      si: f.dataset.si, no: f.dataset.no, peligro: f.hasAttribute('data-peligro')
+    }).then(function (ok) {
+      if (ok) { f.dataset.ok = '1'; f.submit(); }
+    });
+  }, true);
+})();
+</script>
