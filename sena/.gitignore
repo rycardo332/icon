@@ -1,27 +1,63 @@
-# Entorno y secretos
+# ==============================
+# ENTORNO Y SECRETOS
+# ==============================
 .env
 *.env
 .venv/
 venv/
 
-# Python
+# ==============================
+# PYTHON
+# ==============================
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
-# Archivos generados
+# ==============================
+# DJANGO - ARCHIVOS GENERADOS
+# ==============================
 staticfiles/
 media/
 *.log
 
-# Bases de datos locales
+# ==============================
+# BASES DE DATOS LOCALES
+# ==============================
 db.sql
 db.sqlite3
 *.sqlite3
 
-# Copias de seguridad y datos exportados (contienen hashes de contraseñas)
+# ==============================
+# COPIAS DE SEGURIDAD Y DATOS EXPORTADOS
+# ==============================
+backup_*.json
 backup_*.zip
 datos.json
 *.bak
+*.py.bak
 
-# Editor
+# ==============================
+# ARCHIVOS DE PRUEBA LOCALES
+# ==============================
+prueba_velocidad.xlsx
+aplicar_cambios_excel.py
+
+# ==============================
+# EDITOR / IDE
+# ==============================
 .vscode/
+.idea/
+
+# ==============================
+# SISTEMA OPERATIVO
+# ==============================
+.DS_Store
+Thumbs.db
+
+# ==============================
+# ARCHIVOS TEMPORALES
+# ==============================
+*.tmp
+*.temp
+*.swp
