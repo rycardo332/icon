@@ -136,14 +136,14 @@ def _h(texto):
             .replace("$", "&#36;"))
 
 
-def pedir_ruta_osrm(origen, destino, intentos=2):
+def pedir_ruta_osrm(origen, destino, intentos=1):
     """Camino por carretera entre dos puntos. Devuelve (geometria, distancia_km)."""
     url = (f"{OSRM_URL}/{origen[1]},{origen[0]};{destino[1]},{destino[0]}"
            f"?overview=full&geometries=geojson")
     ultimo_error = None
     for intento in range(intentos):
         try:
-            resp = requests.get(url, timeout=25)
+            resp = requests.get(url, timeout=(5, 15))
             resp.raise_for_status()
             data = resp.json()
             if data.get("code") != "Ok":
@@ -153,7 +153,8 @@ def pedir_ruta_osrm(origen, destino, intentos=2):
             return geometria, ruta["distance"] / 1000
         except Exception as e:
             ultimo_error = e
-            time.sleep(1.0 * (intento + 1))
+            if intento < intentos - 1:
+                time.sleep(1.0 * (intento + 1))
     raise ErrorOSRM(str(ultimo_error))
 
 
@@ -294,10 +295,9 @@ def _archivo_cache_overpass(query):
         return None
 
 
-def consultar_overpass(query, dias_cache=OVERPASS_DIAS_CACHE):
-    """Ejecuta una consulta Overpass. Guarda la respuesta en disco (misma consulta =
-    misma respuesta por 'dias_cache' dias) y reintenta con los dos servidores si el
-    publico esta saturado (429/502/503/504) o se agota el tiempo. Lanza ErrorOverpass."""
+def consultar_overpass(query, dias_cache=OVERPASS_DIAS_CACHE, presupuesto_s=60):
+    """Ejecuta una consulta Overpass. Usa caché en disco y prueba cada servidor una vez,
+    sin pasar de 'presupuesto_s' segundos en total. Lanza ErrorOverpass."""
     archivo = _archivo_cache_overpass(query)
     if archivo is not None and archivo.exists():
         if time.time() - archivo.stat().st_mtime < dias_cache * 86400:
@@ -307,30 +307,32 @@ def consultar_overpass(query, dias_cache=OVERPASS_DIAS_CACHE):
                 pass
 
     headers = {"User-Agent": "ICON-LTDA-reportes/1.0 (uso interno)", "Accept": "application/json"}
+    inicio = time.monotonic()
     ultimo_error = None
-    for ronda in range(2):
-        for url in OVERPASS_ENDPOINTS:
-            try:
-                resp = requests.post(url, data={"data": query}, headers=headers, timeout=80)
-                if resp.status_code in (429, 502, 503, 504):
-                    raise ErrorOverpass(f"{url} respondió {resp.status_code}")
-                resp.raise_for_status()
-                data = resp.json()
-                remark = str(data.get("remark", "")).lower()
-                if "timed out" in remark or "out of memory" in remark:
-                    raise ErrorOverpass(f"{url}: {data.get('remark')}")
-                if archivo is not None:
-                    try:
-                        archivo.write_text(json.dumps(data), encoding="utf-8")
-                    except OSError:
-                        pass
-                return data
-            except Exception as e:
-                ultimo_error = e
-                log.warning("Overpass falló en %s: %s", url, e)
-        if ronda == 0:
-            time.sleep(4)
-    raise ErrorOverpass(str(ultimo_error))
+    for url in OVERPASS_ENDPOINTS:
+        restante = presupuesto_s - (time.monotonic() - inicio)
+        if restante < 5:
+            break
+        try:
+            resp = requests.post(url, data={"data": query}, headers=headers,
+                                 timeout=(5, min(40, restante)))
+            if resp.status_code in (429, 502, 503, 504):
+                raise ErrorOverpass(f"{url} respondió {resp.status_code}")
+            resp.raise_for_status()
+            data = resp.json()
+            remark = str(data.get("remark", "")).lower()
+            if "timed out" in remark or "out of memory" in remark:
+                raise ErrorOverpass(f"{url}: {data.get('remark')}")
+            if archivo is not None:
+                try:
+                    archivo.write_text(json.dumps(data), encoding="utf-8")
+                except OSError:
+                    pass
+            return data
+        except Exception as e:
+            ultimo_error = e
+            log.warning("Overpass falló en %s: %s", url, e)
+    raise ErrorOverpass(str(ultimo_error or "sin respuesta"))
 
 
 def _adelgazar(ruta, paso_m=100):

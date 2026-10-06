@@ -100,7 +100,8 @@ WSGI_APPLICATION = 'sena.wsgi.application'
 # el .env, falla en vez de entrar como root o con una clave quemada.
 # DB_USER debe ser un usuario propio (icon_app), con permisos solo sobre esta base.
 if os.environ.get('DATABASE_URL'):
-    DATABASES = {'default': dj_database_url.config(conn_max_age=600)}
+    # conn_health_checks: si Neon durmió la conexión, Django reconecta en vez de fallar.
+    DATABASES = {'default': dj_database_url.config(conn_max_age=600, conn_health_checks=True)}
 else:
     DATABASES = {
         'default': {
@@ -224,3 +225,11 @@ DEFAULT_FROM_EMAIL  = 'ICON LTDA <iconltda18@gmail.com>'
 # ========== INDICADOR PESV DE VELOCIDAD (SIG.FT-57) ==========
 PESV_LIMITE_VELOCIDAD = 80  # km/h; trayectos con velocidad máxima por encima cuentan como exceso
 PESV_PLANTILLA_VELOCIDAD = BASE_DIR / "plantillas" / "INDICADOR_PESV_VELOCIDAD.xlsx"
+
+# ========== LOGGING (para ver avisos en los Logs de Render) ==========
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {'console': {'class': 'logging.StreamHandler'}},
+    'root': {'handlers': ['console'], 'level': 'WARNING'},
+}
