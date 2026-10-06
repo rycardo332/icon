@@ -4,239 +4,212 @@
 {% block title %}Inspecciones{% endblock %}
 
 {% block content %}
-
-<!-- Fuente llamativa (la misma del panel) -->
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
-    /* ============================================================
-       INSPECCIONES - estilos propios (prefijo in-)
-       Mismo diseño del panel: vidrio, encabezados oscuros
-       ============================================================ */
-
-    .in-wrap {
-        --in-dark: var(--dark, #0d1726);
-        --in-dark-2: var(--dark-2, #16233a);
-        --in-ink: #0f172a;
-        --in-muted: #64748b;
-        --in-line: rgba(15, 23, 42, .09);
-        --in-fancy: 'Space Mono', 'Courier New', monospace;
-        max-width: 1200px;
-        margin: 0 auto;
-        display: flex;
-        flex-direction: column;
-        gap: 1.25rem;
+    /* INSPECCIONES - mismo estilo del Panel de control (prefijo ic-) · sin animaciones */
+    .ic-dash {
+        --volt: #5bb5c8; --lime: #8fbf6a; --amber: #d9a840; --red2: #d9777a;
+        --ink: #dbe4f0; --mute: #8696ad; --line: rgba(91, 181, 200, .28);
+        --glass: rgba(6, 14, 28, .82);
+        --ic-fancy: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        --ic-mono: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        color: var(--ink); font-family: var(--ic-fancy); font-variant-numeric: tabular-nums;
+        display: flex; flex-direction: column; gap: 1.5rem;
     }
 
-    /* ---------- Encabezado ---------- */
-    .in-head {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        align-items: center;
-        gap: 1rem;
-    }
-    .in-title-row { display: flex; align-items: center; gap: .8rem; }
-    .in-title-ico { width: 44px; height: 44px; object-fit: contain; border-radius: 10px; }
-    .in-title {
-        font-family: var(--in-fancy);
-        font-size: 1.7rem;
-        font-weight: 700;
-        color: #fff;
-        text-shadow: 0 2px 8px rgba(0, 0, 0, .45);
-        margin: 0;
-        line-height: 1.1;
-    }
-    .in-sub { color: #e2e8f0; font-size: .9rem; text-shadow: 0 1px 4px rgba(0, 0, 0, .4); }
-
-    .in-btn {
-        display: inline-flex;
-        align-items: center;
-        padding: .5rem 1.1rem;
-        border-radius: 999px;
-        font-size: .875rem;
-        font-weight: 600;
-        text-decoration: none;
-        border: 1px solid rgba(255, 255, 255, .5);
-        background: rgba(255, 255, 255, .85);
-        color: var(--in-ink);
-        transition: all .15s;
-    }
-    .in-btn:hover { background: #fff; color: var(--in-ink); transform: translateY(-1px); }
-
-    /* ---------- Mensajes ---------- */
-    .in-msg {
-        padding: .8rem 1.1rem;
-        border-radius: 14px;
-        font-size: .9rem;
-        background: rgba(255, 255, 255, .88);
-        color: #334155;
-        box-shadow: 0 6px 18px rgba(0, 0, 0, .15);
-    }
-    .in-msg.success { background: rgba(240, 253, 244, .94); color: #166534; }
-    .in-msg.error   { background: rgba(254, 242, 242, .94); color: #991b1b; }
-    .in-msg.info    { background: rgba(239, 246, 255, .94); color: #1e40af; }
-    .in-msg.warning { background: rgba(255, 251, 235, .94); color: #92400e; }
-
-    /* ---------- Filtro (Todos / Sin inspección) ---------- */
-    .in-filter {
-        display: inline-flex;
-        padding: 4px;
-        gap: 4px;
-        border-radius: 999px;
-        background: rgba(13, 23, 38, .70);
-        -webkit-backdrop-filter: blur(10px);
-        backdrop-filter: blur(10px);
-        align-self: flex-start;
-    }
-    .in-filter a {
-        padding: .4rem 1.1rem;
-        border-radius: 999px;
-        font-size: .85rem;
-        font-weight: 600;
-        text-decoration: none;
-        color: #cbd5e1;
-        transition: all .15s;
-    }
-    .in-filter a:hover { color: #fff; }
-    .in-filter a.on { background: #fff; color: var(--in-ink); }
-
-    /* ---------- Panel ---------- */
-    .in-panel {
-        background: rgba(255, 255, 255, .84);
-        -webkit-backdrop-filter: blur(14px) saturate(140%);
-        backdrop-filter: blur(14px) saturate(140%);
-        border: 1px solid rgba(255, 255, 255, .7);
-        border-radius: 18px;
-        overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, .18);
-    }
-    .in-panel-head {
-        display: flex;
-        align-items: center;
-        gap: .75rem;
-        padding: .9rem 1.2rem;
-        background: linear-gradient(90deg, var(--in-dark), var(--in-dark-2));
-        border-bottom: 1px solid rgba(255, 255, 255, .08);
-    }
-    .in-step { font-family: var(--in-fancy); font-size: .8rem; font-weight: 700; color: #a3e635; }
-    .in-panel-title {
-        font-family: var(--in-fancy);
-        font-size: .95rem;
-        font-weight: 700;
-        letter-spacing: .5px;
-        color: #fff;
-        margin: 0;
-    }
-    .in-count {
-        margin-left: auto;
-        font-size: .75rem;
-        font-weight: 600;
-        color: #e2e8f0;
-        padding: .15rem .7rem;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, .12);
+    /* PANEL -------------------------------------------------- */
+    .ic-panel {
+        display: flex; flex-direction: column;
+        background: var(--glass);
+        -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%);
+        border: 1px solid rgba(91, 181, 200, .25); border-radius: 20px; overflow: hidden;
+        box-shadow: 0 14px 36px rgba(0, 0, 0, .4);
     }
 
-    /* ---------- Tabla ---------- */
-    .in-scroll { max-height: 640px; overflow-y: auto; }
-    .in-table { width: 100%; margin: 0; border-collapse: collapse; }
-    .in-table thead th {
-        position: sticky;
-        top: 0;
-        z-index: 1;
-        background: rgba(248, 250, 252, .92);
-        color: var(--in-muted);
-        font-size: .78rem;
-        font-weight: 600;
-        padding: .6rem 1.2rem;
-        border-bottom: 1px solid var(--in-line);
-        white-space: nowrap;
+    /* BARRA SUPERIOR ----------------------------------------- */
+    .ic-top {
+        display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;
+        padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--line);
+        background: linear-gradient(100deg, rgba(91, 181, 200, .1), rgba(143, 191, 106, .03) 60%, transparent);
     }
-    .in-table tbody td {
-        padding: .8rem 1.2rem;
-        border-bottom: 1px solid var(--in-line);
-        vertical-align: middle;
-        font-size: .9rem;
-        color: #334155;
-        background: transparent;
-    }
-    .in-table tbody tr:last-child td { border-bottom: 0; }
-    .in-table tbody tr:hover td { background: rgba(255, 255, 255, .6); }
-    .in-plate { font-weight: 700; color: var(--in-ink); letter-spacing: .03em; }
+    .ic-top-icon { width: 44px; height: 44px; flex: none; object-fit: contain; border-radius: 10px; }
+    .ic-title { font-family: var(--ic-fancy); font-weight: 700; font-size: 1.4rem; margin: 0; color: #fff; }
+    .ic-subtitle { margin: 0; color: var(--mute); font-size: .85rem; }
+    .ic-actions { margin-left: auto; display: flex; gap: .5rem; flex-wrap: wrap; }
 
-    /* ---------- Chips de estado ---------- */
-    .in-tag {
-        display: inline-flex;
-        align-items: center;
-        padding: .15rem .65rem;
-        border-radius: 999px;
-        font-size: .76rem;
-        font-weight: 600;
-        background: rgba(248, 250, 252, .9);
-        color: var(--in-muted);
-        border: 1px solid var(--in-line);
-        white-space: nowrap;
+    /* BOTONES ------------------------------------------------ */
+    .ic-btn {
+        display: inline-flex; align-items: center; gap: .4rem; border-radius: 999px;
+        padding: .45rem 1.05rem; font-size: .83rem; font-weight: 600; text-decoration: none;
+        color: var(--ink); border: 1px solid var(--line); background: rgba(2, 8, 20, .5);
+        cursor: pointer; transition: all .15s;
     }
-    .in-tag.ok   { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
-    .in-tag.warn { background: #fffbeb; color: #b45309; border-color: #fde68a; }
-    .in-tag.bad  { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+    .ic-btn:hover { border-color: var(--volt); color: #fff; box-shadow: 0 0 0 1px var(--volt); }
+    .ic-btn:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+    .ic-btn-main { background: var(--volt); border-color: var(--volt); color: #04141b; }
+    .ic-btn-main:hover { background: #7cc6d6; border-color: #7cc6d6; color: #04141b; box-shadow: none; }
+    .ic-btn-sm { padding: .3rem .85rem; font-size: .78rem; }
 
-    /* ---------- Botones de acción ---------- */
-    .in-act {
-        display: inline-flex;
-        align-items: center;
-        padding: .35rem .95rem;
-        border-radius: 999px;
-        font-size: .8rem;
-        font-weight: 600;
-        text-decoration: none;
-        border: 1px solid var(--in-line);
-        background: rgba(255, 255, 255, .9);
-        color: var(--in-ink);
-        transition: all .15s;
+    /* FILTRO EN PESTAÑAS (Todos / Sin inspección) ------------- */
+    .ic-filter-bar { padding: 0 1.25rem; border-bottom: 1px solid var(--line); }
+    .ic-tabs { display: flex; flex-wrap: wrap; gap: .25rem; }
+    .ic-tab {
+        position: relative; display: inline-flex; align-items: center; gap: .5rem; padding: .95rem 1.1rem;
+        font-size: .88rem; font-weight: 600; color: var(--mute); text-decoration: none; white-space: nowrap;
+        transition: color .15s;
     }
-    .in-act:hover { background: var(--in-dark); border-color: var(--in-dark); color: #fff; transform: translateY(-1px); }
-    .in-act.primary { background: var(--red, #d31414); border-color: var(--red, #d31414); color: #fff; }
-    .in-act.primary:hover { background: var(--red, #d31414); filter: brightness(.92); }
+    .ic-tab:hover { color: #fff; }
+    .ic-tab.on { color: var(--volt); }
+    .ic-tab:focus-visible { outline: 2px solid var(--lime); outline-offset: -2px; border-radius: 8px; }
+    .ic-tab::after {
+        content: ""; position: absolute; left: .6rem; right: .6rem; bottom: -1px; height: 2px;
+        border-radius: 2px; background: var(--volt); display: none;
+    }
+    .ic-tab.on::after { display: block; }
+    .ic-tab-pend::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--amber); }
 
-    .in-empty { padding: 2rem 1.2rem; text-align: center; color: var(--in-muted); font-size: .9rem; }
+    /* ENCABEZADO DE SECCIÓN: 01 Título ........ [contador] --- */
+    .ic-sec-head {
+        position: relative; display: flex; align-items: center; gap: .6rem;
+        padding: .95rem 1.5rem .7rem; border-bottom: 1px solid var(--line);
+        background: linear-gradient(100deg, rgba(91, 181, 200, .1), rgba(143, 191, 106, .03) 60%, transparent);
+    }
+    .ic-sec-head::after {
+        content: ""; position: absolute; left: 0; bottom: -1px; width: 64px; height: 2px; background: var(--lime);
+    }
+    .ic-step { font-family: var(--ic-mono); font-size: .8rem; font-weight: 700; color: var(--lime); }
+    .ic-panel-title { font-family: var(--ic-mono); font-weight: 700; font-size: .95rem; color: #fff; margin: 0; }
+    .ic-head-right { margin-left: auto; display: flex; align-items: center; gap: .5rem; }
+    .ic-count {
+        background: rgba(91, 181, 200, .1); border: 1px solid var(--line); color: var(--volt);
+        border-radius: 999px; padding: .15rem .75rem; font-size: .78rem; font-weight: 600;
+    }
+
+    /* TABLA -------------------------------------------------- */
+    .ic-scroll { max-height: 640px; overflow: auto; }
+    .ic-table { width: 100%; margin: 0; border-collapse: collapse; color: var(--ink); }
+    .ic-table thead th {
+        position: sticky; top: 0; z-index: 1;
+        background: #08121f; color: var(--mute);
+        font-size: .78rem; font-weight: 600; padding: .75rem 1.2rem; text-align: left;
+        border-bottom: 1px solid var(--line); white-space: nowrap;
+    }
+    .ic-table thead th.ic-right { text-align: right; }
+    .ic-table tbody td {
+        padding: .75rem 1.2rem; border-top: 1px solid rgba(91, 181, 200, .12);
+        vertical-align: middle; font-size: .88rem; background: transparent; color: var(--ink);
+    }
+    .ic-table tbody tr:hover td { background: rgba(91, 181, 200, .06); }
+    .ic-right { text-align: right; }
+    .ic-nowrap { white-space: nowrap; }
+
+    .ic-plate {
+        display: inline-flex; align-items: center; gap: .4rem;
+        font-weight: 600; font-size: .8rem; color: var(--ink); letter-spacing: .06em;
+        padding: .15rem .7rem; border-radius: 999px;
+        background: rgba(91, 181, 200, .1); border: 1px solid rgba(91, 181, 200, .32);
+    }
+    .ic-plate::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--volt); }
+
+    /* ETIQUETAS ---------------------------------------------- */
+    .ic-tag {
+        display: inline-flex; align-items: center; gap: .3rem; padding: .15rem .7rem; border-radius: 999px;
+        font-size: .74rem; font-weight: 600; white-space: nowrap;
+        color: var(--mute); background: rgba(138, 160, 189, .08); border: 1px solid rgba(138, 160, 189, .4);
+    }
+    .ic-tag.ok   { color: var(--lime);  background: rgba(143, 191, 106, .1); border-color: rgba(143, 191, 106, .4); }
+    .ic-tag.warn { color: var(--amber); background: rgba(217, 168, 64, .1);  border-color: rgba(217, 168, 64, .4); }
+    .ic-tag.bad  { color: var(--red2);  background: rgba(217, 119, 122, .1); border-color: rgba(217, 119, 122, .4); }
+
+    /* VACÍO -------------------------------------------------- */
+    .ic-empty { padding: 2rem 1.2rem !important; text-align: center; color: var(--mute); font-size: .9rem; }
+
+    /* PAGINADOR: 10 filas por página ------------------------- */
+    .ic-pager {
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem;
+        padding: .8rem 1.5rem; border-top: 1px solid var(--line); background: rgba(91, 181, 200, .05);
+    }
+    .ic-pager[hidden] { display: none; }
+    .ic-pager-info { font-size: .82rem; color: var(--mute); }
+    .ic-pager-info b { color: var(--volt); font-weight: 700; }
+    .ic-pages { display: flex; flex-wrap: wrap; gap: .35rem; }
+    .ic-pg {
+        min-width: 36px; height: 36px; padding: 0 .7rem; border-radius: 10px; cursor: pointer;
+        font-family: var(--ic-fancy); font-weight: 600; font-size: .8rem; color: var(--ink);
+        border: 1px solid var(--line); background: rgba(2, 8, 20, .6); transition: all .15s;
+    }
+    .ic-pg:hover:not(:disabled):not(.on) { border-color: var(--volt); box-shadow: 0 0 0 1px var(--volt); }
+    .ic-pg:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+    .ic-pg.on { background: var(--volt); border-color: var(--volt); color: #04141b; cursor: default; }
+    .ic-pg:disabled { opacity: .35; cursor: not-allowed; }
+    .ic-dots { align-self: center; color: var(--mute); padding: 0 .2rem; }
+
+    /* MENSAJES ----------------------------------------------- */
+    .ic-msg {
+        border-radius: 14px; padding: .75rem 1rem; font-size: .88rem; font-weight: 500;
+        background: rgba(6, 14, 28, .88); border: 1px solid;
+    }
+    .ic-msg-success { color: var(--lime); border-color: rgba(143, 191, 106, .45); }
+    .ic-msg-error, .ic-msg-danger { color: #f3c4c6; border-color: rgba(217, 119, 122, .5); }
+    .ic-msg-warning { color: var(--amber); border-color: rgba(217, 168, 64, .45); }
+    .ic-msg-info, .ic-msg-debug { color: #bfe6ee; border-color: rgba(91, 181, 200, .45); }
+
+    @media (max-width: 767px) {
+        .ic-title { font-size: 1.2rem; }
+        .ic-actions { width: 100%; margin-left: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .ic-btn, .ic-pg, .ic-tab { transition: none; }
+    }
 </style>
 
-<div class="in-wrap">
+<div class="ic-dash">
 
-    <!-- Encabezado -->
-    <div class="in-head">
-        <div>
-            <div class="in-title-row">
-                <img class="in-title-ico" src="{% static 'img/iconos/inspeccion.jpg' %}" alt="">
-                <h1 class="in-title">Inspecciones</h1>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="ic-msg ic-msg-{{ message.tags|default:'info' }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <section class="ic-panel">
+
+        <!-- Barra superior -->
+        <div class="ic-top">
+            <img class="ic-top-icon" src="{% static 'img/iconos/inspeccion.jpg' %}" alt="">
+            <div>
+                <h1 class="ic-title">Inspecciones</h1>
+                <p class="ic-subtitle">Revisión de los vehículos antes de cada desplazamiento</p>
             </div>
-            <span class="in-sub">Revisión de los vehículos antes de cada desplazamiento</span>
+            <div class="ic-actions">
+                <a href="{% url 'panel' %}" class="ic-btn">Volver al panel</a>
+            </div>
         </div>
-        <a href="{% url 'panel' %}" class="in-btn">Volver al panel</a>
-    </div>
 
-    <!-- Mensajes del sistema -->
-    {% for message in messages %}
-    <div class="in-msg {{ message.tags }}">{{ message }}</div>
-    {% endfor %}
-
-    <!-- Filtro -->
-    <div class="in-filter">
-        <a href="{% url 'listar_inspecciones' %}" class="{% if not solo_pendientes %}on{% endif %}">Todos</a>
-        <a href="{% url 'listar_inspecciones' %}?ver=pendientes" class="{% if solo_pendientes %}on{% endif %}">Sin inspección</a>
-    </div>
-
-    <!-- 01 LISTA -->
-    <section class="in-panel">
-        <div class="in-panel-head">
-            <span class="in-step">01</span>
-            <h2 class="in-panel-title">{% if solo_pendientes %}Desplazamientos sin inspección{% else %}Todos los desplazamientos{% endif %}</h2>
-            <span class="in-count">{{ desplazamientos|length }}</span>
+        <!-- Filtro en pestañas -->
+        <div class="ic-filter-bar">
+            <nav class="ic-tabs" aria-label="Filtrar desplazamientos">
+                <a href="{% url 'listar_inspecciones' %}"
+                   class="ic-tab {% if not solo_pendientes %}on{% endif %}"
+                   {% if not solo_pendientes %}aria-current="page"{% endif %}>Todos</a>
+                <a href="{% url 'listar_inspecciones' %}?ver=pendientes"
+                   class="ic-tab ic-tab-pend {% if solo_pendientes %}on{% endif %}"
+                   {% if solo_pendientes %}aria-current="page"{% endif %}>Sin inspección</a>
+            </nav>
         </div>
-        <div class="table-responsive in-scroll">
-            <table class="in-table">
+
+        <!-- Encabezado de sección -->
+        <div class="ic-sec-head">
+            <span class="ic-step">01</span>
+            <h2 class="ic-panel-title">{% if solo_pendientes %}Desplazamientos sin inspección{% else %}Todos los desplazamientos{% endif %}</h2>
+            <div class="ic-head-right">
+                <span class="ic-count">{{ desplazamientos|length }}</span>
+            </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="ic-scroll" id="ic-scroll">
+            <table class="ic-table">
                 <thead>
                     <tr>
                         <th>Fecha</th>
@@ -244,40 +217,40 @@
                         <th>Vehículo</th>
                         <th>Conductor</th>
                         <th>Inspección</th>
-                        <th class="text-end">Acciones</th>
+                        <th class="ic-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for d in desplazamientos %}
                     <tr>
-                        <td class="text-nowrap">{{ d.fecha_desplazamiento|date:"d/m/Y" }}</td>
+                        <td class="ic-nowrap">{{ d.fecha_desplazamiento|date:"d/m/Y" }}</td>
                         <td><strong>{{ d.ruta.codigo }}</strong></td>
-                        <td><span class="in-plate">{{ d.vehiculo.placa }}</span></td>
+                        <td><span class="ic-plate">{{ d.vehiculo.placa }}</span></td>
                         <td>{{ d.conductor.nombre }}</td>
                         <td>
                             {% if d.inspeccion %}
                                 {% if d.inspeccion.resultado_general == 'apto' %}
-                                    <span class="in-tag ok">{{ d.inspeccion.get_resultado_general_display }}</span>
+                                    <span class="ic-tag ok">{{ d.inspeccion.get_resultado_general_display }}</span>
                                 {% elif d.inspeccion.resultado_general == 'no_apto' %}
-                                    <span class="in-tag bad">{{ d.inspeccion.get_resultado_general_display }}</span>
+                                    <span class="ic-tag bad">{{ d.inspeccion.get_resultado_general_display }}</span>
                                 {% else %}
-                                    <span class="in-tag warn">{{ d.inspeccion.get_resultado_general_display }}</span>
+                                    <span class="ic-tag warn">{{ d.inspeccion.get_resultado_general_display }}</span>
                                 {% endif %}
                             {% else %}
-                                <span class="in-tag">Pendiente</span>
+                                <span class="ic-tag">Pendiente</span>
                             {% endif %}
                         </td>
-                        <td class="text-end text-nowrap">
+                        <td class="ic-right ic-nowrap">
                             {% if d.inspeccion %}
-                                <a href="{% url 'planificar_desplazamiento' d.id %}" class="in-act">Ver / editar</a>
+                                <a href="{% url 'planificar_desplazamiento' d.id %}" class="ic-btn ic-btn-sm">Ver / editar</a>
                             {% else %}
-                                <a href="{% url 'planificar_desplazamiento' d.id %}" class="in-act primary">Hacer inspección</a>
+                                <a href="{% url 'planificar_desplazamiento' d.id %}" class="ic-btn ic-btn-main ic-btn-sm">Hacer inspección</a>
                             {% endif %}
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6" class="in-empty">
+                        <td colspan="6" class="ic-empty">
                             {% if solo_pendientes %}Todos los desplazamientos ya tienen inspección.
                             {% else %}Aún no hay desplazamientos registrados.{% endif %}
                         </td>
@@ -286,8 +259,82 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Paginador -->
+        <nav class="ic-pager" id="ic-pager" aria-label="Paginación" hidden>
+            <span class="ic-pager-info" id="ic-info"></span>
+            <div class="ic-pages" id="ic-pages"></div>
+        </nav>
+
     </section>
 
 </div>
+{% endblock %}
 
+{% block extra_js %}
+<script>
+  // Paginador: 10 desplazamientos por página.
+  (function () {
+    var POR_PAGINA = 10;
+    var filas = Array.prototype.slice.call(document.querySelectorAll('.ic-table tbody tr'))
+      .filter(function (f) { return !f.querySelector('.ic-empty'); });
+    var pager = document.getElementById('ic-pager');
+    if (!pager || filas.length <= POR_PAGINA) return;   // con 10 o menos no hace falta paginar
+
+    var total = Math.ceil(filas.length / POR_PAGINA);
+    var actual = 1;
+    var info = document.getElementById('ic-info');
+    var cont = document.getElementById('ic-pages');
+    var scroll = document.getElementById('ic-scroll');
+    pager.hidden = false;
+
+    function boton(texto, pagina, op) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'ic-pg' + (op && op.on ? ' on' : '');
+      b.textContent = texto;
+      if (op && op.label) b.setAttribute('aria-label', op.label);
+      if (op && op.on) b.setAttribute('aria-current', 'page');
+      if (op && op.off) b.disabled = true;
+      else b.addEventListener('click', function () { ir(pagina); });
+      return b;
+    }
+
+    function visibles() {
+      var lista = [];
+      for (var p = 1; p <= total; p++) {
+        if (p === 1 || p === total || Math.abs(p - actual) <= 1) lista.push(p);
+      }
+      return lista;
+    }
+
+    function ir(pagina) {
+      actual = Math.min(Math.max(pagina, 1), total);
+      var desde = (actual - 1) * POR_PAGINA;
+      filas.forEach(function (f, i) {
+        f.style.display = (i >= desde && i < desde + POR_PAGINA) ? '' : 'none';
+      });
+      if (scroll) scroll.scrollTop = 0;
+      var hasta = Math.min(desde + POR_PAGINA, filas.length);
+      info.innerHTML = 'Mostrando <b>' + (desde + 1) + '–' + hasta + '</b> de <b>' + filas.length + '</b>';
+
+      cont.innerHTML = '';
+      cont.appendChild(boton('Anterior', actual - 1, { off: actual === 1, label: 'Página anterior' }));
+      var previa = 0;
+      visibles().forEach(function (p) {
+        if (previa && p - previa > 1) {
+          var puntos = document.createElement('span');
+          puntos.className = 'ic-dots';
+          puntos.textContent = '…';
+          cont.appendChild(puntos);
+        }
+        cont.appendChild(boton(p, p, { on: p === actual, label: 'Página ' + p }));
+        previa = p;
+      });
+      cont.appendChild(boton('Siguiente', actual + 1, { off: actual === total, label: 'Página siguiente' }));
+    }
+
+    ir(1);
+  })();
+</script>
 {% endblock %}

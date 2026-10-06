@@ -326,7 +326,7 @@ Para cambiar el color principal, edita --sb-color (una sola línea).
     <a href="{% url 'panel' %}" class="sb-brand">
       <div class="sb-logo">
         {# Logo: static/img/logo.jpg #}
-        <img src="{% static 'img/logo.jpg' %}" alt="ICON LTDA">
+        <img src="{% static 'img/logo.png' %}" alt="ICON LTDA">
       </div>
       <div style="min-width:0;">
         <div class="sb-brand-name">ICON<em> LTDA</em></div>
@@ -369,6 +369,11 @@ Para cambiar el color principal, edita --sb-color (una sola línea).
       <img class="sb-ico" src="{% static 'img/iconos/rutas.jpg' %}" alt="">
       <span class="sb-item-text">Rutas</span>
     </a>
+        <a href="{% url 'indicador_velocidad' %}" class="sb-item {% if n == 'indicador_velocidad' or n == 'descargar_indicador_velocidad' %}active{% endif %}" data-tip="Indicador de velocidad" title="Indicador de velocidad">
+      <img class="sb-ico" src="{% static 'img/iconos/indicador-velocidad.jpg' %}" alt="">
+      <span class="sb-item-text">Indicador de velocidad</span>
+    </a>
+    
     <a href="{% url 'listar_vehiculos' %}" class="sb-item {% if n == 'listar_vehiculos' or n == 'crear_vehiculo' or n == 'editar_vehiculo' %}active{% endif %}" data-tip="Vehículos" title="Vehículos">
       <img class="sb-ico" src="{% static 'img/iconos/vehiculos.jpg' %}" alt="">
       <span class="sb-item-text">Vehículos</span>
@@ -378,17 +383,20 @@ Para cambiar el color principal, edita --sb-color (una sola línea).
       <span class="sb-item-text">Conductores</span>
     </a>
 
-    {% if user.is_authenticated %}
+        {% if user.is_authenticated and user.is_staff %}
     <div class="sb-section">Cuenta</div>
-    <form method="post" action="{% url 'logout' %}" class="sb-item-form">
-      {% csrf_token %}
-      <input type="hidden" name="next" value="{% url 'login' %}">
-      <button type="submit" class="sb-item sb-item-btn" data-tip="Cerrar sesión" title="Cerrar sesión">
-        <svg class="sb-icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        <span class="sb-item-text">Cerrar sesión</span>
-      </button>
-    </form>
+
+    <a href="{% url 'listar_usuarios' %}" class="sb-item {% if n == 'listar_usuarios' or n == 'crear_usuario' or n == 'editar_usuario' %}active{% endif %}" data-tip="Usuarios" title="Usuarios">
+      <img class="sb-ico" src="{% static 'img/iconos/usuarios.jpg' %}" alt="">
+      <span class="sb-item-text">Usuarios</span>
+    </a>
+
+    <a href="{% url 'restaurar_backup' %}" class="sb-item {% if n == 'restaurar_backup' or n == 'descargar_backup' %}active{% endif %}" data-tip="Copias de seguridad" title="Copias de seguridad">
+      <img class="sb-ico" src="{% static 'img/iconos/backups.jpg' %}" alt="">
+      <span class="sb-item-text">Copias de seguridad</span>
+    </a>
     {% endif %}
+       
 
   </div>
 

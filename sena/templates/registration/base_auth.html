@@ -1,0 +1,421 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rutas GPS — {% block title %}Acceso{% endblock %}</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --azul: #0b63d6;
+    --azul-osc: #06285e;
+    --cian: #35c4ff;
+    --rojo: #e0201b;
+    --tarjeta: #eef2f8;
+  }
+  html, body { height: 100%; }
+  body {
+    min-height: 100vh; font-family: 'Outfit', sans-serif; color: var(--azul-osc);
+    background:
+      radial-gradient(ellipse 90% 45% at 50% 108%, rgba(255,140,50,.95) 0%, rgba(232,80,40,.55) 40%, transparent 75%),
+      linear-gradient(180deg, #040918 0%, #0a1a4a 38%, #16357f 62%, #5a3a7a 82%, #c8552e 100%);
+    display: flex; align-items: safe center; justify-content: center;
+    padding: 24px; overflow-x: hidden;
+  }
+
+  /* ---------- Escena de fondo (igual que el login) ---------- */
+  .escena { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  .escena svg { width: 100%; height: 100%; display: block; }
+  .estrella { fill: #cfe8ff; animation: titila 4s ease-in-out infinite; }
+  .estrella:nth-child(2n) { animation-duration: 5.5s; animation-delay: -2s; }
+  .estrella:nth-child(3n) { animation-duration: 3.2s; animation-delay: -1s; }
+  @keyframes titila { 0%,100% { opacity: .15; } 50% { opacity: .9; } }
+  .nube { fill: #ff9a5c; opacity: .22; filter: blur(14px); animation: deriva 60s linear infinite; }
+  .nube.b { fill: #b56fc0; opacity: .18; animation-duration: 85s; animation-delay: -30s; }
+  @keyframes deriva { from { transform: translateX(-260px); } to { transform: translateX(1900px); } }
+  .cable-glow { stroke: var(--cian); stroke-width: 9; opacity: .22; animation: latido 3.5s ease-in-out infinite; }
+  .cable-core { stroke: #4fd0ff; stroke-width: 2.2; }
+  .cable-pulso { stroke: #fff; stroke-width: 3.6; stroke-linecap: round; stroke-dasharray: 26 974; stroke-dashoffset: 1000; animation: viaja 4.2s linear infinite; }
+  .pulsos { filter: drop-shadow(0 0 5px #35c4ff); }
+  @keyframes viaja { to { stroke-dashoffset: 0; } }
+  @keyframes latido { 0%,100% { opacity: .16; } 50% { opacity: .36; } }
+  .torre { stroke: #040918; fill: none; stroke-width: 4.2; stroke-linejoin: round; stroke-linecap: round; }
+  .torre .pie { fill: #040918; stroke-width: 2; }
+  .luz-torre { fill: #ff4d4d; animation: aviso 2.4s ease-in-out infinite; }
+  @keyframes aviso { 0%,100% { opacity: .15; } 50% { opacity: 1; } }
+
+  /* ---------- Tarjeta ---------- */
+  @property --ang { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+
+  .card {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 320px; margin-bottom: 2vh; left: -3vw;
+    background: var(--tarjeta);
+    border-radius: 18px; overflow: hidden;
+    box-shadow: 0 30px 80px rgba(1,6,24,.7), 0 0 50px rgba(53,196,255,.18);
+    animation: entra .8s cubic-bezier(.2,.8,.2,1) both;
+  }
+  @keyframes entra { from { opacity: 0; transform: translateY(26px) scale(.98); } to { opacity: 1; transform: none; } }
+
+  .contenido { padding: 10px 22px 18px; }
+
+  .logo { padding: 0 30px; }
+  .logo img { display: block; width: 100%; height: auto; mix-blend-mode: multiply; }
+
+  .mapa { display: block; width: 100%; height: 44px; margin-top: 0; }
+  .ruta-base { stroke: rgba(6,40,94,.35); stroke-width: 2; stroke-dasharray: 2 7; stroke-linecap: round; fill: none; }
+  .ruta-viva {
+    fill: none; stroke: #0b63d6; stroke-width: 3.4; stroke-linecap: round;
+    stroke-dasharray: 100; stroke-dashoffset: 100;
+    filter: drop-shadow(0 0 4px rgba(11,99,214,.5));
+    animation: traza 6s linear infinite;
+  }
+  @keyframes traza {
+    0%   { stroke-dashoffset: 100; opacity: 1; }
+    70%  { stroke-dashoffset: 0;   opacity: 1; }
+    90%  { stroke-dashoffset: 0;   opacity: 1; }
+    100% { stroke-dashoffset: 0;   opacity: 0; }
+  }
+  .onda { fill: none; stroke: #e0201b; stroke-width: 1.6; transform-box: fill-box; transform-origin: center; animation: onda 2.4s ease-out infinite; }
+  .onda.b { animation-delay: -1.2s; }
+  @keyframes onda { from { transform: scale(1); opacity: .9; } to { transform: scale(5); opacity: 0; } }
+
+  .sistema {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin: 0 0 6px; font-size: .85rem; font-weight: 600; color: var(--azul-osc);
+    letter-spacing: .4px;
+  }
+  .sistema i { color: var(--rojo); }
+  .sistema::before, .sistema::after { content: ""; height: 1px; flex: 1; background: linear-gradient(90deg, transparent, rgba(6,40,94,.25)); }
+  .sistema::after { background: linear-gradient(270deg, transparent, rgba(6,40,94,.25)); }
+
+  /* ---------- Contenido de cada pantalla (títulos, textos, campos) ---------- */
+  .contenido h1 {
+    font-size: 1.1rem; font-weight: 700; text-align: center;
+    color: var(--azul-osc); margin: 2px 0 2px; letter-spacing: .2px;
+  }
+  .contenido .sub { font-size: .76rem; color: #4a6288; text-align: center; margin-bottom: 8px; line-height: 1.35; }
+  .contenido p { font-size: .8rem; line-height: 1.45; }
+
+  .contenido label {
+    display: block; font-size: .72rem; font-weight: 600;
+    margin: 8px 0 3px; color: var(--azul-osc);
+  }
+  .contenido input:not([type=checkbox]):not([type=radio]):not([type=hidden]) {
+    width: 100%; height: 36px; padding: 0 12px;
+    background: #fff; color: var(--azul-osc);
+    border: 1.5px solid #c3d0e4; border-radius: 10px;
+    font: inherit; font-size: .85rem; outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .contenido input::placeholder { color: #8fa3c2; }
+  .contenido input:focus { border-color: var(--azul); box-shadow: 0 0 0 4px rgba(11,99,214,.18); }
+  .contenido input:-webkit-autofill {
+    -webkit-text-fill-color: var(--azul-osc); caret-color: var(--azul-osc);
+    -webkit-box-shadow: 0 0 0 100px #fff inset;
+  }
+  .contenido .error, .contenido .errorlist li {
+    display: block; font-size: .75rem; color: #b3261e; margin-top: 5px; list-style: none;
+  }
+  .contenido .errorlist { list-style: none; }
+  .contenido .ayuda { font-size: .68rem; color: #4a6288; margin: 4px 0 0; line-height: 1.3; }
+  .contenido .ayuda ul { padding-left: 1.1rem; margin: 2px 0; }
+  .contenido .ayuda li { margin: 1px 0; }
+  .contenido a:not(.boton) { color: var(--azul); text-decoration: underline; text-underline-offset: 3px; }
+  .contenido a:not(.boton):hover { color: var(--azul-osc); }
+
+  /* Enlace "Volver a iniciar sesión": botón secundario con flecha, bien visible */
+  .contenido a[href$="/login/"] {
+    position: relative;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%; height: 40px; margin-top: 12px;
+    border: 2px solid var(--azul); border-radius: 10px;
+    background: #fff; color: var(--azul);
+    font-size: .88rem; font-weight: 600; text-decoration: none;
+    box-shadow: 0 4px 14px rgba(11,99,214,.15);
+    transition: background .2s, color .2s, transform .15s, box-shadow .2s;
+  }
+  .contenido a[href$="/login/"]::before {
+    content: "\f060"; font-family: "Font Awesome 6 Free"; font-weight: 900; font-size: .85rem;
+    transition: transform .2s;
+  }
+  .contenido a[href$="/login/"]:hover {
+    background: var(--azul); color: #fff; transform: translateY(-1px);
+    box-shadow: 0 8px 22px rgba(11,99,214,.35);
+  }
+  .contenido a[href$="/login/"]:hover::before { transform: translateX(-4px); }
+
+  /* Botón oscuro con corriente de luz recorriendo el borde (igual que el login) */
+  .btn, .contenido button[type=submit], .contenido a.boton {
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; height: 40px; margin-top: 14px; border-radius: 10px; cursor: pointer;
+    border: 2px solid transparent; text-decoration: none;
+    background:
+      linear-gradient(#0a2f70, #051b44) padding-box,
+      conic-gradient(from var(--ang), rgba(11,99,214,.25) 0deg, rgba(11,99,214,.25) 240deg, #35c4ff 320deg, #ffffff 350deg, rgba(11,99,214,.25) 360deg) border-box;
+    color: #fff; font: inherit; font-size: .9rem; font-weight: 600; letter-spacing: .2px;
+    box-shadow: 0 8px 22px rgba(6,40,94,.35);
+    animation: gira 3.2s linear infinite;
+    transition: transform .15s, box-shadow .2s;
+  }
+  @keyframes gira { to { --ang: 360deg; } }
+  .btn::after, .contenido button[type=submit]::after, .contenido a.boton::after {
+    content: ""; position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,.28), transparent);
+    transform: skewX(-20deg);
+  }
+  .btn:hover, .contenido button[type=submit]:hover, .contenido a.boton:hover {
+    transform: translateY(-1px); box-shadow: 0 10px 28px rgba(11,99,214,.5); color: #fff;
+  }
+  .btn:hover::after, .contenido button[type=submit]:hover::after, .contenido a.boton:hover::after { animation: destello .8s ease; }
+  @keyframes destello { to { left: 130%; } }
+  .btn:active, .contenido button[type=submit]:active { transform: translateY(0); }
+  .btn:focus-visible, .contenido button:focus-visible, .contenido a:focus-visible { outline: 3px solid var(--azul); outline-offset: 2px; }
+  .cargando { pointer-events: none; opacity: .85; }
+  .cargando::before {
+    content: ""; width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.4); border-top-color: #fff;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- Cielo interactivo ---------- */
+  .estrella { transform-box: fill-box; transform-origin: center; transition: transform .3s, filter .3s, fill .3s; }
+  .estrella.brilla { animation: none; opacity: 1; fill: #fff; transform: scale(2.8); filter: drop-shadow(0 0 4px #7fd6ff) drop-shadow(0 0 8px #35c4ff); }
+  #halo { transition: opacity .35s; pointer-events: none; }
+
+  @media (max-width: 480px) {
+    .card { margin-bottom: 0; max-width: 300px; left: 0; }
+    .contenido { padding: 10px 16px 18px; }
+    .contenido input:not([type=checkbox]):not([type=radio]):not([type=hidden]) { font-size: 1rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .estrella, .nube, .cable-glow, .cable-pulso, .luz-torre, .card, .btn, .contenido button[type=submit], .contenido a.boton, .ruta-viva, .onda { animation: none; }
+    .cable-pulso, .punto-mov { display: none; }
+    .ruta-viva { stroke-dashoffset: 0; }
+  }
+</style>
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<!-- Fondo: torres de alta tensión con cables luminosos y pulsos de energía -->
+<div class="escena" aria-hidden="true">
+  <svg id="escenaSvg" viewBox="0 0 1600 800" preserveAspectRatio="xMidYMax slice">
+    <defs>
+      <radialGradient id="haloGrad">
+        <stop offset="0" stop-color="#9fdcff" stop-opacity=".38"/>
+        <stop offset=".45" stop-color="#35c4ff" stop-opacity=".14"/>
+        <stop offset="1" stop-color="#35c4ff" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="colaGrad" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="-130" y2="-49">
+        <stop offset="0" stop-color="#fff" stop-opacity="1"/>
+        <stop offset=".35" stop-color="#9fdcff" stop-opacity=".6"/>
+        <stop offset="1" stop-color="#35c4ff" stop-opacity="0"/>
+      </linearGradient>
+      <symbol id="torre" viewBox="0 0 100 300" overflow="visible">
+        <g class="torre">
+          <path d="M26 300 L45 62 L50 28 L55 62 L74 300"/>
+          <path d="M0 60 H100 M10 110 H90 M20 160 H80"/>
+          <path d="M0 60 V72 M100 60 V72 M10 110 V122 M90 110 V122 M20 160 V172 M80 160 V172"/>
+          <path d="M0 60 L44 88 M100 60 L56 88 M10 110 L41 136 M90 110 L59 136 M20 160 L37 182 M80 160 L63 182"/>
+          <path d="M45 62 L58.8 110 M55 62 L41.2 110"/>
+          <path d="M41.2 110 L62.8 160 M58.8 110 L37.2 160"/>
+          <path d="M37.2 160 L67.6 220 M62.8 160 L32.4 220 M32.4 220 H67.6"/>
+          <path d="M32.4 220 L74 300 M67.6 220 L26 300 M29.2 260 H70.8 M26 300 H74"/>
+          <path d="M50 28 V10"/>
+          <path class="pie" d="M16 296 H36 V312 H16Z M64 296 H84 V312 H64Z"/>
+        </g>
+        <circle class="luz-torre" cx="50" cy="8" r="3"/>
+      </symbol>
+      <path id="w0" pathLength="1000" d="M228 444 Q311 545 395 539"/>
+      <path id="w1" pathLength="1000" d="M212 521 Q309 620 406 594"/>
+      <path id="w2" pathLength="1000" d="M196 598 Q307 694 417 649"/>
+      <path id="w3" pathLength="1000" d="M505 539 Q605 641 705 615"/>
+      <path id="w4" pathLength="1000" d="M494 594 Q603 692 712 650"/>
+      <path id="w5" pathLength="1000" d="M483 649 Q601 743 719 685"/>
+      <path id="w6" pathLength="1000" d="M775 615 Q884 662 992 570"/>
+      <path id="w7" pathLength="1000" d="M768 650 Q885 708 1002 617"/>
+      <path id="w8" pathLength="1000" d="M761 685 Q886 755 1012 664"/>
+      <path id="w9" pathLength="1000" d="M1088 570 Q1206 588 1325 455"/>
+      <path id="w10" pathLength="1000" d="M1078 617 Q1209 657 1340 530"/>
+      <path id="w11" pathLength="1000" d="M1068 664 Q1212 726 1355 605"/>
+      <path id="w12" pathLength="1000" d="M-80 394 L72 444"/>
+      <path id="w13" pathLength="1000" d="M-80 471 L88 521"/>
+      <path id="w14" pathLength="1000" d="M-80 548 L104 598"/>
+      <path id="w15" pathLength="1000" d="M1475 455 L1680 395"/>
+      <path id="w16" pathLength="1000" d="M1460 530 L1680 470"/>
+      <path id="w17" pathLength="1000" d="M1445 605 L1680 545"/>
+    </defs>
+
+    <g>
+      <circle class="estrella" cx="683" cy="97" r="1.9"/>
+      <circle class="estrella" cx="1353" cy="44" r="1.1"/>
+      <circle class="estrella" cx="1117" cy="68" r="1.6"/>
+      <circle class="estrella" cx="1213" cy="49" r="1.3"/>
+      <circle class="estrella" cx="96" cy="64" r="1.9"/>
+      <circle class="estrella" cx="876" cy="55" r="1.3"/>
+      <circle class="estrella" cx="205" cy="237" r="1.1"/>
+      <circle class="estrella" cx="1178" cy="83" r="1.3"/>
+      <circle class="estrella" cx="1311" cy="51" r="1.9"/>
+      <circle class="estrella" cx="121" cy="133" r="1.1"/>
+      <circle class="estrella" cx="1160" cy="88" r="1.6"/>
+      <circle class="estrella" cx="878" cy="93" r="1.1"/>
+      <circle class="estrella" cx="1189" cy="177" r="1.3"/>
+      <circle class="estrella" cx="231" cy="116" r="1.6"/>
+      <circle class="estrella" cx="219" cy="300" r="1.1"/>
+      <circle class="estrella" cx="1036" cy="292" r="1.9"/>
+      <circle class="estrella" cx="663" cy="258" r="1.9"/>
+      <circle class="estrella" cx="760" cy="173" r="1.3"/>
+      <circle class="estrella" cx="388" cy="144" r="1.1"/>
+      <circle class="estrella" cx="1196" cy="173" r="1.9"/>
+      <circle class="estrella" cx="723" cy="249" r="1.6"/>
+      <circle class="estrella" cx="1267" cy="57" r="1.1"/>
+      <circle class="estrella" cx="1068" cy="234" r="1.3"/>
+      <circle class="estrella" cx="1570" cy="195" r="1.3"/>
+      <circle class="estrella" cx="1388" cy="59" r="1.6"/>
+      <circle class="estrella" cx="716" cy="199" r="1.9"/>
+    </g>
+
+    <g id="cielo"><circle id="halo" r="120" fill="url(#haloGrad)" opacity="0"/></g>
+
+    <ellipse class="nube"   cx="0" cy="560" rx="260" ry="34"/>
+    <ellipse class="nube b" cx="0" cy="470" rx="210" ry="26"/>
+    <ellipse class="nube"   cx="0" cy="650" rx="320" ry="30" style="animation-delay:-22s"/>
+
+    <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <g class="cable-glow"><use href="#w0"/><use href="#w1"/><use href="#w2"/><use href="#w3"/><use href="#w4"/><use href="#w5"/><use href="#w6"/><use href="#w7"/><use href="#w8"/><use href="#w9"/><use href="#w10"/><use href="#w11"/><use href="#w12"/><use href="#w13"/><use href="#w14"/><use href="#w15"/><use href="#w16"/><use href="#w17"/></g>
+      <g class="cable-core"><use href="#w0"/><use href="#w1"/><use href="#w2"/><use href="#w3"/><use href="#w4"/><use href="#w5"/><use href="#w6"/><use href="#w7"/><use href="#w8"/><use href="#w9"/><use href="#w10"/><use href="#w11"/><use href="#w12"/><use href="#w13"/><use href="#w14"/><use href="#w15"/><use href="#w16"/><use href="#w17"/></g>
+      <g class="pulsos">
+      <use href="#w0" class="cable-pulso" style="animation-duration:3.4s;animation-delay:-0.0s"/>
+      <use href="#w1" class="cable-pulso" style="animation-duration:3.8s;animation-delay:-1.3s"/>
+      <use href="#w2" class="cable-pulso" style="animation-duration:4.1s;animation-delay:-2.6s"/>
+      <use href="#w3" class="cable-pulso" style="animation-duration:4.5s;animation-delay:-3.9s"/>
+      <use href="#w4" class="cable-pulso" style="animation-duration:4.9s;animation-delay:-5.2s"/>
+      <use href="#w5" class="cable-pulso" style="animation-duration:5.2s;animation-delay:-0.5s"/>
+      <use href="#w6" class="cable-pulso" style="animation-duration:5.6s;animation-delay:-1.8s"/>
+      <use href="#w7" class="cable-pulso" style="animation-duration:6.0s;animation-delay:-3.1s"/>
+      <use href="#w8" class="cable-pulso" style="animation-duration:6.4s;animation-delay:-4.4s"/>
+      <use href="#w9" class="cable-pulso" style="animation-duration:3.7s;animation-delay:-5.7s"/>
+      <use href="#w10" class="cable-pulso" style="animation-duration:4.1s;animation-delay:-1.0s"/>
+      <use href="#w11" class="cable-pulso" style="animation-duration:4.5s;animation-delay:-2.3s"/>
+      <use href="#w12" class="cable-pulso" style="animation-duration:4.8s;animation-delay:-3.6s"/>
+      <use href="#w13" class="cable-pulso" style="animation-duration:5.2s;animation-delay:-4.9s"/>
+      <use href="#w14" class="cable-pulso" style="animation-duration:5.6s;animation-delay:-0.2s"/>
+      <use href="#w15" class="cable-pulso" style="animation-duration:5.9s;animation-delay:-1.5s"/>
+      <use href="#w16" class="cable-pulso" style="animation-duration:6.3s;animation-delay:-2.8s"/>
+      <use href="#w17" class="cable-pulso" style="animation-duration:3.7s;animation-delay:-4.1s"/>
+      </g>
+    </g>
+
+    <path d="M0 800 V748 C 200 730 380 752 620 742 S 1000 728 1250 745 S 1500 738 1600 744 V800Z" fill="#0a1532"/>
+
+    <use href="#torre" transform="translate(72 335) scale(1.55)" width="100" height="300"/>
+    <use href="#torre" transform="translate(395 462) scale(1.1)" width="100" height="300"/>
+    <use href="#torre" transform="translate(705 566) scale(0.7)" width="100" height="300"/>
+    <use href="#torre" transform="translate(992 503) scale(0.95)" width="100" height="300"/>
+    <use href="#torre" transform="translate(1325 350) scale(1.5)" width="100" height="300"/>
+
+    <path d="M0 800 V758 C 250 748 450 766 800 756 S 1300 748 1600 760 V800Z" fill="#040918"/>
+  </svg>
+</div>
+
+<main class="card">
+  <div class="contenido">
+    <div class="logo">
+      <img src="{% static 'img/logo.png' %}" alt="Icon Ltda — Ingenieros Contratistas">
+    </div>
+
+    <svg class="mapa" viewBox="0 0 300 160" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <g stroke="rgba(6,40,94,.12)" stroke-width="1">
+        <path d="M0 30H300M0 60H300M0 90H300M0 120H300M0 150H300"/>
+        <path d="M30 0V160M60 0V160M90 0V160M120 0V160M150 0V160M180 0V160M210 0V160M240 0V160M270 0V160"/>
+      </g>
+      <path class="ruta-base" d="M22 128 C 70 128 60 70 112 78 S 170 128 208 92 S 246 40 270 36"/>
+      <path class="ruta-viva" pathLength="100" d="M22 128 C 70 128 60 70 112 78 S 170 128 208 92 S 246 40 270 36"/>
+      <circle cx="22" cy="128" r="4.5" fill="#06285e"/>
+      <circle cx="112" cy="78" r="3.2" fill="#0b63d6" stroke="#fff" stroke-width="1.6"/>
+      <circle cx="208" cy="92" r="3.2" fill="#0b63d6" stroke="#fff" stroke-width="1.6"/>
+      <circle class="onda"   cx="270" cy="36" r="5"/>
+      <circle class="onda b" cx="270" cy="36" r="5"/>
+      <circle cx="270" cy="36" r="6" fill="#e0201b" stroke="#fff" stroke-width="2"/>
+      <g class="punto-mov">
+        <circle r="11" fill="#0b63d6" opacity=".25"/>
+        <circle r="5"  fill="#0b63d6"/>
+        <animateMotion dur="6s" repeatCount="indefinite" calcMode="linear" keyPoints="0;1;1" keyTimes="0;.7;1"
+          path="M22 128 C 70 128 60 70 112 78 S 170 128 208 92 S 246 40 270 36"/>
+      </g>
+    </svg>
+
+    <p class="sistema"><i class="fas fa-location-dot"></i> Rutas GPS</p>
+
+    {% block content %}{% endblock %}
+  </div>
+</main>
+
+<script>
+  /* Botones de enviar: muestran "cargando" para evitar doble clic */
+  document.querySelectorAll('.contenido form').forEach(function (f) {
+    f.addEventListener('submit', function () {
+      var b = f.querySelector('button[type=submit]');
+      if (b) { b.classList.add('cargando'); }
+    });
+  });
+
+  /* ---------- Cielo: brillo al pasar el mouse ---------- */
+  (function () {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var NS = 'http://www.w3.org/2000/svg';
+    var svg = document.getElementById('escenaSvg');
+    var cielo = svg.querySelector('#cielo'), halo = svg.querySelector('#halo');
+    var estrellas = Array.prototype.map.call(svg.querySelectorAll('.estrella'), function (el) {
+      return { el: el, x: +el.getAttribute('cx'), y: +el.getAttribute('cy') };
+    });
+    var pt = svg.createSVGPoint();
+    var colores = ['#ffffff', '#9fdcff', '#35c4ff', '#ffd9a0'];
+    var ultimo = 0;
+
+    function aSvg(x, y) { pt.x = x; pt.y = y; return pt.matrixTransform(svg.getScreenCTM().inverse()); }
+    function apagar() { halo.style.opacity = 0; estrellas.forEach(function (s) { s.el.classList.remove('brilla'); }); }
+
+    function destello(x, y) {
+      var el = document.createElementNS(NS, Math.random() < .5 ? 'circle' : 'path');
+      if (el.tagName === 'circle') el.setAttribute('r', 1.2 + Math.random() * 1.8);
+      else el.setAttribute('d', 'M0-6L1.6-1.6 6 0 1.6 1.6 0 6-1.6 1.6-6 0-1.6-1.6Z');
+      el.setAttribute('fill', colores[(Math.random() * colores.length) | 0]);
+      el.style.pointerEvents = 'none';
+      cielo.appendChild(el);
+      var dx = (Math.random() - .5) * 30, dy = 10 + Math.random() * 24;
+      el.animate([
+        { transform: 'translate(' + x + 'px,' + y + 'px) scale(1) rotate(0deg)', opacity: 1 },
+        { transform: 'translate(' + (x + dx) + 'px,' + (y + dy) + 'px) scale(0) rotate(120deg)', opacity: 0 }
+      ], { duration: 650 + Math.random() * 400, easing: 'ease-out' }).onfinish = function () { el.remove(); };
+    }
+
+    window.addEventListener('mousemove', function (e) {
+      if (e.target.closest && e.target.closest('.card')) return apagar();
+      var p = aSvg(e.clientX, e.clientY);
+      if (p.y < 0 || p.y > 470) return apagar();
+      halo.setAttribute('cx', p.x); halo.setAttribute('cy', p.y); halo.style.opacity = 1;
+      estrellas.forEach(function (s) { s.el.classList.toggle('brilla', Math.hypot(s.x - p.x, s.y - p.y) < 120); });
+      var t = performance.now();
+      if (t - ultimo > 45) { ultimo = t; destello(p.x + (Math.random() - .5) * 16, p.y + (Math.random() - .5) * 16); }
+    });
+    document.addEventListener('mouseleave', apagar);
+  })();
+
+  /* Ajusta el encuadre del fondo en pantallas verticales (celulares) */
+  (function () {
+    var svg = document.getElementById('escenaSvg');
+    function ajustar() {
+      svg.setAttribute('preserveAspectRatio', window.innerWidth < window.innerHeight ? 'xMinYMax slice' : 'xMidYMax slice');
+    }
+    ajustar(); window.addEventListener('resize', ajustar);
+  })();
+</script>
+
+</body>
+</html>

@@ -4,355 +4,409 @@
 {% block title %}Importar reporte FILPAC{% endblock %}
 
 {% block content %}
-
-<!-- Fuente llamativa (la misma del panel) -->
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
-    /* ============================================================
-       IMPORTAR REPORTE - estilos propios (prefijo im-)
-       Mismo diseño del panel: vidrio, encabezados oscuros
-       ============================================================ */
-
+    /* IMPORTAR REPORTE - mismo estilo suave del panel (prefijo im-) · todo en un solo cuadro */
     .im-wrap {
-        --im-dark: var(--dark, #0d1726);
-        --im-dark-2: var(--dark-2, #16233a);
-        --im-ink: #0f172a;
-        --im-muted: #64748b;
-        --im-line: rgba(15, 23, 42, .09);
-        --im-fancy: 'Space Mono', 'Courier New', monospace;
-        max-width: 1100px;
-        margin: 0 auto;
-        display: flex;
-        flex-direction: column;
-        gap: 1.25rem;
+        --volt: #5bb5c8; --lime: #8fbf6a; --amber: #d9a840; --red2: #d9777a;
+        --ink: #dbe4f0; --mute: #8696ad; --line: rgba(91, 181, 200, .28);
+        --im-fancy: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        max-width: 1100px; margin: 0 auto; color: var(--ink);
+        font-family: var(--im-fancy); font-variant-numeric: tabular-nums;
     }
 
-    /* ---------- Encabezado ---------- */
+    /* CUADRO ÚNICO ------------------------------------------- */
+    .im-card {
+        background: rgba(6, 14, 28, .82);
+        -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%);
+        border: 1px solid rgba(91, 181, 200, .25); border-radius: 20px; overflow: hidden;
+        box-shadow: 0 14px 36px rgba(0, 0, 0, .4);
+    }
+
+    /* Encabezado del cuadro */
     .im-head {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        align-items: center;
-        gap: 1rem;
+        display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem;
+        padding: 1.2rem 1.5rem;
+        border-bottom: 1px solid var(--line);
+        background: linear-gradient(100deg, rgba(91, 181, 200, .1), rgba(143, 191, 106, .03) 60%, transparent);
     }
     .im-title-row { display: flex; align-items: center; gap: .8rem; }
     .im-title-ico { width: 44px; height: 44px; object-fit: contain; border-radius: 10px; }
-    .im-title {
-        font-family: var(--im-fancy);
-        font-size: 1.7rem;
-        font-weight: 700;
-        color: #fff;
-        text-shadow: 0 2px 8px rgba(0, 0, 0, .45);
-        margin: 0;
-        line-height: 1.1;
-    }
-    .im-sub { color: #e2e8f0; font-size: .9rem; text-shadow: 0 1px 4px rgba(0, 0, 0, .4); }
+    .im-title { font-size: 1.35rem; font-weight: 700; color: #fff; margin: 0; line-height: 1.15; }
+    .im-sub { display: block; color: var(--mute); font-size: .85rem; margin-top: .15rem; }
     .im-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
-
     .im-btn {
-        display: inline-flex;
-        align-items: center;
-        padding: .5rem 1.1rem;
-        border-radius: 999px;
-        font-size: .875rem;
-        font-weight: 600;
-        text-decoration: none;
-        border: 1px solid rgba(255, 255, 255, .5);
-        background: rgba(255, 255, 255, .85);
-        color: var(--im-ink);
-        transition: all .15s;
+        display: inline-flex; align-items: center; padding: .4rem 1rem; border-radius: 999px;
+        font-size: .82rem; font-weight: 600; text-decoration: none; color: var(--volt);
+        border: 1px solid var(--line); background: rgba(91, 181, 200, .1); transition: all .15s;
     }
-    .im-btn:hover { background: #fff; color: var(--im-ink); transform: translateY(-1px); }
+    .im-btn:hover { color: #fff; border-color: var(--volt); transform: translateY(-1px); }
+    .im-btn:focus-visible, .im-go:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
 
-    /* ---------- Mensajes ---------- */
+    /* Secciones dentro del cuadro */
+    .im-sec { border-bottom: 1px solid var(--line); }
+    .im-sec:last-child { border-bottom: 0; }
+    .im-sec-head {
+        position: relative; display: flex; align-items: center; gap: .6rem;
+        padding: .85rem 1.5rem .65rem; border-bottom: 1px solid rgba(91, 181, 200, .14);
+    }
+    .im-sec-head::after {
+        content: ""; position: absolute; left: 0; bottom: -1px; width: 64px; height: 2px; background: var(--lime);
+    }
+    .im-step { font-size: .8rem; font-weight: 700; color: var(--lime); }
+    .im-sec-title { font-size: .95rem; font-weight: 700; color: #fff; margin: 0; }
+    .im-sec-body { padding: 1.3rem 1.5rem; }
+
+    /* Mensajes */
+    .im-msgs { padding: 1rem 1.5rem 0; display: flex; flex-direction: column; gap: .6rem; }
     .im-msg {
-        padding: .8rem 1.1rem;
-        border-radius: 14px;
-        font-size: .9rem;
-        background: rgba(255, 255, 255, .88);
-        color: #334155;
-        box-shadow: 0 6px 18px rgba(0, 0, 0, .15);
+        padding: .65rem 1rem; border-radius: 12px; font-size: .88rem;
+        background: rgba(138, 160, 189, .08); color: var(--ink); border: 1px solid rgba(138, 160, 189, .4);
     }
-    .im-msg.success { background: rgba(240, 253, 244, .94); color: #166534; }
-    .im-msg.error   { background: rgba(254, 242, 242, .94); color: #991b1b; }
-    .im-msg.info    { background: rgba(239, 246, 255, .94); color: #1e40af; }
-    .im-msg.warning { background: rgba(255, 251, 235, .94); color: #92400e; }
+    .im-msg.success { color: var(--lime); background: rgba(143, 191, 106, .1); border-color: rgba(143, 191, 106, .4); }
+    .im-msg.error, .im-msg.danger { color: var(--red2); background: rgba(217, 119, 122, .1); border-color: rgba(217, 119, 122, .4); }
+    .im-msg.info { color: var(--volt); background: rgba(91, 181, 200, .1); border-color: rgba(91, 181, 200, .4); }
+    .im-msg.warning { color: var(--amber); background: rgba(217, 168, 64, .1); border-color: rgba(217, 168, 64, .4); }
+    .im-msg.d-none { display: none; }
 
-    /* ---------- Paneles ---------- */
-    .im-panel {
-        background: rgba(255, 255, 255, .84);
-        -webkit-backdrop-filter: blur(14px) saturate(140%);
-        backdrop-filter: blur(14px) saturate(140%);
-        border: 1px solid rgba(255, 255, 255, .7);
-        border-radius: 18px;
-        overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, .18);
-    }
-    .im-panel-head {
-        display: flex;
-        align-items: center;
-        gap: .75rem;
-        padding: .9rem 1.2rem;
-        background: linear-gradient(90deg, var(--im-dark), var(--im-dark-2));
-        border-bottom: 1px solid rgba(255, 255, 255, .08);
-    }
-    .im-step {
-        font-family: var(--im-fancy);
-        font-size: .8rem;
-        font-weight: 700;
-        color: #a3e635;
-    }
-    .im-panel-title {
-        font-family: var(--im-fancy);
-        font-size: .95rem;
-        font-weight: 700;
-        letter-spacing: .5px;
-        color: #fff;
-        margin: 0;
-    }
-    .im-panel-body { padding: 1.3rem 1.4rem; }
-
-    /* ---------- Zona de subida ---------- */
+    /* Zona de subida */
     .im-drop {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: .4rem;
-        text-align: center;
-        padding: 2rem 1rem;
-        border: 2px dashed rgba(15, 23, 42, .25);
-        border-radius: 16px;
-        background: rgba(255, 255, 255, .55);
-        cursor: pointer;
-        transition: all .2s;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .4rem;
+        text-align: center; padding: 2rem 1rem; cursor: pointer;
+        border: 2px dashed rgba(91, 181, 200, .4); border-radius: 16px;
+        background: rgba(2, 8, 20, .45); transition: all .2s;
     }
-    .im-drop:hover, .im-drop.on { background: rgba(255, 255, 255, .9); border-color: var(--im-dark); }
-    .im-drop-ico { width: 56px; height: 56px; object-fit: contain; border-radius: 10px; margin-bottom: .2rem; }
-    .im-drop-main { font-weight: 600; color: var(--im-ink); }
-    .im-drop-hint { font-size: .8rem; color: var(--im-muted); }
+    .im-drop:hover, .im-drop.on { background: rgba(91, 181, 200, .08); border-color: var(--volt); }
+    .im-drop-ico { width: 52px; height: 52px; object-fit: contain; border-radius: 10px; margin-bottom: .2rem; }
+    .im-drop-main { font-weight: 600; color: #fff; }
+    .im-drop-hint { font-size: .8rem; color: var(--mute); }
     .im-drop input { display: none; }
 
     .im-go {
-        font-family: var(--im-fancy);
-        font-weight: 700;
-        font-size: .85rem;
-        letter-spacing: .5px;
-        border: 0;
-        border-radius: 999px;
-        padding: .7rem 1.8rem;
-        background: var(--red, #d31414);
-        color: #fff;
-        transition: all .2s;
+        font-size: .9rem; font-weight: 600; border: 1px solid var(--volt); border-radius: 999px;
+        padding: .6rem 1.8rem; background: rgba(91, 181, 200, .18); color: #fff; transition: all .15s;
     }
-    .im-go:hover { filter: brightness(.92); transform: translateY(-2px); }
+    .im-go:hover { background: var(--volt); color: #02131c; transform: translateY(-1px); }
     .im-go:disabled { opacity: .6; transform: none; }
 
-    /* ---------- Resultado (tarjetas oscuras como las del panel) ---------- */
-    .im-stats {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 1rem;
-    }
+    /* Resultado */
+    .im-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
     @media (max-width: 991px) { .im-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (max-width: 575px) { .im-stats { grid-template-columns: 1fr; } }
-
     .im-stat {
-        --mc: #a3e635;
-        display: flex;
-        flex-direction: column;
-        gap: .3rem;
-        padding: 1.1rem 1.25rem;
-        border-radius: 18px;
-        color: #cbd5e1;
-        background: linear-gradient(150deg, rgba(13, 23, 38, .90), rgba(22, 35, 58, .80));
-        -webkit-backdrop-filter: blur(14px) saturate(140%);
-        backdrop-filter: blur(14px) saturate(140%);
-        border: 1px solid rgba(255, 255, 255, .10);
-        box-shadow: 0 10px 28px rgba(0, 0, 0, .28);
+        --mc: #8fbf6a; display: flex; flex-direction: column; gap: .3rem;
+        padding: 1.1rem 1.25rem; border-radius: 16px; color: var(--mute);
+        background: linear-gradient(150deg, rgba(6, 14, 28, .92), rgba(12, 28, 50, .84));
+        border: 1px solid rgba(91, 181, 200, .2);
     }
-    .im-stat.c-ok    { --mc: #a3e635; }
-    .im-stat.c-gris  { --mc: #94a3b8; }
-    .im-stat.c-azul  { --mc: #60a5fa; }
-    .im-stat.c-ambar { --mc: #fbbf24; }
-    .im-stat-num {
-        font-family: var(--im-fancy);
-        font-size: 2.5rem;
-        font-weight: 700;
-        line-height: 1;
-        color: var(--mc);
-    }
-    .im-stat-label { font-size: .88rem; color: #e2e8f0; }
-    .im-stat-note { font-size: .75rem; color: #94a3b8; }
+    .im-stat.c-ok { --mc: #8fbf6a; }
+    .im-stat.c-gris { --mc: #8696ad; }
+    .im-stat.c-azul { --mc: #5bb5c8; }
+    .im-stat.c-ambar { --mc: #d9a840; }
+    .im-stat-num { font-size: 2.4rem; font-weight: 700; line-height: 1; color: var(--mc); letter-spacing: -.01em; }
+    .im-stat-label { font-size: .86rem; color: var(--ink); }
+    .im-stat-note { font-size: .75rem; color: var(--mute); }
 
-    /* ---------- Tabla ---------- */
-    .im-table { width: 100%; margin: 0; border-collapse: collapse; }
+    /* Tabla */
+    .im-table { width: 100%; margin: 0; border-collapse: collapse; color: var(--ink); }
     .im-table thead th {
-        background: rgba(248, 250, 252, .70);
-        color: var(--im-muted);
-        font-size: .78rem;
-        font-weight: 600;
-        padding: .6rem 1.2rem;
-        border-bottom: 1px solid var(--im-line);
-        white-space: nowrap;
+        background: #08121f; color: var(--mute); font-size: .78rem; font-weight: 600;
+        padding: .7rem 1.2rem; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap;
     }
     .im-table tbody td {
-        padding: .8rem 1.2rem;
-        border-bottom: 1px solid var(--im-line);
-        vertical-align: middle;
-        font-size: .9rem;
-        color: #334155;
-        background: transparent;
+        padding: .75rem 1.2rem; border-top: 1px solid rgba(91, 181, 200, .12);
+        vertical-align: middle; font-size: .88rem; color: var(--ink); background: transparent;
     }
-    .im-table tbody tr:last-child td { border-bottom: 0; }
-    .im-table tbody tr:hover td { background: rgba(255, 255, 255, .6); }
-
+    .im-table tbody tr:hover td { background: rgba(91, 181, 200, .06); }
     .im-placa {
-        display: inline-block;
-        font-weight: 700;
-        letter-spacing: 1px;
-        padding: .1rem .6rem;
-        border-radius: 999px;
-        background: #fef3c7;
-        border: 1px solid #fcd34d;
-        color: #78350f;
+        display: inline-flex; align-items: center; gap: .4rem;
+        font-weight: 600; font-size: .8rem; color: var(--ink); letter-spacing: .06em;
+        padding: .15rem .7rem; border-radius: 999px;
+        background: rgba(91, 181, 200, .1); border: 1px solid rgba(91, 181, 200, .32);
     }
-    .im-empty { padding: 2rem 1.2rem; text-align: center; color: var(--im-muted); }
+    .im-placa::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--volt); }
+    .im-empty { padding: 2rem 1.2rem; text-align: center; color: var(--mute); font-size: .9rem; }
 </style>
 
 <div class="im-wrap">
+    <div class="im-card">
 
-    <!-- Encabezado -->
-    <div class="im-head">
-        <div>
+        <!-- Encabezado -->
+        <div class="im-head">
             <div class="im-title-row">
                 <img class="im-title-ico" src="{% static 'img/iconos/importar.jpg' %}" alt="">
-                <h1 class="im-title">Importar reporte FILPAC</h1>
-            </div>
-            <span class="im-sub">Carga el Excel de trayectos para crear los viajes</span>
-        </div>
-        <div class="im-actions">
-            <a href="{% url 'panel' %}" class="im-btn">Panel</a>
-            <a href="{% url 'mapa_gps' %}" class="im-btn">Mapa</a>
-        </div>
-    </div>
-
-    <!-- Mensajes del sistema -->
-    {% for m in messages %}
-    <div class="im-msg {{ m.tags }}">{{ m }}</div>
-    {% endfor %}
-
-    <!-- 01 SUBIR -->
-    <section class="im-panel">
-        <div class="im-panel-head">
-            <span class="im-step">01</span>
-            <h2 class="im-panel-title">Subir reporte</h2>
-        </div>
-        <div class="im-panel-body">
-            <form method="post" enctype="multipart/form-data" id="form-import">
-                {% csrf_token %}
-                <label class="im-drop" id="drop">
-                    <img class="im-drop-ico" src="{% static 'img/iconos/excel.jpg' %}" alt="">
-                    <span class="im-drop-main" id="drop-nombre">Elige el Excel de trayectos (.xlsx)</span>
-                    <span class="im-drop-hint">El que descargas de FILPAC. Haz clic aquí o arrastra el archivo.</span>
-                    <input type="file" name="archivo_excel" id="archivo" accept=".xlsx" required>
-                </label>
-                <div class="text-end mt-3">
-                    <button type="submit" class="im-go" id="btn-import">Importar</button>
-                </div>
-            </form>
-        </div>
-    </section>
-
-    <!-- 02 RESULTADO -->
-    {% if resumen %}
-    <section class="im-panel">
-        <div class="im-panel-head">
-            <span class="im-step">02</span>
-            <h2 class="im-panel-title">Resultado</h2>
-        </div>
-        <div class="im-panel-body">
-            <div class="im-stats">
-                <div class="im-stat c-ok">
-                    <div class="im-stat-num">{{ resumen.registros_nuevos }}</div>
-                    <div class="im-stat-label">Movimientos nuevos guardados</div>
-                </div>
-                <div class="im-stat c-gris">
-                    <div class="im-stat-num">{{ resumen.registros_repetidos }}</div>
-                    <div class="im-stat-label">Ya estaban importados</div>
-                    <div class="im-stat-note">Se omitieron</div>
-                </div>
-                <div class="im-stat c-azul">
-                    <div class="im-stat-num">{{ resumen.viajes_creados }}</div>
-                    <div class="im-stat-label">Viajes creados</div>
-                </div>
-                <div class="im-stat c-ambar">
-                    <div class="im-stat-num">{{ resumen.maniobras_menores }}</div>
-                    <div class="im-stat-label">Maniobras menores</div>
-                    <div class="im-stat-note">Menos de 150 m, no son viaje</div>
+                <div>
+                    <h1 class="im-title">Importar reporte FILPAC</h1>
+                    <span class="im-sub">Carga el Excel de trayectos para crear los viajes</span>
                 </div>
             </div>
-
-            {% if resumen.viajes_sin_destino %}
-            <div class="im-msg warning mt-3">
-                <b>{{ resumen.viajes_sin_destino }}</b> viaje(s) sin destino conocido: era el último movimiento del archivo.
+            <div class="im-actions">
+                <a href="{% url 'panel' %}" class="im-btn">Panel</a>
+                <a href="{% url 'mapa_gps' %}" class="im-btn">Mapa</a>
             </div>
-            {% endif %}
         </div>
-    </section>
-    {% endif %}
 
-    <!-- ÚLTIMOS VIAJES -->
-    <section class="im-panel">
-        <div class="im-panel-head">
-            <span class="im-step">{% if resumen %}03{% else %}02{% endif %}</span>
-            <h2 class="im-panel-title">Últimos viajes importados</h2>
+        <!-- Mensajes del sistema -->
+        {% if messages %}
+        <div class="im-msgs">
+            {% for m in messages %}
+            <div class="im-msg {{ m.tags }}">{{ m }}</div>
+            {% endfor %}
         </div>
-        {% if ultimos_viajes %}
-        <div class="table-responsive">
-            <table class="im-table">
-                <thead>
-                    <tr><th>Vehículo</th><th>Inicio</th><th>Fin</th><th>km</th><th>Origen</th></tr>
-                </thead>
-                <tbody>
-                    {% for v in ultimos_viajes %}
-                    <tr>
-                        <td><span class="im-placa">{{ v.vehiculo.placa }}</span></td>
-                        <td class="text-nowrap">{{ v.fecha_hora_inicio|date:"Y-m-d H:i" }}</td>
-                        <td>{{ v.fecha_hora_fin|date:"H:i" }}</td>
-                        <td>{{ v.distancia_total }}</td>
-                        <td>{{ v.direccion_origen }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <div class="im-empty">Todavía no hay viajes. Sube un Excel para empezar.</div>
         {% endif %}
-    </section>
 
+        <!-- 01 SUBIR -->
+        <section class="im-sec">
+            <div class="im-sec-head">
+                <span class="im-step">01</span>
+                <h2 class="im-sec-title">Subir reporte</h2>
+            </div>
+            <div class="im-sec-body">
+
+                <!-- Alerta propia del sistema (se llena desde JavaScript) -->
+                <div id="aviso-archivos" class="im-msg warning d-none mb-3" role="alert">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                    <span id="aviso-texto"></span>
+                </div>
+
+                <form method="post" enctype="multipart/form-data" id="form-import">
+                    {% csrf_token %}
+                    <label class="im-drop" id="drop">
+                        <img class="im-drop-ico" src="{% static 'img/iconos/excel.jpg' %}" alt="">
+                        <span class="im-drop-main" id="drop-nombre">Elige el Excel de trayectos (.xlsx)</span>
+                        <span class="im-drop-hint">El que descargas de FILPAC. Haz clic aquí o arrastra uno o varios archivos.</span>
+                        <input type="file" name="archivo_excel" id="archivo" accept=".xlsx" multiple>
+                    </label>
+                    <div class="text-end mt-3">
+                        <button type="submit" class="im-go" id="btn-import">Importar</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- 02 RESULTADO -->
+        {% if resumen %}
+        <section class="im-sec">
+            <div class="im-sec-head">
+                <span class="im-step">02</span>
+                <h2 class="im-sec-title">Resultado</h2>
+            </div>
+            <div class="im-sec-body">
+                <div class="im-stats">
+                    <div class="im-stat c-ok">
+                        <div class="im-stat-num">{{ resumen.registros_nuevos }}</div>
+                        <div class="im-stat-label">Movimientos nuevos guardados</div>
+                    </div>
+                    <div class="im-stat c-gris">
+                        <div class="im-stat-num">{{ resumen.registros_repetidos }}</div>
+                        <div class="im-stat-label">Ya estaban importados</div>
+                        <div class="im-stat-note">Se omitieron</div>
+                    </div>
+                    <div class="im-stat c-azul">
+                        <div class="im-stat-num">{{ resumen.viajes_creados }}</div>
+                        <div class="im-stat-label">Viajes creados</div>
+                    </div>
+                    <div class="im-stat c-ambar">
+                        <div class="im-stat-num">{{ resumen.maniobras_menores }}</div>
+                        <div class="im-stat-label">Maniobras menores</div>
+                        <div class="im-stat-note">Menos de 150 m, no son viaje</div>
+                    </div>
+                </div>
+
+                {% if resumen.viajes_sin_destino %}
+                <div class="im-msg warning mt-3">
+                    <b>{{ resumen.viajes_sin_destino }}</b> viaje(s) sin destino conocido: era el último movimiento del archivo.
+                </div>
+                {% endif %}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- ÚLTIMOS VIAJES -->
+        <section class="im-sec">
+            <div class="im-sec-head">
+                <span class="im-step">{% if resumen %}03{% else %}02{% endif %}</span>
+                <h2 class="im-sec-title">Últimos viajes importados</h2>
+            </div>
+            {% if ultimos_viajes %}
+            <div class="table-responsive">
+                <table class="im-table">
+                    <thead>
+                        <tr><th>Vehículo</th><th>Inicio</th><th>Fin</th><th>km</th><th>Origen</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for v in ultimos_viajes %}
+                        <tr>
+                            <td><span class="im-placa">{{ v.vehiculo.placa }}</span></td>
+                            <td class="text-nowrap">{{ v.fecha_hora_inicio|date:"Y-m-d H:i" }}</td>
+                            <td>{{ v.fecha_hora_fin|date:"H:i" }}</td>
+                            <td>{{ v.distancia_total }}</td>
+                            <td>{{ v.direccion_origen }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="im-empty">Todavía no hay viajes. Sube un Excel para empezar.</div>
+            {% endif %}
+        </section>
+
+    </div>
 </div>
 
 {% endblock %}
 
-
 {% block extra_js %}
 <script>
-    // Muestra el nombre del archivo elegido y avisa que está importando
     const input = document.getElementById('archivo');
     const nombre = document.getElementById('drop-nombre');
     const drop = document.getElementById('drop');
+    const form = document.getElementById('form-import');
+    const aviso = document.getElementById('aviso-archivos');
+    const avisoTexto = document.getElementById('aviso-texto');
+    const TEXTO_INICIAL = 'Elige el Excel de trayectos (.xlsx)';
+
+    function mostrarAviso(msg) {
+        avisoTexto.textContent = msg;
+        aviso.classList.remove('d-none');
+    }
+    function ocultarAviso() { aviso.classList.add('d-none'); }
+
+    function mostrarNombre() {
+        const n = input.files.length;
+        nombre.textContent = n === 0 ? TEXTO_INICIAL
+            : n === 1 ? input.files[0].name
+            : n + ' archivos seleccionados';
+    }
+    // Detecta archivos que no son el informe de FILPAC. Devuelve el mensaje de error o null si todo está bien.
+    function archivoIncorrecto(archivos) {
+        for (const f of archivos) {
+            const n = f.name.toLowerCase();
+            if (!n.endsWith('.xlsx')) {
+                return 'Solo se aceptan archivos .xlsx. "' + f.name + '" no lo es.';
+            }
+            if (/^tarjeta[_\s-]*ruta/.test(n)) {
+                return '"' + f.name + '" no es un informe de FILPAC, es una tarjeta de ruta. Selecciona el informe de trayectos correcto descargado de FILPAC.';
+            }
+        }
+        return null;
+    }
+
     input.addEventListener('change', () => {
-        nombre.textContent = input.files.length ? input.files[0].name : 'Elige el Excel de trayectos (.xlsx)';
+        ocultarAviso();
+        const error = archivoIncorrecto(input.files);
+        if (error) {
+            mostrarAviso(error);
+            input.value = '';
+        }
+        mostrarNombre();
     });
+
+    // Evita que el navegador abra el archivo si se suelta fuera de la zona
+    ['dragover', 'drop'].forEach(e => window.addEventListener(e, ev => ev.preventDefault()));
+
+    // Resalta la zona mientras se arrastra encima
     ['dragenter', 'dragover'].forEach(e => drop.addEventListener(e, () => drop.classList.add('on')));
     ['dragleave', 'drop'].forEach(e => drop.addEventListener(e, () => drop.classList.remove('on')));
-    document.getElementById('form-import').addEventListener('submit', () => {
+
+    // Al soltar, pasa los archivos al campo del formulario
+    drop.addEventListener('drop', ev => {
+        ev.preventDefault();
+        const archivos = ev.dataTransfer.files;
+        if (!archivos.length) return;
+        const error = archivoIncorrecto(archivos);
+        if (error) {
+            mostrarAviso(error);
+            return;
+        }
+        ocultarAviso();
+        input.files = archivos;
+        mostrarNombre();
+    });
+
+    // Lee cada archivo completo en memoria. Si alguno ya no existe o cambió, lanza error con su nombre.
+    async function leerArchivos() {
+        const lista = [];
+        for (const f of input.files) {
+            try {
+                const buf = await f.arrayBuffer();
+                lista.push({ nombre: f.name, tipo: f.type, buf: buf });
+            } catch (e) {
+                const err = new Error('ilegible');
+                err.archivo = f.name;
+                throw err;
+            }
+        }
+        return lista;
+    }
+
+    function restaurarBoton() {
+        const b = document.getElementById('btn-import');
+        b.disabled = false;
+        b.textContent = 'Importar';
+    }
+
+    form.addEventListener('submit', async ev => {
+        ev.preventDefault();
+        ocultarAviso();
+
+        if (!input.files.length) {
+            mostrarAviso('Selecciona al menos un Excel antes de importar.');
+            return;
+        }
+
+        const errorNombre = archivoIncorrecto(input.files);
+        if (errorNombre) {
+            mostrarAviso(errorNombre);
+            input.value = '';
+            mostrarNombre();
+            return;
+        }
+
         const b = document.getElementById('btn-import');
         b.disabled = true;
         b.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Importando...';
+
+        // 1) Leer los archivos antes de enviar
+        let archivos;
+        try {
+            archivos = await leerArchivos();
+        } catch (e) {
+            mostrarAviso('No se pudo leer "' + (e.archivo || 'el archivo') + '". Es posible que se haya movido, renombrado, borrado o que esté abierto en otro programa. Vuelve a seleccionarlo y prueba otra vez.');
+            input.value = '';
+            mostrarNombre();
+            restaurarBoton();
+            return;
+        }
+
+        // 2) Enviar con fetch (los datos ya están en memoria, Chrome no vuelve a abrir los archivos)
+        const datos = new FormData();
+        const token = form.querySelector('[name=csrfmiddlewaretoken]');
+        if (token) datos.append('csrfmiddlewaretoken', token.value);
+        archivos.forEach(a => datos.append('archivo_excel', new Blob([a.buf], { type: a.tipo }), a.nombre));
+
+        try {
+            const resp = await fetch(form.getAttribute('action') || window.location.href, {
+                method: 'POST',
+                body: datos,
+                credentials: 'same-origin'
+            });
+            if (!resp.ok) {
+                mostrarAviso('El servidor respondió con un error (' + resp.status + '). Revisa la consola de Django.');
+                restaurarBoton();
+                return;
+            }
+            if (resp.redirected) { window.location.href = resp.url; return; }
+            const html = await resp.text();
+            document.open();
+            document.write(html);
+            document.close();
+        } catch (e) {
+            mostrarAviso('No se pudo enviar el archivo al servidor. Verifica que el servidor esté activo y vuelve a intentar.');
+            restaurarBoton();
+        }
     });
 </script>
 {% endblock %}

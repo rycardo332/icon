@@ -1,17 +1,30 @@
-
+import re
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from .validadores import validar_tamano_imagen
 
 # ======================================================================
 # 1. VEHÍCULOS Y CONDUCTORES
 # ======================================================================
+PATRON_PLACA = re.compile(r"^([A-Z]{3}\d{3}|[A-Z]{3}\d{2}[A-Z]|[RS]\d{5})$")
+
+
+def validar_placa(valor):
+    placa = "".join(str(valor).split()).upper()
+    if not PATRON_PLACA.match(placa):
+        raise ValidationError(
+            "Placa inválida. Usa el formato ABC123 (carro/camión), ABC12D (moto) o R12345 (remolque)."
+        )
+
 
 class Vehiculo(models.Model):
-    imagen = models.ImageField(upload_to="vehiculos/", blank=True, null=True)
-    placa = models.CharField(max_length=15, unique=True)
+    imagen = models.ImageField(
+        upload_to="vehiculos/", blank=True, null=True, validators=[validar_tamano_imagen]
+    )
+    placa = models.CharField(max_length=15, unique=True, validators=[validar_placa])
     tipo = models.CharField(max_length=150)  # "NISSAN FRONTIER - Camioneta"
 
     soat_vigente_hasta = models.DateField()
@@ -23,13 +36,18 @@ class Vehiculo(models.Model):
     # Vincula la placa con el identificador de objeto/dispositivo en FILPAC
     id_objeto_gps = models.CharField(max_length=50, blank=True)
 
+    def save(self, *args, **kwargs):
+        # Sin espacios y en mayúscula, igual que _normalizar() del indicador
+        self.placa = "".join(self.placa.split()).upper()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.placa
 
 
 class Conductor(models.Model):
     nombre = models.CharField(max_length=200)
-    cargo = models.CharField(max_length=200)  
+    cargo = models.CharField(max_length=200)
     licencia_conduccion_vigente_hasta = models.DateField()
     activo = models.BooleanField(default=True)
 
@@ -53,7 +71,11 @@ class Ruta(models.Model):
     descripcion_ruta = models.TextField(blank=True)
     instrucciones_recorrido = models.TextField(blank=True)  # giros paso a paso
 
-    mapa_imagen = models.FileField(upload_to="rutas/mapas/", null=True, blank=True)
+    # ImageField (antes FileField): Pillow comprueba que el archivo sea una imagen de verdad,
+    # así no se puede subir un .html, .svg o .js que luego se sirva desde el mismo dominio.
+    mapa_imagen = models.ImageField(
+        upload_to="rutas/mapas/", null=True, blank=True, validators=[validar_tamano_imagen]
+    )
     geometria_ruta = models.JSONField(null=True, blank=True)  # polilínea/coordenadas, opcional
 
     activa = models.BooleanField(default=True)
@@ -102,6 +124,7 @@ class Ruta(models.Model):
 
     def __str__(self):
         return f"{self.codigo} - {self.nombre}"
+
 
 class PuntoRuta(models.Model):
     """Entidad genérica para todo elemento de la ruta con ubicación puntual."""
@@ -190,7 +213,7 @@ class InspeccionVehiculo(models.Model):
         "Desplazamiento", related_name="inspeccion", on_delete=models.CASCADE
     )
     fecha_hora = models.DateTimeField(auto_now_add=True)
-    realizada_por = models.CharField(max_length=200, blank=True) 
+    realizada_por = models.CharField(max_length=200, blank=True)
     resultado_general = models.CharField(max_length=20, choices=Resultado.choices, default=Resultado.APTO)
     observaciones = models.TextField(blank=True)
 
@@ -276,7 +299,6 @@ class Desplazamiento(models.Model):
     def __str__(self):
         return f"{self.ruta.codigo} - {self.fecha_desplazamiento} ({self.vehiculo.placa})"
 
-   
 
 # ======================================================================
 # 5. GPS FILPAC: IMPORTACIÓN, REGISTROS CRUDOS Y VIAJE AGRUPADO
@@ -322,11 +344,10 @@ class Viaje(models.Model):
     tiempo_ralenti = models.DurationField(null=True, blank=True)
     tiempo_actividad = models.DurationField(null=True, blank=True)
 
-   
     geometria_osrm = models.JSONField(null=True, blank=True)
     distancia_osrm_km = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     pasos_osrm = models.JSONField(null=True, blank=True)
-    
+
     def __str__(self):
         return f"Viaje {self.vehiculo.placa} {self.fecha_hora_inicio:%Y-%m-%d %H:%M}"
 

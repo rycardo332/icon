@@ -4,7 +4,7 @@
 {% block content %}
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  .rf-wrap{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:1.25rem}
+  .rf-wrap{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:1.25rem}
   .rf-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
   .rf-title-box{display:flex;align-items:center;gap:.9rem}
   .rf-title-box img{width:44px;height:44px;object-fit:contain;border-radius:10px}
@@ -19,8 +19,9 @@
   .rf-btn-dark{background:var(--dark);color:#fff}
   .rf-btn-dark:hover{color:#fff}
 
-  .rf-panel{background:rgba(255,255,255,.84);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(255,255,255,.7);border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.18)}
-  .rf-panel-head{display:flex;align-items:center;gap:.75rem;padding:.9rem 1.25rem;background:linear-gradient(90deg,var(--dark),var(--dark-2))}
+  /* overflow visible: si no, el panel recorta la lista desplegable */
+  .rf-panel{background:rgba(255,255,255,.84);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(255,255,255,.7);border-radius:18px;overflow:visible;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+  .rf-panel-head{display:flex;align-items:center;gap:.75rem;padding:.9rem 1.25rem;background:linear-gradient(90deg,var(--dark),var(--dark-2));border-radius:17px 17px 0 0}
   .rf-step{font-family:'Space Mono',monospace;font-weight:700;color:#a3e635}
   .rf-panel-title{font-family:'Space Mono',monospace;font-weight:700;font-size:.95rem;color:#fff;margin:0}
   .rf-body{padding:1.25rem}
@@ -34,6 +35,20 @@
   .rf-alert ul{list-style:none;margin:0;padding:0}
 
   .rf-foot{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid rgba(15,23,42,.09)}
+
+  /* Lista desplegable propia (siempre se abre hacia abajo) */
+  .rf-dd{position:relative}
+  .rf-dd-btn{width:100%;display:flex;justify-content:space-between;align-items:center;gap:.5rem;text-align:left;border-radius:10px;border:1px solid rgba(15,23,42,.15);background:rgba(255,255,255,.9);padding:.5rem .75rem;font-size:.88rem;color:#0f172a;cursor:pointer}
+  .rf-dd-btn:focus{outline:none;border-color:var(--dark-2)}
+  .rf-dd-btn.rf-dd-error{border-color:#b91c1c}
+  .rf-dd-btn .rf-dd-placeholder{color:#64748b}
+  .rf-dd-btn::after{content:"";width:7px;height:7px;border-right:2px solid #475569;border-bottom:2px solid #475569;transform:rotate(45deg);margin-top:-3px;flex-shrink:0;transition:transform .15s}
+  .rf-dd.open .rf-dd-btn::after{transform:rotate(-135deg);margin-top:3px}
+  .rf-dd-list{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:50;max-height:220px;overflow-y:auto;margin:0;padding:.3rem;list-style:none;background:#fff;border:1px solid rgba(15,23,42,.15);border-radius:10px;box-shadow:0 12px 28px rgba(0,0,0,.22)}
+  .rf-dd.open .rf-dd-list{display:block}
+  .rf-dd-list li{padding:.4rem .6rem;border-radius:7px;font-size:.88rem;color:#0f172a;cursor:pointer}
+  .rf-dd-list li:hover,.rf-dd-list li.activo{background:#e2e8f0}
+  .rf-dd-list li.elegido{background:var(--dark-2);color:#fff;font-weight:600}
 
   @media (max-width:767px){
     .rf-title{font-size:1.3rem}
@@ -72,12 +87,12 @@
       {% endif %}
 
       <div class="row g-3">
-        <div class="col-md-4">
+        <div class="col-md-6">
           <label for="{{ form.codigo.id_for_label }}">Código</label>
           {{ form.codigo }}
           <div class="rf-err">{{ form.codigo.errors }}</div>
         </div>
-        <div class="col-md-8">
+        <div class="col-md-6">
           <label for="{{ form.nombre.id_for_label }}">Nombre</label>
           {{ form.nombre }}
           <div class="rf-err">{{ form.nombre.errors }}</div>
@@ -124,5 +139,190 @@
       e.preventDefault();
     }
   }, true);
+</script>
+<script>
+  // Distancia y tiempo estimado como listas desplegables propias.
+  // Siempre se abren hacia abajo (el select nativo lo decide el navegador).
+  // El campo original queda oculto y recibe el valor elegido, así el formulario
+  // se envía igual que antes. Si el JavaScript falla, se ven los campos normales.
+  (function () {
+    function aNumero(v) {
+      return parseFloat(String(v).replace(",", "."));
+    }
+    function aSegundos(v) {
+      var p = String(v).split(":");
+      if (p.length < 2) return NaN;
+      return (+p[0]) * 3600 + (+p[1]) * 60 + (+(p[2] || 0));
+    }
+
+    var abierto = null; // lista desplegable abierta en este momento
+
+    function cerrar() {
+      if (abierto) { abierto.classList.remove("open"); abierto = null; }
+    }
+    document.addEventListener("click", function (e) {
+      if (abierto && !abierto.contains(e.target)) cerrar();
+    });
+
+    function convertir(id, opciones, clave, textoActual) {
+      var campo = document.getElementById(id);
+      if (!campo) return;
+      var actual = campo.value.trim();
+      var obligatorio = campo.required;
+
+      // Si la ruta ya tiene un valor que no está en la lista, se conserva
+      // para no borrarlo sin querer.
+      var hallado = opciones.some(function (o) {
+        return actual && clave(o.valor) === clave(actual);
+      });
+      var lista = opciones.slice();
+      if (actual && !hallado && !isNaN(clave(actual))) {
+        lista.unshift({ texto: textoActual(actual), valor: actual });
+      }
+
+      var cont = document.createElement("div");
+      cont.className = "rf-dd";
+
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "rf-dd-btn";
+
+      var ul = document.createElement("ul");
+      ul.className = "rf-dd-list";
+
+      var items = [];
+      var elegido = null;
+
+      function pintarBoton() {
+        btn.innerHTML = "";
+        var span = document.createElement("span");
+        if (elegido) {
+          span.textContent = elegido.texto;
+        } else {
+          span.textContent = "Selecciona...";
+          span.className = "rf-dd-placeholder";
+        }
+        btn.appendChild(span);
+      }
+
+      function elegir(o, li) {
+        elegido = o;
+        campo.value = o ? o.valor : "";
+        items.forEach(function (x) { x.classList.remove("elegido"); });
+        if (li) li.classList.add("elegido");
+        btn.classList.remove("rf-dd-error");
+        pintarBoton();
+        cerrar();
+      }
+
+      // Opción vacía
+      var vacio = document.createElement("li");
+      vacio.textContent = "Selecciona...";
+      vacio.addEventListener("click", function () { elegir(null, null); });
+      ul.appendChild(vacio);
+      items.push(vacio);
+
+      lista.forEach(function (o) {
+        var li = document.createElement("li");
+        li.textContent = o.texto;
+        li.addEventListener("click", function () { elegir(o, li); });
+        ul.appendChild(li);
+        items.push(li);
+        if (actual && clave(o.valor) === clave(actual)) {
+          elegido = o;
+          li.classList.add("elegido");
+          campo.value = o.valor;
+        }
+      });
+
+      function abrir() {
+        cerrar();
+        cont.classList.add("open");
+        abierto = cont;
+        var sel = ul.querySelector(".elegido");
+        // Deja visible la opción elegida dentro de la lista.
+        ul.scrollTop = sel ? Math.max(0, sel.offsetTop - 60) : 0;
+        // Si la lista queda fuera de la pantalla, mueve la página un poco.
+        ul.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+
+      btn.addEventListener("click", function () {
+        if (cont.classList.contains("open")) cerrar(); else abrir();
+      });
+
+      // Teclado: flechas para moverse, Enter para elegir, Escape para cerrar.
+      btn.addEventListener("keydown", function (e) {
+        var abiertaAhora = cont.classList.contains("open");
+        if (e.key === "Escape") { cerrar(); return; }
+        if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+          e.preventDefault();
+          if (!abiertaAhora) { abrir(); return; }
+          var i = items.findIndex(function (x) { return x.classList.contains("activo"); });
+          if (i < 0) i = items.findIndex(function (x) { return x.classList.contains("elegido"); });
+          i = e.key === "ArrowDown" ? Math.min(items.length - 1, i + 1) : Math.max(0, i - 1);
+          items.forEach(function (x) { x.classList.remove("activo"); });
+          items[i].classList.add("activo");
+          items[i].scrollIntoView({ block: "nearest" });
+        } else if (e.key === "Enter" && abiertaAhora) {
+          e.preventDefault();
+          var a = ul.querySelector(".activo");
+          if (a) a.click();
+        }
+      });
+
+      pintarBoton();
+      cont.appendChild(btn);
+      cont.appendChild(ul);
+
+      // El campo original deja de ser obligatorio para el navegador (está oculto
+      // y no se podría enfocar); la validación se hace al enviar.
+      campo.required = false;
+      campo.style.display = "none";
+      campo.parentNode.insertBefore(cont, campo);
+
+      var form = campo.form;
+      if (form) {
+        form.addEventListener("submit", function (e) {
+          if (obligatorio && !campo.value) {
+            e.preventDefault();
+            btn.classList.add("rf-dd-error");
+            btn.focus();
+          }
+        });
+      }
+    }
+
+    // Distancia: de 1 en 1 km hasta 100, y de 5 en 5 hasta 500.
+    var km = [];
+    for (var d = 1; d <= 100; d++) km.push(d);
+    for (var d2 = 105; d2 <= 500; d2 += 5) km.push(d2);
+    convertir(
+      "{{ form.distancia_km.id_for_label }}",
+      km.map(function (n) { return { texto: n + " km", valor: n.toFixed(2) }; }),
+      aNumero,
+      function (v) { return aNumero(v) + " km"; }
+    );
+
+    // Tiempo: de 5 en 5 minutos hasta 3 horas, y de 15 en 15 hasta 12 horas.
+    function textoTiempo(min) {
+      var h = Math.floor(min / 60), m = min % 60;
+      if (h === 0) return m + " min";
+      if (m === 0) return h + " h";
+      return h + " h " + (m < 10 ? "0" : "") + m + " min";
+    }
+    function valorTiempo(min) {
+      var h = Math.floor(min / 60), m = min % 60;
+      return (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m + ":00";
+    }
+    var mins = [];
+    for (var t = 5; t <= 180; t += 5) mins.push(t);
+    for (var t2 = 195; t2 <= 720; t2 += 15) mins.push(t2);
+    convertir(
+      "{{ form.tiempo_estimado.id_for_label }}",
+      mins.map(function (m) { return { texto: textoTiempo(m), valor: valorTiempo(m) }; }),
+      aSegundos,
+      function (v) { return textoTiempo(Math.round(aSegundos(v) / 60)); }
+    );
+  })();
 </script>
 {% endblock %}

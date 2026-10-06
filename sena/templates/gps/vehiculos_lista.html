@@ -1,178 +1,306 @@
 {% extends "base.html" %}
 {% load static %}
 
+{% block title %}Vehículos{% endblock %}
+
 {% block content %}
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
-  .vl-wrap{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:1.25rem}
-  .vl-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
-  .vl-title-box{display:flex;align-items:center;gap:.9rem}
-  .vl-title-box img{width:44px;height:44px;object-fit:contain;border-radius:10px}
-  .vl-title{font-family:'Space Mono',monospace;font-weight:700;font-size:1.7rem;color:#fff;margin:0;text-shadow:0 2px 8px rgba(0,0,0,.45)}
-  .vl-sub{color:#e2e8f0;font-size:.9rem;margin:0;text-shadow:0 1px 4px rgba(0,0,0,.4)}
-  .vl-actions{display:flex;gap:.6rem;flex-wrap:wrap}
+    /* VEHÍCULOS - mismo estilo del Panel de control (prefijo ic-) · sin animaciones */
+    .ic-dash {
+        --volt: #5bb5c8; --lime: #8fbf6a; --amber: #d9a840; --red2: #d9777a;
+        --ink: #dbe4f0; --mute: #8696ad; --line: rgba(91, 181, 200, .28);
+        --glass: rgba(6, 14, 28, .82);
+        --ic-fancy: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        --ic-mono: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        max-width: 1200px; margin: 0 auto;
+        color: var(--ink); font-family: var(--ic-fancy); font-variant-numeric: tabular-nums;
+        display: flex; flex-direction: column; gap: 1.5rem;
+    }
 
-  .vl-btn{display:inline-flex;align-items:center;gap:.4rem;border-radius:999px;padding:.5rem 1.1rem;font-size:.85rem;font-weight:600;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:transform .15s,filter .15s,background .15s,color .15s}
-  .vl-btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
-  .vl-btn-sec{background:rgba(255,255,255,.88);color:#0f172a;border-color:rgba(255,255,255,.7)}
-  .vl-btn-sec:hover{background:var(--dark-2);color:#fff}
-  .vl-btn-main{background:var(--red);color:#fff}
-  .vl-btn-main:hover{color:#fff}
-  .vl-btn-dark{background:var(--dark);color:#fff}
-  .vl-btn-dark:hover{color:#fff}
-  .vl-btn-sm{padding:.3rem .85rem;font-size:.78rem}
+    /* PANEL -------------------------------------------------- */
+    .ic-panel {
+        display: flex; flex-direction: column;
+        background: var(--glass);
+        -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%);
+        border: 1px solid rgba(91, 181, 200, .25); border-radius: 20px; overflow: hidden;
+        box-shadow: 0 14px 36px rgba(0, 0, 0, .4);
+    }
 
-  .vl-panel{background:rgba(255,255,255,.84);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(255,255,255,.7);border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.18)}
-  .vl-panel-head{display:flex;align-items:center;gap:.75rem;padding:.9rem 1.25rem;background:linear-gradient(90deg,var(--dark),var(--dark-2))}
-  .vl-step{font-family:'Space Mono',monospace;font-weight:700;color:#a3e635}
-  .vl-panel-title{font-family:'Space Mono',monospace;font-weight:700;font-size:.95rem;color:#fff;margin:0}
-  .vl-count{margin-left:auto;background:rgba(255,255,255,.12);color:#fff;border-radius:999px;padding:.2rem .75rem;font-size:.78rem;font-weight:600}
+    /* BARRA SUPERIOR ----------------------------------------- */
+    .ic-top {
+        display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;
+        padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--line);
+        background: linear-gradient(100deg, rgba(91, 181, 200, .1), rgba(143, 191, 106, .03) 60%, transparent);
+    }
+    .ic-top-icon { width: 44px; height: 44px; flex: none; object-fit: contain; border-radius: 10px; }
+    .ic-title { font-family: var(--ic-fancy); font-weight: 700; font-size: 1.4rem; margin: 0; color: #fff; }
+    .ic-subtitle { margin: 0; color: var(--mute); font-size: .85rem; }
+    .ic-actions { margin-left: auto; display: flex; gap: .5rem; flex-wrap: wrap; }
 
-  .vl-scroll{max-height:640px;overflow:auto}
-  .vl-table{width:100%;border-collapse:collapse;font-size:.88rem;color:#334155}
-  .vl-table thead th{position:sticky;top:0;z-index:1;background:rgba(248,250,252,.92);color:#64748b;font-size:.78rem;font-weight:600;text-align:left;padding:.75rem 1rem;white-space:nowrap}
-  .vl-table td{padding:.7rem 1rem;border-top:1px solid rgba(15,23,42,.09);vertical-align:middle}
-  .vl-table tbody tr:hover{background:rgba(255,255,255,.6)}
-  .vl-off td{color:#64748b}
-  .vl-right{text-align:right!important}
-  .vl-plate{font-family:'Space Mono',monospace;font-weight:700;color:#0f172a}
-  .vl-off .vl-plate{color:#64748b}
-  .vl-thumb{width:72px;height:48px;border-radius:10px;object-fit:cover;display:block;background:#eef2f7}
-  .vl-thumb-ph{object-fit:contain;padding:6px}
-  .vl-thumb-btn{display:block;padding:0;border:0;background:none;border-radius:10px;cursor:zoom-in;transition:transform .15s,filter .15s}
-  .vl-thumb-btn:hover{transform:scale(1.06);filter:brightness(1.05)}
-  .vl-date{font-size:.78rem;color:#64748b;margin-bottom:.2rem}
-  .vl-row-actions{display:flex;gap:.4rem;justify-content:flex-end;align-items:center}
-  .vl-row-actions form{margin:0}
-  .vl-empty{text-align:center;color:#64748b;padding:2rem 1rem!important}
+    /* BOTONES ------------------------------------------------ */
+    .ic-btn {
+        display: inline-flex; align-items: center; gap: .4rem; border-radius: 999px;
+        padding: .45rem 1.05rem; font-size: .83rem; font-weight: 600; text-decoration: none;
+        color: var(--ink); border: 1px solid var(--line); background: rgba(2, 8, 20, .5);
+        cursor: pointer; transition: all .15s;
+    }
+    .ic-btn:hover { border-color: var(--volt); color: #fff; box-shadow: 0 0 0 1px var(--volt); }
+    .ic-btn:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+    .ic-btn-main { background: var(--volt); border-color: var(--volt); color: #04141b; }
+    .ic-btn-main:hover { background: #7cc6d6; border-color: #7cc6d6; color: #04141b; box-shadow: none; }
+    .ic-btn-sm { padding: .3rem .85rem; font-size: .78rem; }
 
-  .vl-pill{display:inline-block;border-radius:999px;padding:.2rem .7rem;font-size:.75rem;font-weight:600;border:1px solid;background:#f1f5f9;color:#475569;border-color:#e2e8f0}
-  .vl-pill-success{background:#f0fdf4;color:#15803d;border-color:#bbf7d0}
-  .vl-pill-warning{background:#fffbeb;color:#b45309;border-color:#fde68a}
-  .vl-pill-danger{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
-  .vl-pill-secondary,.vl-pill-info,.vl-pill-primary,.vl-pill-light,.vl-pill-dark{background:#f1f5f9;color:#475569;border-color:#e2e8f0}
+    /* ENCABEZADO DE SECCIÓN: 01 Título ........ [contador] --- */
+    .ic-sec-head {
+        position: relative; display: flex; align-items: center; gap: .6rem;
+        padding: .95rem 1.5rem .7rem; border-bottom: 1px solid var(--line);
+        background: linear-gradient(100deg, rgba(91, 181, 200, .1), rgba(143, 191, 106, .03) 60%, transparent);
+    }
+    .ic-sec-head::after {
+        content: ""; position: absolute; left: 0; bottom: -1px; width: 64px; height: 2px; background: var(--lime);
+    }
+    .ic-step { font-family: var(--ic-mono); font-size: .8rem; font-weight: 700; color: var(--lime); }
+    .ic-panel-title { font-family: var(--ic-mono); font-weight: 700; font-size: .95rem; color: #fff; margin: 0; }
+    .ic-head-right { margin-left: auto; display: flex; align-items: center; gap: .5rem; }
+    .ic-count {
+        background: rgba(91, 181, 200, .1); border: 1px solid var(--line); color: var(--volt);
+        border-radius: 999px; padding: .15rem .75rem; font-size: .78rem; font-weight: 600;
+    }
 
-  .vl-msg{border-radius:14px;padding:.75rem 1rem;font-size:.88rem;font-weight:500}
-  .vl-msg-success{background:#f0fdf4;color:#15803d}
-  .vl-msg-error,.vl-msg-danger{background:#fef2f2;color:#b91c1c}
-  .vl-msg-warning{background:#fffbeb;color:#b45309}
-  .vl-msg-info,.vl-msg-debug{background:#eff6ff;color:#1d4ed8}
+    /* TABLA -------------------------------------------------- */
+    .ic-scroll { max-height: 640px; overflow: auto; }
+    .ic-table { width: 100%; margin: 0; border-collapse: collapse; color: var(--ink); }
+    .ic-table thead th {
+        position: sticky; top: 0; z-index: 1;
+        background: #08121f; color: var(--mute);
+        font-size: .78rem; font-weight: 600; padding: .75rem 1.2rem; text-align: left;
+        border-bottom: 1px solid var(--line); white-space: nowrap;
+    }
+    .ic-table tbody td {
+        padding: .75rem 1.2rem; border-top: 1px solid rgba(91, 181, 200, .12);
+        vertical-align: middle; font-size: .88rem; background: transparent; color: var(--ink);
+    }
+    .ic-table tbody tr:hover td { background: rgba(91, 181, 200, .06); }
+    .ic-off td { color: var(--mute); }
+    .ic-right { text-align: right !important; }
+    .ic-center { text-align: center !important; }
+    .ic-date { font-size: .78rem; color: var(--mute); margin-bottom: .3rem; }
+    .ic-row-actions { display: flex; gap: .4rem; justify-content: flex-end; align-items: center; }
+    .ic-row-actions form { margin: 0; }
+    .ic-empty { padding: 2rem 1.2rem !important; text-align: center; color: var(--mute); font-size: .9rem; }
 
-  .vl-lb{position:fixed;inset:0;z-index:3000;display:none;align-items:center;justify-content:center;padding:1.5rem;background:rgba(13,23,38,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-  .vl-lb.vl-open{display:flex}
-  .vl-lb-card{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35);max-width:min(92vw,1000px);display:flex;flex-direction:column}
-  .vl-lb-card img{display:block;max-width:100%;max-height:72vh;object-fit:contain;background:var(--dark)}
-  .vl-lb-foot{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.8rem 1.1rem}
-  .vl-lb-title{font-family:'Space Mono',monospace;font-weight:700;font-size:.95rem;color:#0f172a;margin:0}
-  .vl-lb-sub{font-size:.82rem;color:#64748b;margin:0}
+    .ic-plate {
+        display: inline-flex; align-items: center; gap: .4rem;
+        font-weight: 600; font-size: .8rem; color: var(--ink); letter-spacing: .06em;
+        padding: .15rem .7rem; border-radius: 999px;
+        background: rgba(91, 181, 200, .1); border: 1px solid rgba(91, 181, 200, .32);
+    }
+    .ic-plate::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--volt); }
+    .ic-off .ic-plate { color: var(--mute); background: rgba(138, 160, 189, .08); border-color: rgba(138, 160, 189, .3); }
+    .ic-off .ic-plate::before { background: var(--mute); }
 
-  @media (max-width:767px){
-    .vl-title{font-size:1.3rem}
-    .vl-actions{width:100%}
-  }
+    /* Miniatura de la foto */
+    .ic-thumb {
+        width: 72px; height: 48px; border-radius: 10px; object-fit: cover; display: block; margin: 0 auto;
+        background: rgba(2, 8, 20, .7); border: 1px solid rgba(91, 181, 200, .25);
+    }
+    .ic-thumb-ph { object-fit: contain; padding: 6px; }
+    .ic-thumb-btn { display: block; margin: 0 auto; padding: 0; border: 0; background: none; border-radius: 10px; cursor: zoom-in; }
+    .ic-thumb-btn:hover .ic-thumb { border-color: var(--volt); box-shadow: 0 0 0 1px var(--volt); }
+    .ic-thumb-btn:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+
+    /* ETIQUETAS ---------------------------------------------- */
+    .ic-tag {
+        display: inline-flex; align-items: center; gap: .3rem; padding: .15rem .7rem; border-radius: 999px;
+        font-size: .74rem; font-weight: 600; white-space: nowrap;
+        color: var(--mute); background: rgba(138, 160, 189, .08); border: 1px solid rgba(138, 160, 189, .4);
+    }
+    .ic-tag.ok, .ic-tag-success { color: var(--lime);  background: rgba(143, 191, 106, .1); border-color: rgba(143, 191, 106, .4); }
+    .ic-tag.warn, .ic-tag-warning { color: var(--amber); background: rgba(217, 168, 64, .1);  border-color: rgba(217, 168, 64, .4); }
+    .ic-tag.bad, .ic-tag-danger { color: var(--red2);  background: rgba(217, 119, 122, .1); border-color: rgba(217, 119, 122, .4); }
+
+    /* PAGINADOR: 10 filas por página ------------------------- */
+    .ic-pager {
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem;
+        padding: .8rem 1.5rem; border-top: 1px solid var(--line); background: rgba(91, 181, 200, .05);
+    }
+    .ic-pager[hidden] { display: none; }
+    .ic-pager-info { font-size: .82rem; color: var(--mute); }
+    .ic-pager-info b { color: var(--volt); font-weight: 700; }
+    .ic-pages { display: flex; flex-wrap: wrap; gap: .35rem; }
+    .ic-pg {
+        min-width: 36px; height: 36px; padding: 0 .7rem; border-radius: 10px; cursor: pointer;
+        font-family: var(--ic-fancy); font-weight: 600; font-size: .8rem; color: var(--ink);
+        border: 1px solid var(--line); background: rgba(2, 8, 20, .6); transition: all .15s;
+    }
+    .ic-pg:hover:not(:disabled):not(.on) { border-color: var(--volt); box-shadow: 0 0 0 1px var(--volt); }
+    .ic-pg:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+    .ic-pg.on { background: var(--volt); border-color: var(--volt); color: #04141b; cursor: default; }
+    .ic-pg:disabled { opacity: .35; cursor: not-allowed; }
+    .ic-dots { align-self: center; color: var(--mute); padding: 0 .2rem; }
+
+    /* MENSAJES ----------------------------------------------- */
+    .ic-msg {
+        border-radius: 14px; padding: .75rem 1rem; font-size: .88rem; font-weight: 500;
+        background: rgba(6, 14, 28, .88); border: 1px solid;
+    }
+    .ic-msg-success { color: var(--lime); border-color: rgba(143, 191, 106, .45); }
+    .ic-msg-error, .ic-msg-danger { color: #f3c4c6; border-color: rgba(217, 119, 122, .5); }
+    .ic-msg-warning { color: var(--amber); border-color: rgba(217, 168, 64, .45); }
+    .ic-msg-info, .ic-msg-debug { color: #bfe6ee; border-color: rgba(91, 181, 200, .45); }
+
+    /* AMPLIAR FOTO (colores fijos: este bloque se agrega al body, fuera de .ic-dash) */
+    .ic-lb {
+        position: fixed; inset: 0; z-index: 3000; display: none; align-items: center; justify-content: center;
+        padding: 1.5rem; background: rgba(2, 8, 20, .78);
+        backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+        font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+    .ic-lb.ic-open { display: flex; }
+    .ic-lb-card {
+        background: rgba(6, 14, 28, .96); border: 1px solid rgba(91, 181, 200, .35); border-radius: 18px;
+        overflow: hidden; box-shadow: 0 14px 36px rgba(0, 0, 0, .5);
+        max-width: min(92vw, 1000px); display: flex; flex-direction: column;
+    }
+    .ic-lb-card img { display: block; max-width: 100%; max-height: 72vh; object-fit: contain; background: #020814; }
+    .ic-lb-foot {
+        display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+        padding: .8rem 1.1rem; border-top: 1px solid rgba(91, 181, 200, .28);
+    }
+    .ic-lb-title { font-weight: 700; font-size: .95rem; color: #fff; margin: 0; }
+    .ic-lb-sub { font-size: .82rem; color: #8696ad; margin: 0; }
+    .ic-lb-close {
+        display: inline-flex; align-items: center; border-radius: 999px; padding: .3rem .85rem;
+        font-size: .78rem; font-weight: 600; color: #dbe4f0; cursor: pointer;
+        border: 1px solid rgba(91, 181, 200, .28); background: rgba(2, 8, 20, .5); transition: all .15s;
+    }
+    .ic-lb-close:hover { border-color: #5bb5c8; color: #fff; box-shadow: 0 0 0 1px #5bb5c8; }
+    .ic-lb-close:focus-visible { outline: 2px solid #8fbf6a; outline-offset: 2px; }
+
+    @media (max-width: 767px) {
+        .ic-title { font-size: 1.2rem; }
+        .ic-actions { width: 100%; margin-left: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .ic-btn, .ic-pg, .ic-lb-close { transition: none; }
+    }
 </style>
 
-<div class="vl-wrap">
+<div class="ic-dash">
 
-  <div class="vl-head">
-    <div class="vl-title-box">
-      <img src="{% static 'img/iconos/vehiculos.jpg' %}" alt="">
-      <div>
-        <h1 class="vl-title">Vehículos</h1>
-        <p class="vl-sub">Administra la flota y el estado de sus documentos</p>
-      </div>
-    </div>
-    <div class="vl-actions">
-      <a href="{% url 'panel' %}" class="vl-btn vl-btn-sec">Volver al panel</a>
-      <a href="{% url 'crear_vehiculo' %}" class="vl-btn vl-btn-main">+ Nuevo vehículo</a>
-    </div>
-  </div>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="ic-msg ic-msg-{{ message.tags|default:'info' }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
 
-  {% if messages %}
-    {% for message in messages %}
-      <div class="vl-msg vl-msg-{{ message.tags|default:'info' }}">{{ message }}</div>
-    {% endfor %}
-  {% endif %}
+    <section class="ic-panel">
 
-  <div class="vl-panel">
-    <div class="vl-panel-head">
-      <span class="vl-step">01</span>
-      <h2 class="vl-panel-title">Listado de vehículos</h2>
-      <span class="vl-count">{{ filas|length }}</span>
-    </div>
-    <div class="vl-scroll">
-      <table class="vl-table">
-        <thead>
-          <tr>
-            <th>Foto</th>
-            <th>Placa</th>
-            <th>Tipo</th>
-            <th>SOAT</th>
-            <th>Tecnomecánica</th>
-            <th>Seguro de carga</th>
-            <th>Lic. tránsito</th>
-            <th class="vl-right">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for f in filas %}
-          <tr{% if not f.v.activo %} class="vl-off"{% endif %}>
-            <td>
-              {% if f.v.imagen %}
-                <button type="button" class="vl-thumb-btn"
-                        data-zoom-src="{{ f.v.imagen.url }}"
-                        data-zoom-titulo="{{ f.v.placa }}"
-                        data-zoom-sub="{{ f.v.tipo }}"
-                        aria-label="Ampliar foto de {{ f.v.placa }}">
-                  <img src="{{ f.v.imagen.url }}" alt="Foto de {{ f.v.placa }}" class="vl-thumb">
-                </button>
-              {% else %}
-                <img src="{% static 'img/iconos/vehiculos.jpg' %}" alt="Sin foto" class="vl-thumb vl-thumb-ph">
-              {% endif %}
-            </td>
-            <td>
-              <span class="vl-plate">{{ f.v.placa }}</span>{% if not f.v.activo %} <span class="vl-pill vl-pill-secondary">Inactivo</span>{% endif %}
-            </td>
-            <td>{{ f.v.tipo }}</td>
-            {% for doc in f.docs %}
-            <td>
-              {% if doc.fecha %}<div class="vl-date">{{ doc.fecha|date:"d/m/Y" }}</div>{% endif %}
-              <span class="vl-pill vl-pill-{{ doc.color }}">{{ doc.texto }}</span>
-            </td>
-            {% endfor %}
-            <td>
-              {% if f.v.licencia_transito_vigente %}<span class="vl-pill vl-pill-success">Vigente</span>
-              {% else %}<span class="vl-pill vl-pill-danger">No vigente</span>{% endif %}
-            </td>
-            <td class="vl-right">
-              <div class="vl-row-actions">
-                <a href="{% url 'editar_vehiculo' f.v.id %}" class="vl-btn vl-btn-sec vl-btn-sm">Editar</a>
-                <form method="post" action="{% url 'alternar_vehiculo' f.v.id %}"
-                      data-titulo="{% if f.v.activo %}¿Desactivar vehículo?{% else %}¿Activar vehículo?{% endif %}"
-                      data-confirmar="¿Seguro que quieres {% if f.v.activo %}desactivar{% else %}activar{% endif %} el vehículo {{ f.v.placa }}?"
-                      data-si="{% if f.v.activo %}Sí, desactivar{% else %}Sí, activar{% endif %}"
-                      data-no="Cancelar"{% if f.v.activo %} data-peligro{% endif %}>
-                  {% csrf_token %}
-                  {% if f.v.activo %}
-                    <button type="submit" class="vl-btn vl-btn-sec vl-btn-sm">Desactivar</button>
-                  {% else %}
-                    <button type="submit" class="vl-btn vl-btn-dark vl-btn-sm">Activar</button>
-                  {% endif %}
-                </form>
-              </div>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="8" class="vl-empty">
-              Aún no hay vehículos registrados. Crea el primero con «Nuevo vehículo».
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
+        <!-- Barra superior -->
+        <div class="ic-top">
+            <img class="ic-top-icon" src="{% static 'img/iconos/vehiculos.jpg' %}" alt="">
+            <div>
+                <h1 class="ic-title">Vehículos</h1>
+                <p class="ic-subtitle">Administra la flota y el estado de sus documentos</p>
+            </div>
+            <div class="ic-actions">
+                <a href="{% url 'panel' %}" class="ic-btn">Volver al panel</a>
+                <a href="{% url 'crear_vehiculo' %}" class="ic-btn ic-btn-main">+ Nuevo vehículo</a>
+            </div>
+        </div>
+
+        <!-- Encabezado de sección -->
+        <div class="ic-sec-head">
+            <span class="ic-step">01</span>
+            <h2 class="ic-panel-title">Listado de vehículos</h2>
+            <div class="ic-head-right">
+                <span class="ic-count">{{ filas|length }}</span>
+            </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="ic-scroll" id="ic-scroll">
+            <table class="ic-table">
+                <thead>
+                    <tr>
+                        <th class="ic-center">Foto</th>
+                        <th>Placa</th>
+                        <th>Tipo</th>
+                        <th class="ic-center">SOAT</th>
+                        <th class="ic-center">Tecnomecánica</th>
+                        <th class="ic-center">Seguro de carga</th>
+                        <th class="ic-center">Lic. tránsito</th>
+                        <th class="ic-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in filas %}
+                    <tr{% if not f.v.activo %} class="ic-off"{% endif %}>
+                        <td class="ic-center">
+                            {% if f.v.imagen %}
+                                <button type="button" class="ic-thumb-btn"
+                                        data-zoom-src="{{ f.v.imagen.url }}"
+                                        data-zoom-titulo="{{ f.v.placa }}"
+                                        data-zoom-sub="{{ f.v.tipo }}"
+                                        aria-label="Ampliar foto de {{ f.v.placa }}">
+                                    <img src="{{ f.v.imagen.url }}" alt="Foto de {{ f.v.placa }}" class="ic-thumb">
+                                </button>
+                            {% else %}
+                                <img src="{% static 'img/iconos/vehiculos.jpg' %}" alt="Sin foto" class="ic-thumb ic-thumb-ph">
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="ic-plate">{{ f.v.placa }}</span>{% if not f.v.activo %} <span class="ic-tag ms-1">Inactivo</span>{% endif %}
+                        </td>
+                        <td>{{ f.v.tipo }}</td>
+                        {% for doc in f.docs %}
+                        <td class="ic-center">
+                            {% if doc.fecha %}<div class="ic-date">{{ doc.fecha|date:"d/m/Y" }}</div>{% endif %}
+                            <span class="ic-tag ic-tag-{{ doc.color }}">{{ doc.texto }}</span>
+                        </td>
+                        {% endfor %}
+                        <td class="ic-center">
+                            {% if f.v.licencia_transito_vigente %}<span class="ic-tag ok">Vigente</span>
+                            {% else %}<span class="ic-tag bad">No vigente</span>{% endif %}
+                        </td>
+                        <td class="ic-right">
+                            <div class="ic-row-actions">
+                                <a href="{% url 'editar_vehiculo' f.v.id %}" class="ic-btn ic-btn-sm">Editar</a>
+                                <form method="post" action="{% url 'alternar_vehiculo' f.v.id %}"
+                                      data-titulo="{% if f.v.activo %}¿Desactivar vehículo?{% else %}¿Activar vehículo?{% endif %}"
+                                      data-confirmar="¿Seguro que quieres {% if f.v.activo %}desactivar{% else %}activar{% endif %} el vehículo {{ f.v.placa }}?"
+                                      data-si="{% if f.v.activo %}Sí, desactivar{% else %}Sí, activar{% endif %}"
+                                      data-no="Cancelar"{% if f.v.activo %} data-peligro{% endif %}>
+                                    {% csrf_token %}
+                                    {% if f.v.activo %}
+                                        <button type="submit" class="ic-btn ic-btn-sm">Desactivar</button>
+                                    {% else %}
+                                        <button type="submit" class="ic-btn ic-btn-main ic-btn-sm">Activar</button>
+                                    {% endif %}
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="ic-empty">
+                            Aún no hay vehículos registrados. Crea el primero con «Nuevo vehículo».
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginador -->
+        <nav class="ic-pager" id="ic-pager" aria-label="Paginación" hidden>
+            <span class="ic-pager-info" id="ic-info"></span>
+            <div class="ic-pages" id="ic-pages"></div>
+        </nav>
+
+    </section>
 
 </div>
 {% endblock %}
@@ -182,42 +310,106 @@
   // Ampliar la foto del vehículo al hacer clic en la miniatura.
   (function () {
     var lb = document.createElement("div");
-    lb.className = "vl-lb";
+    lb.className = "ic-lb";
     lb.innerHTML =
-      '<div class="vl-lb-card" role="dialog" aria-modal="true">' +
-        '<img id="vl-lb-img" src="" alt="">' +
-        '<div class="vl-lb-foot">' +
-          '<div><p class="vl-lb-title" id="vl-lb-titulo"></p><p class="vl-lb-sub" id="vl-lb-sub"></p></div>' +
-          '<button type="button" class="vl-btn vl-btn-sec vl-btn-sm" id="vl-lb-cerrar">Cerrar</button>' +
+      '<div class="ic-lb-card" role="dialog" aria-modal="true">' +
+        '<img id="ic-lb-img" src="" alt="">' +
+        '<div class="ic-lb-foot">' +
+          '<div><p class="ic-lb-title" id="ic-lb-titulo"></p><p class="ic-lb-sub" id="ic-lb-sub"></p></div>' +
+          '<button type="button" class="ic-lb-close" id="ic-lb-cerrar">Cerrar</button>' +
         '</div>' +
       '</div>';
     document.body.appendChild(lb);
 
-    var img = lb.querySelector("#vl-lb-img");
-    var titulo = lb.querySelector("#vl-lb-titulo");
-    var sub = lb.querySelector("#vl-lb-sub");
+    var img = lb.querySelector("#ic-lb-img");
+    var titulo = lb.querySelector("#ic-lb-titulo");
+    var sub = lb.querySelector("#ic-lb-sub");
 
     function abrir(btn) {
       img.src = btn.dataset.zoomSrc;
       img.alt = "Foto de " + btn.dataset.zoomTitulo;
       titulo.textContent = btn.dataset.zoomTitulo;
       sub.textContent = btn.dataset.zoomSub || "";
-      lb.classList.add("vl-open");
+      lb.classList.add("ic-open");
     }
     function cerrar() {
-      lb.classList.remove("vl-open");
+      lb.classList.remove("ic-open");
       img.src = "";
     }
 
-    document.querySelectorAll(".vl-thumb-btn").forEach(function (b) {
+    document.querySelectorAll(".ic-thumb-btn").forEach(function (b) {
       b.addEventListener("click", function () { abrir(b); });
     });
     lb.addEventListener("click", function (e) {
-      if (e.target === lb || e.target.id === "vl-lb-cerrar") cerrar();
+      if (e.target === lb || e.target.id === "ic-lb-cerrar") cerrar();
     });
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape" && lb.classList.contains("vl-open")) cerrar();
+      if (e.key === "Escape" && lb.classList.contains("ic-open")) cerrar();
     });
+  })();
+
+  // Paginador: 10 vehículos por página.
+  (function () {
+    var POR_PAGINA = 10;
+    var filas = Array.prototype.slice.call(document.querySelectorAll('.ic-table tbody tr'))
+      .filter(function (f) { return !f.querySelector('.ic-empty'); });
+    var pager = document.getElementById('ic-pager');
+    if (!pager || filas.length <= POR_PAGINA) return;   // con 10 o menos no hace falta paginar
+
+    var total = Math.ceil(filas.length / POR_PAGINA);
+    var actual = 1;
+    var info = document.getElementById('ic-info');
+    var cont = document.getElementById('ic-pages');
+    var scroll = document.getElementById('ic-scroll');
+    pager.hidden = false;
+
+    function boton(texto, pagina, op) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'ic-pg' + (op && op.on ? ' on' : '');
+      b.textContent = texto;
+      if (op && op.label) b.setAttribute('aria-label', op.label);
+      if (op && op.on) b.setAttribute('aria-current', 'page');
+      if (op && op.off) b.disabled = true;
+      else b.addEventListener('click', function () { ir(pagina); });
+      return b;
+    }
+
+    function visibles() {
+      var lista = [];
+      for (var p = 1; p <= total; p++) {
+        if (p === 1 || p === total || Math.abs(p - actual) <= 1) lista.push(p);
+      }
+      return lista;
+    }
+
+    function ir(pagina) {
+      actual = Math.min(Math.max(pagina, 1), total);
+      var desde = (actual - 1) * POR_PAGINA;
+      filas.forEach(function (f, i) {
+        f.style.display = (i >= desde && i < desde + POR_PAGINA) ? '' : 'none';
+      });
+      if (scroll) scroll.scrollTop = 0;
+      var hasta = Math.min(desde + POR_PAGINA, filas.length);
+      info.innerHTML = 'Mostrando <b>' + (desde + 1) + '–' + hasta + '</b> de <b>' + filas.length + '</b>';
+
+      cont.innerHTML = '';
+      cont.appendChild(boton('Anterior', actual - 1, { off: actual === 1, label: 'Página anterior' }));
+      var previa = 0;
+      visibles().forEach(function (p) {
+        if (previa && p - previa > 1) {
+          var puntos = document.createElement('span');
+          puntos.className = 'ic-dots';
+          puntos.textContent = '…';
+          cont.appendChild(puntos);
+        }
+        cont.appendChild(boton(p, p, { on: p === actual, label: 'Página ' + p }));
+        previa = p;
+      });
+      cont.appendChild(boton('Siguiente', actual + 1, { off: actual === total, label: 'Página siguiente' }));
+    }
+
+    ir(1);
   })();
 </script>
 {% endblock %}

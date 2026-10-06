@@ -1,40 +1,25 @@
-# ------------------------------------------------------------
-# Dockerfile para una aplicación Django
-# ------------------------------------------------------------
-# Etapa 1: Imagen Base
-FROM python:3.11-slim
+FROM python:3.12-slim
 
-# Etapa 2: Variables de Entorno
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-
-# Etapa 3: Instalar Dependencias del Sistema
-RUN apt-get update && apt-get install -y \
-    default-libmysqlclient-dev \
-    gcc \
-    pkg-config \
-    libcairo2-dev \
-    libpango-1.0-0 \
-    libpangocairo-1.0-0 \
-    libpangoft2-1.0-0 \
-    libgdk-pixbuf-2.0-0 \
-    libffi-dev \
-    shared-mime-info \
-    fonts-liberation \
-    && rm -rf /var/lib/apt/lists/*
-
-# Etapa 4: Configurar el Directorio de Trabajo
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
-# Etapa 5: Instalar Dependencias de Python
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz0b libffi-dev \
+    shared-mime-info fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Etapa 6: Copiar el Proyecto
 COPY . .
+RUN mkdir -p media privado static
 
-# Etapa 7: Puerto que expone el contenedor
-EXPOSE 8000
+# Variables falsas solo para que collectstatic pueda cargar settings.py al construir
+RUN DEBUG=True SECRET_KEY=build DATABASE_URL=sqlite:////tmp/build.db \
+    EMAIL_HOST_USER=x EMAIL_HOST_PASSWORD=x \
+    python manage.py collectstatic --noinput
 
-# Etapa 8: Comando por defecto (desarrollo con runserver)
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+EXPOSE 10000
+CMD python manage.py migrate --noinput && \
+    gunicorn sena.wsgi:application --bind 0.0.0.0:${PORT:-10000} --workers 1 --threads 4 --timeout 120

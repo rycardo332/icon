@@ -1,6 +1,7 @@
 ﻿from datetime import timedelta
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.db.models import Count, Max, Q
 from django.shortcuts import render
 from django.urls import NoReverseMatch, reverse
@@ -12,10 +13,20 @@ from .models import (
     Desplazamiento, ReporteGPSImportado, Viaje, RegistroGPS,
     DocumentoGenerado,
 )
+
+
 def _admin_url(nombre, *args):
     """URL del admin de Django; devuelve "" si no existe (así el panel nunca se cae)."""
     try:
         return reverse(f"admin:{nombre}", args=args)
+    except NoReverseMatch:
+        return ""
+
+
+def _url(nombre, *args):
+    """URL por nombre; devuelve "" si no existe (el enlace simplemente no sale)."""
+    try:
+        return reverse(nombre, args=args)
     except NoReverseMatch:
         return ""
 
@@ -72,17 +83,19 @@ def panel(request):
             n_desp=Count("desplazamientos", distinct=True),
             n_puntos=Count("puntos", distinct=True),
             n_riesgos=Count("riesgos", distinct=True),
-        ).order_by("codigo")[:50]
+        ).order_by("codigo")[:10]
     )
-    n_rutas_activas = sum(1 for r in rutas if r.activa)
-    n_sin_condiciones = sum(1 for r in rutas if r.activa and not r.visibilidad)
+    activas = list(Ruta.objects.filter(activa=True).only("id", "visibilidad"))
+    n_rutas_activas = len(activas)
+    n_sin_condiciones = sum(1 for r in activas if not r.visibilidad)
+    # La tarjeta necesita el id de una ruta: se usa la primera ruta activa (por código)
+    ruta_tarjeta = Ruta.objects.filter(activa=True).order_by("codigo").first()
+    url_tarjeta = _url("ver_tarjeta_ruta", ruta_tarjeta.pk) if ruta_tarjeta else ""
 
     # ---------------- Cifras por módulo ----------------
     resumen_gps = Viaje.objects.aggregate(n=Count("id"), ultimo=Max("fecha_hora_inicio"))
     ultimo_reporte = ReporteGPSImportado.objects.order_by("-fecha_importacion").first()
-    n_mes = Desplazamiento.objects.filter(
-        fecha_desplazamiento__year=hoy.year, fecha_desplazamiento__month=hoy.month
-    ).count()
+    n_mes = Desplazamiento.objects.filter(fecha_desplazamiento__gte=hace_30).count()
     n_insp = InspeccionVehiculo.objects.count()
     n_fallas = InspeccionVehiculo.objects.exclude(
         resultado_general=InspeccionVehiculo.Resultado.APTO
@@ -98,29 +111,53 @@ def panel(request):
          "cifra": resumen_gps["n"], "etiqueta": "viajes importados",
          "detalle": (f"Último reporte: {timezone.localtime(ultimo_reporte.fecha_importacion):%d/%m/%Y}"
                      if ultimo_reporte else "Aún no se ha importado ningún reporte"),
-         "enlaces": _enlaces(("Importar reporte", reverse("importar_gps")),
-                             ("Mapa de viajes", reverse("mapa_gps")))},
+         "enlaces": _enlaces(
+             ("Importar reporte", reverse("importar_gps")),
+             ("Mapa", _url("mapa_gps")),
+         )},
         {"nombre": "Rutas", "icono": "fa-route", "color": "success",
          "cifra": n_rutas_activas, "etiqueta": "rutas activas",
          "detalle": f"{n_sin_condiciones} sin condiciones de la vía registradas",
-         "enlaces": _enlaces(("Rutas", reverse("listar_rutas")))},
+         "enlaces": _enlaces(
+             ("Rutas", reverse("listar_rutas")),
+             ("Tarjeta Excel", url_tarjeta),
+         )},
         {"nombre": "Desplazamientos", "icono": "fa-truck-fast", "color": "warning",
-         "cifra": n_mes, "etiqueta": "este mes",
+         "cifra": n_mes, "etiqueta": "últimos 30 días",
          "detalle": f"{n_pendientes} por completar (últimos 30 días)",
          "enlaces": _enlaces(("Ver todos", reverse("listar_desplazamientos")))},
         {"nombre": "Inspección", "icono": "fa-screwdriver-wrench", "color": "info",
          "cifra": n_insp, "etiqueta": "inspecciones",
          "detalle": f"{n_fallas} con observaciones o no aptas",
-                  "enlaces": _enlaces(("Inspecciones", reverse("listar_inspecciones")))},
+         "enlaces": _enlaces(("Preoperacional", reverse("listar_inspecciones")))},
         {"nombre": "Vehículos", "icono": "fa-car", "color": "secondary",
          "cifra": len(vehiculos), "etiqueta": "vehículos",
          "detalle": f"{a_veh} documentos vencidos o por vencer",
-            "enlaces": _enlaces(("Vehículos", reverse("listar_vehiculos")))},
+         "enlaces": _enlaces(("Vehículos", reverse("listar_vehiculos")))},
         {"nombre": "Conductores", "icono": "fa-id-card", "color": "dark",
          "cifra": len(conductores), "etiqueta": "conductores",
          "detalle": f"{a_cond} licencias vencidas o por vencer",
          "enlaces": _enlaces(("Conductores", reverse("listar_conductores")))},
+        {"nombre": "Indicador velocidad", "icono": "fa-gauge-high", "color": "danger",
+         "cifra": str(hoy.year), "etiqueta": "año en curso",
+         "detalle": "Excesos de velocidad laboral (meta 5 % o menos)",
+         "enlaces": _enlaces(("Ver indicador", reverse("indicador_velocidad")))},
     ]
+
+    # Agregar la tarjeta de usuarios condicionalmente antes de renderizar
+    if request.user.is_staff:
+        modulos.append({
+            "nombre": "Usuarios",
+            "icono": "fa-users",
+            "color": "primary",
+            "cifra": User.objects.filter(is_active=True).count(),
+            "etiqueta": "usuarios activos",
+            "detalle": f"usuarios activos · {User.objects.filter(is_active=False).count()} desactivados",
+            "enlaces": [
+                ("Ver usuarios", reverse("listar_usuarios")),
+                ("Nuevo", reverse("crear_usuario")),
+            ],
+        })
 
     return render(request, "gps/panel.html", {
         "hoy": hoy,
@@ -131,4 +168,3 @@ def panel(request):
         "n_pendientes": n_pendientes,
         "admin_inicio": _admin_url("index"),
     })
-    

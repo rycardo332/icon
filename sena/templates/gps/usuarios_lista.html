@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Usuarios{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+    /* USUARIOS - mismo estilo del Panel de control (prefijo ic-) · sin animaciones */
+    .ic-dash {
+        --volt: #5bb5c8; --lime: #8fbf6a; --amber: #d9a840; --red2: #d9777a;
+        --ink: #dbe4f0; --mute: #8696ad; --line: rgba(91, 181, 200, .28);
+        --glass: rgba(6, 14, 28, .82);
+        --ic-fancy: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        --ic-mono: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        max-width: 1200px; margin: 0 auto;
+        color: var(--ink); font-family: var(--ic-fancy); font-variant-numeric: tabular-nums;
+        display: flex; flex-direction: column; gap: 1.5rem;
+    }
+
+    /* PANEL -------------------------------------------------- */
+    .ic-panel {
+        display: flex; flex-direction: column;
+        background: var(--glass);
+        -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%);
+        border: 1px solid rgba(91, 181, 200, .25); border-radius: 20px; overflow: hidden;
+        box-shadow: 0 14px 36px rgba(0, 0, 0, .4);
+    }
+
+    /* BARRA SUPERIOR ----------------------------------------- */
+    .ic-top {
+        display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;
+        padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--line);
+        background: linear-gradient(100deg, rgba(91, 181, 200, .1), rgba(143, 191, 106, .03) 60%, transparent);
+    }
+    .ic-top-icon {
+        width: 44px; height: 44px; flex: none; border-radius: 10px;
+        display: grid; place-items: center; font-size: 1.3rem; color: var(--volt);
+        background: rgba(91, 181, 200, .1); border: 1px solid rgba(91, 181, 200, .32);
+    }
+    .ic-title { font-family: var(--ic-fancy); font-weight: 700; font-size: 1.4rem; margin: 0; color: #fff; }
+    .ic-subtitle { margin: 0; color: var(--mute); font-size: .85rem; }
+    .ic-actions { margin-left: auto; display: flex; gap: .5rem; flex-wrap: wrap; }
+
+    /* BOTONES ------------------------------------------------ */
+    .ic-btn {
+        display: inline-flex; align-items: center; gap: .4rem; border-radius: 999px;
+        padding: .45rem 1.05rem; font-size: .83rem; font-weight: 600; text-decoration: none;
+        color: var(--ink); border: 1px solid var(--line); background: rgba(2, 8, 20, .5);
+        cursor: pointer; transition: all .15s;
+    }
+    .ic-btn:hover { border-color: var(--volt); color: #fff; box-shadow: 0 0 0 1px var(--volt); }
+    .ic-btn:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+    .ic-btn-main { background: var(--volt); border-color: var(--volt); color: #04141b; }
+    .ic-btn-main:hover { background: #7cc6d6; border-color: #7cc6d6; color: #04141b; box-shadow: none; }
+    .ic-btn-sm { padding: .3rem .85rem; font-size: .78rem; }
+
+    /* ENCABEZADO DE SECCIÓN: 01 Título ........ [contador] --- */
+    .ic-sec-head {
+        position: relative; display: flex; align-items: center; gap: .6rem;
+        padding: .95rem 1.5rem .7rem; border-bottom: 1px solid var(--line);
+        background: linear-gradient(100deg, rgba(91, 181, 200, .1), rgba(143, 191, 106, .03) 60%, transparent);
+    }
+    .ic-sec-head::after {
+        content: ""; position: absolute; left: 0; bottom: -1px; width: 64px; height: 2px; background: var(--lime);
+    }
+    .ic-step { font-family: var(--ic-mono); font-size: .8rem; font-weight: 700; color: var(--lime); }
+    .ic-panel-title { font-family: var(--ic-mono); font-weight: 700; font-size: .95rem; color: #fff; margin: 0; }
+    .ic-head-right { margin-left: auto; display: flex; align-items: center; gap: .5rem; }
+    .ic-count {
+        background: rgba(91, 181, 200, .1); border: 1px solid var(--line); color: var(--volt);
+        border-radius: 999px; padding: .15rem .75rem; font-size: .78rem; font-weight: 600;
+    }
+
+    /* TABLA -------------------------------------------------- */
+    .ic-scroll { max-height: 640px; overflow: auto; }
+    .ic-table { width: 100%; margin: 0; border-collapse: collapse; color: var(--ink); }
+    .ic-table thead th {
+        position: sticky; top: 0; z-index: 1;
+        background: #08121f; color: var(--mute);
+        font-size: .78rem; font-weight: 600; padding: .75rem 1.2rem; text-align: left;
+        border-bottom: 1px solid var(--line); white-space: nowrap;
+    }
+    .ic-table tbody td {
+        padding: .75rem 1.2rem; border-top: 1px solid rgba(91, 181, 200, .12);
+        vertical-align: middle; font-size: .88rem; background: transparent; color: var(--ink);
+    }
+    .ic-table tbody tr:hover td { background: rgba(91, 181, 200, .06); }
+    .ic-off td { color: var(--mute); }
+    .ic-right { text-align: right !important; }
+    .ic-name { color: #fff; font-weight: 600; }
+    .ic-off .ic-name { color: var(--mute); }
+    .ic-small { font-size: .78rem; color: var(--mute); }
+    .ic-row-actions { display: flex; gap: .4rem; justify-content: flex-end; align-items: center; flex-wrap: wrap; }
+    .ic-row-actions form { margin: 0; }
+    .ic-empty { padding: 2rem 1.2rem !important; text-align: center; color: var(--mute); font-size: .9rem; }
+
+    /* ETIQUETAS ---------------------------------------------- */
+    .ic-tag {
+        display: inline-flex; align-items: center; gap: .3rem; padding: .15rem .7rem; border-radius: 999px;
+        font-size: .74rem; font-weight: 600; white-space: nowrap;
+        color: var(--mute); background: rgba(138, 160, 189, .08); border: 1px solid rgba(138, 160, 189, .4);
+    }
+    .ic-tag.ok   { color: var(--lime);  background: rgba(143, 191, 106, .1); border-color: rgba(143, 191, 106, .4); }
+    .ic-tag.warn { color: var(--amber); background: rgba(217, 168, 64, .1);  border-color: rgba(217, 168, 64, .4); }
+    .ic-tag.bad  { color: var(--red2);  background: rgba(217, 119, 122, .1); border-color: rgba(217, 119, 122, .4); }
+    .ic-tag.info { color: var(--volt);  background: rgba(91, 181, 200, .1);  border-color: rgba(91, 181, 200, .4); }
+
+    /* MENSAJES ----------------------------------------------- */
+    .ic-msg {
+        border-radius: 14px; padding: .75rem 1rem; font-size: .88rem; font-weight: 500;
+        background: rgba(6, 14, 28, .88); border: 1px solid;
+    }
+    .ic-msg-success { color: var(--lime); border-color: rgba(143, 191, 106, .45); }
+    .ic-msg-error, .ic-msg-danger { color: #f3c4c6; border-color: rgba(217, 119, 122, .5); }
+    .ic-msg-warning { color: var(--amber); border-color: rgba(217, 168, 64, .45); }
+    .ic-msg-info, .ic-msg-debug { color: #bfe6ee; border-color: rgba(91, 181, 200, .45); }
+
+    @media (max-width: 767px) {
+        .ic-title { font-size: 1.2rem; }
+        .ic-actions { width: 100%; margin-left: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .ic-btn { transition: none; }
+    }
+</style>
+
+<div class="ic-dash">
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="ic-msg ic-msg-{{ message.tags|default:'info' }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <section class="ic-panel">
+
+        <!-- Barra superior -->
+        <div class="ic-top">
+            <div class="ic-top-icon"><i class="fa-solid fa-users-gear"></i></div>
+            <div>
+                <h1 class="ic-title">Usuarios</h1>
+                <p class="ic-subtitle">Administra quién puede entrar al sistema</p>
+            </div>
+            <div class="ic-actions">
+                <a href="{% url 'panel' %}" class="ic-btn">Volver al panel</a>
+                <a href="{% url 'crear_usuario' %}" class="ic-btn ic-btn-main">+ Nuevo usuario</a>
+            </div>
+        </div>
+
+        <!-- Encabezado de sección -->
+        <div class="ic-sec-head">
+            <span class="ic-step">01</span>
+            <h2 class="ic-panel-title">Listado de usuarios</h2>
+            <div class="ic-head-right">
+                <span class="ic-count">{{ usuarios|length }}</span>
+            </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="ic-scroll">
+            <table class="ic-table">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Nombre</th>
+                        <th>Correo</th>
+                        <th>Rol</th>
+                        <th>Último acceso</th>
+                        <th class="ic-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in usuarios %}
+                    <tr{% if not u.is_active %} class="ic-off"{% endif %}>
+                        <td class="ic-name">
+                            {{ u.username }}
+                            {% if not u.is_active %}<span class="ic-tag ms-1">Inactivo</span>{% endif %}
+                            {% if u == request.user %}<span class="ic-tag info ms-1">Tú</span>{% endif %}
+                        </td>
+                        <td>{{ u.get_full_name|default:"—" }}</td>
+                        <td>{{ u.email|default:"—" }}</td>
+                        <td>
+                            {% if u.is_staff %}
+                                <span class="ic-tag warn">Administrador</span>
+                            {% else %}
+                                <span class="ic-tag">Usuario</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if u.last_login %}
+                                <span class="ic-small">{{ u.last_login|date:"d/m/Y H:i" }}</span>
+                            {% else %}
+                                <span class="ic-small">Aún no ha entrado</span>
+                            {% endif %}
+                        </td>
+                        <td class="ic-right">
+                            <div class="ic-row-actions">
+                                <a href="{% url 'editar_usuario' u.id %}" class="ic-btn ic-btn-sm">Editar</a>
+
+                                {% if u.email and u.is_active %}
+                                <form method="post" action="{% url 'reenviar_enlace_usuario' u.id %}"
+                                      data-titulo="¿Reenviar enlace?"
+                                      data-confirmar="Se enviará a {{ u.email }} un correo para establecer su contraseña."
+                                      data-si="Sí, enviar"
+                                      data-no="Cancelar">
+                                    {% csrf_token %}
+                                    <button type="submit" class="ic-btn ic-btn-sm">Reenviar enlace</button>
+                                </form>
+                                {% endif %}
+
+                                {% if u != request.user %}
+                                <form method="post" action="{% url 'alternar_usuario' u.id %}"
+                                      data-titulo="{% if u.is_active %}¿Desactivar usuario?{% else %}¿Activar usuario?{% endif %}"
+                                      data-confirmar="¿Seguro que quieres {% if u.is_active %}desactivar{% else %}activar{% endif %} al usuario {{ u.username }}?"
+                                      data-si="{% if u.is_active %}Sí, desactivar{% else %}Sí, activar{% endif %}"
+                                      data-no="Cancelar"{% if u.is_active %} data-peligro{% endif %}>
+                                    {% csrf_token %}
+                                    {% if u.is_active %}
+                                        <button type="submit" class="ic-btn ic-btn-sm">Desactivar</button>
+                                    {% else %}
+                                        <button type="submit" class="ic-btn ic-btn-main ic-btn-sm">Activar</button>
+                                    {% endif %}
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="ic-empty">
+                            Aún no hay usuarios. Crea el primero con «Nuevo usuario».
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </section>
+
+</div>
+{% endblock %}

@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Resumen del día{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+    /* RESUMEN DEL DÍA - mismo estilo suave de Rutas (prefijo rd-) */
+    .rd-wrap {
+        --volt: #5bb5c8; --lime: #8fbf6a; --amber: #d9a840; --red2: #d9777a;
+        --ink: #dbe4f0; --mute: #8696ad; --line: rgba(91, 181, 200, .28);
+        max-width: 1200px; margin: 0 auto; color: var(--ink);
+        font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        font-variant-numeric: tabular-nums;
+    }
+    .rd-card {
+        background: rgba(6, 14, 28, .82);
+        -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%);
+        border: 1px solid rgba(91, 181, 200, .25); border-radius: 20px; overflow: hidden;
+        box-shadow: 0 14px 36px rgba(0, 0, 0, .4);
+    }
+
+    /* Encabezado */
+    .rd-head {
+        display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem;
+        padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--line);
+        background: linear-gradient(100deg, rgba(91, 181, 200, .1), rgba(143, 191, 106, .03) 60%, transparent);
+    }
+    .rd-title-row { display: flex; align-items: center; gap: .8rem; }
+    .rd-title-ico { width: 44px; height: 44px; object-fit: contain; border-radius: 10px; }
+    .rd-title { font-size: 1.35rem; font-weight: 700; color: #fff; margin: 0; line-height: 1.15; }
+    .rd-sub { display: block; color: var(--mute); font-size: .85rem; margin-top: .15rem; }
+
+    .rd-btn {
+        display: inline-flex; align-items: center; padding: .4rem 1rem; border-radius: 999px; cursor: pointer;
+        font-size: .82rem; font-weight: 600; text-decoration: none; color: var(--volt);
+        border: 1px solid var(--line); background: rgba(91, 181, 200, .1); transition: all .15s;
+    }
+    .rd-btn:hover { color: #fff; border-color: var(--volt); transform: translateY(-1px); }
+    .rd-btn.primary { color: #fff; border-color: var(--volt); background: rgba(91, 181, 200, .22); }
+    .rd-btn.primary:hover { background: var(--volt); color: #02131c; }
+    .rd-btn:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+
+    /* Mensajes */
+    .rd-msgs { padding: 1rem 1.5rem 0; display: flex; flex-direction: column; gap: .6rem; }
+    .rd-msg {
+        padding: .65rem 1rem; border-radius: 12px; font-size: .88rem;
+        border: 1px solid rgba(138, 160, 189, .4); background: rgba(138, 160, 189, .08);
+    }
+    .rd-msg.success { color: var(--lime); background: rgba(143, 191, 106, .1); border-color: rgba(143, 191, 106, .4); }
+    .rd-msg.error, .rd-msg.danger { color: var(--red2); background: rgba(217, 119, 122, .1); border-color: rgba(217, 119, 122, .4); }
+    .rd-msg.warning { color: var(--amber); background: rgba(217, 168, 64, .1); border-color: rgba(217, 168, 64, .4); }
+    .rd-msg.info { color: var(--volt); background: rgba(91, 181, 200, .1); border-color: rgba(91, 181, 200, .4); }
+
+    /* Filtro de fecha */
+    .rd-filtro {
+        display: flex; flex-wrap: wrap; align-items: center; gap: .6rem;
+        padding: 1rem 1.5rem; border-bottom: 1px solid var(--line);
+    }
+    .rd-filtro label { color: var(--mute); font-size: .85rem; }
+    .rd-input, .rd-select {
+        background: rgba(2, 8, 20, .6); color: var(--ink); border: 1px solid var(--line);
+        border-radius: 10px; padding: .35rem .7rem; font-size: .85rem; font-family: inherit; color-scheme: dark;
+    }
+    .rd-select { max-width: 190px; }
+
+    /* Encabezado de sección */
+    .rd-sec-head {
+        position: relative; display: flex; align-items: center; gap: .6rem;
+        padding: .85rem 1.5rem .65rem; border-bottom: 1px solid rgba(91, 181, 200, .14);
+    }
+    .rd-sec-head::after {
+        content: ""; position: absolute; left: 0; bottom: -1px; width: 64px; height: 2px; background: var(--lime);
+    }
+    .rd-sec-title { font-size: .95rem; font-weight: 700; color: #fff; margin: 0; }
+    .rd-count {
+        margin-left: auto; font-size: .78rem; font-weight: 600; color: var(--volt);
+        padding: .15rem .75rem; border-radius: 999px; border: 1px solid var(--line); background: rgba(91, 181, 200, .1);
+    }
+
+    /* Tabla */
+    .rd-table { width: 100%; margin: 0; border-collapse: collapse; color: var(--ink); }
+    .rd-table thead th {
+        background: #08121f; color: var(--mute); font-size: .78rem; font-weight: 600;
+        padding: .7rem 1.2rem; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap;
+    }
+    .rd-table tbody td {
+        padding: .8rem 1.2rem; border-top: 1px solid rgba(91, 181, 200, .12);
+        vertical-align: middle; font-size: .88rem; background: transparent;
+    }
+    .rd-table tbody tr:hover td { background: rgba(91, 181, 200, .06); }
+    .rd-route { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .2rem .5rem; font-weight: 600; }
+    .rd-route i { font-style: normal; color: var(--volt); }
+    .rd-meta { display: block; color: var(--mute); font-size: .8rem; margin-top: .15rem; }
+
+    .rd-tag {
+        display: inline-flex; padding: .15rem .7rem; border-radius: 999px; font-size: .74rem; font-weight: 600; white-space: nowrap;
+        color: var(--lime); background: rgba(143, 191, 106, .1); border: 1px solid rgba(143, 191, 106, .4);
+    }
+    .rd-tag.warn { color: var(--amber); background: rgba(217, 168, 64, .1); border-color: rgba(217, 168, 64, .4); }
+
+    .rd-usar { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; margin: 0; }
+    .rd-empty { padding: 2.2rem 1.2rem; text-align: center; color: var(--mute); font-size: .9rem; }
+
+    @media (max-width: 767px) {
+        .rd-title { font-size: 1.15rem; }
+    }
+</style>
+
+<div class="rd-wrap">
+    <div class="rd-card">
+
+        <!-- Encabezado -->
+        <div class="rd-head">
+            <div class="rd-title-row">
+                <img class="rd-title-ico" src="{% static 'img/iconos/rutas.jpg' %}" alt="">
+                <div>
+                    <h1 class="rd-title">Resumen del día</h1>
+                    <span class="rd-sub">Qué hizo cada vehículo según el GPS, sin escribir rutas</span>
+                </div>
+            </div>
+            <a href="{% url 'panel' %}" class="rd-btn">Volver al panel</a>
+        </div>
+
+        <!-- Mensajes del sistema -->
+        {% if messages %}
+        <div class="rd-msgs">
+            {% for message in messages %}
+            <div class="rd-msg {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Filtro por fecha -->
+        <form method="get" class="rd-filtro">
+            <label for="fecha">Fecha</label>
+            <input class="rd-input" type="date" id="fecha" name="fecha" value="{{ fecha|date:'Y-m-d' }}">
+            <button type="submit" class="rd-btn primary">Ver</button>
+        </form>
+
+        <!-- Salidas del día -->
+        <div class="rd-sec-head">
+            <h2 class="rd-sec-title">Salidas desde Duitama · {{ fecha|date:"d/m/Y" }}</h2>
+            <span class="rd-count">{{ salidas|length }}</span>
+        </div>
+        <div class="table-responsive">
+            <table class="rd-table">
+                <thead>
+                    <tr>
+                        <th>Vehículo</th>
+                        <th>Recorrido</th>
+                        <th>Horario</th>
+                        <th>Distancia</th>
+                        <th>Estado</th>
+                        <th>Guardar como desplazamiento</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in salidas %}
+                    <tr>
+                        <td><strong>{{ s.placa }}</strong></td>
+                        <td>
+                            <span class="rd-route"><span>{{ s.origen }}</span><i>→</i><span>{{ s.destino }}</span></span>
+                            {% if s.pasando_por %}<span class="rd-meta">Pasando por {{ s.pasando_por|join:", " }}</span>{% endif %}
+                        </td>
+                        <td>{{ s.hora_salida|time:"H:i" }} a {{ s.hora_fin|time:"H:i" }}</td>
+                        <td>{{ s.km_gps|floatformat:0 }} km</td>
+                        <td>
+                            {% if s.regreso_a_base %}
+                                <span class="rd-tag">Regresó a Duitama</span>
+                            {% else %}
+                                <span class="rd-tag warn">Sin regreso aún</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if s.vehiculo %}
+                            <form method="post" action="{% url 'guardar_trazado' %}" class="rd-usar">
+                                {% csrf_token %}
+                                <input type="hidden" name="vehiculo" value="{{ s.vehiculo.id }}">
+                                <input type="hidden" name="fecha" value="{{ fecha|date:'Y-m-d' }}">
+                                <input type="hidden" name="riesgos" value="1">
+                                <select name="ruta" class="rd-select" required aria-label="Ruta">
+                                    <option value="">— Ruta —</option>
+                                    {% for r in rutas %}
+                                    <option value="{{ r.id }}" {% if s.ruta_sugerida and r.id == s.ruta_sugerida.id %}selected{% endif %}>{{ r.codigo }} · {{ r.destino }}</option>
+                                    {% endfor %}
+                                </select>
+                                <select name="conductor" class="rd-select" required aria-label="Conductor">
+                                    <option value="">— Conductor —</option>
+                                    {% for c in conductores %}
+                                    <option value="{{ c.id }}">{{ c.nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="rd-btn primary">Usar este viaje</button>
+                            </form>
+                            {% else %}
+                                <span class="rd-meta">Vehículo no registrado</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="rd-empty">No hay salidas desde Duitama registradas para esta fecha.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

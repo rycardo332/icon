@@ -4,234 +4,292 @@
 {% block title %}Desplazamientos{% endblock %}
 
 {% block content %}
-
-<!-- Fuente llamativa (la misma del panel) -->
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
-    /* ============================================================
-       DESPLAZAMIENTOS - estilos propios (prefijo ds-)
-       Mismo diseño del panel: vidrio, encabezados oscuros
-       ============================================================ */
-
-    .ds-wrap {
-        --ds-dark: var(--dark, #0d1726);
-        --ds-dark-2: var(--dark-2, #16233a);
-        --ds-ink: #0f172a;
-        --ds-muted: #64748b;
-        --ds-line: rgba(15, 23, 42, .09);
-        --ds-fancy: 'Space Mono', 'Courier New', monospace;
-        max-width: 1200px;
-        margin: 0 auto;
-        display: flex;
-        flex-direction: column;
-        gap: 1.25rem;
+    /* DESPLAZAMIENTOS - mismo estilo del Panel de control (prefijo ic-) · sin animaciones */
+    .ic-dash {
+        --volt: #5bb5c8; --lime: #8fbf6a; --amber: #d9a840; --red2: #d9777a;
+        --ink: #dbe4f0; --mute: #8696ad; --line: rgba(91, 181, 200, .28);
+        --glass: rgba(6, 14, 28, .82);
+        --ic-fancy: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        --ic-mono: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        color: var(--ink); font-family: var(--ic-fancy); font-variant-numeric: tabular-nums;
+        display: flex; flex-direction: column; gap: 1.5rem;
     }
 
-    /* ---------- Encabezado ---------- */
-    .ds-head {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        align-items: center;
-        gap: 1rem;
-    }
-    .ds-title-row { display: flex; align-items: center; gap: .8rem; }
-    .ds-title-ico { width: 44px; height: 44px; object-fit: contain; border-radius: 10px; }
-    .ds-title {
-        font-family: var(--ds-fancy);
-        font-size: 1.7rem;
-        font-weight: 700;
-        color: #fff;
-        text-shadow: 0 2px 8px rgba(0, 0, 0, .45);
-        margin: 0;
-        line-height: 1.1;
-    }
-    .ds-sub { color: #e2e8f0; font-size: .9rem; text-shadow: 0 1px 4px rgba(0, 0, 0, .4); }
-    .ds-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
-
-    .ds-btn {
-        display: inline-flex;
-        align-items: center;
-        padding: .5rem 1.1rem;
-        border-radius: 999px;
-        font-size: .875rem;
-        font-weight: 600;
-        text-decoration: none;
-        border: 1px solid rgba(255, 255, 255, .5);
-        background: rgba(255, 255, 255, .85);
-        color: var(--ds-ink);
-        transition: all .15s;
-    }
-    .ds-btn:hover { background: #fff; color: var(--ds-ink); transform: translateY(-1px); }
-    .ds-btn-primary { background: var(--red, #d31414); border-color: var(--red, #d31414); color: #fff; }
-    .ds-btn-primary:hover { background: var(--red, #d31414); color: #fff; filter: brightness(.92); }
-
-    /* ---------- Panel ---------- */
-    .ds-panel {
-        background: rgba(255, 255, 255, .84);
-        -webkit-backdrop-filter: blur(14px) saturate(140%);
-        backdrop-filter: blur(14px) saturate(140%);
-        border: 1px solid rgba(255, 255, 255, .7);
-        border-radius: 18px;
-        overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, .18);
-    }
-    .ds-panel-head {
-        display: flex;
-        align-items: center;
-        gap: .75rem;
-        padding: .9rem 1.2rem;
-        background: linear-gradient(90deg, var(--ds-dark), var(--ds-dark-2));
-        border-bottom: 1px solid rgba(255, 255, 255, .08);
-    }
-    .ds-step { font-family: var(--ds-fancy); font-size: .8rem; font-weight: 700; color: #a3e635; }
-    .ds-panel-title {
-        font-family: var(--ds-fancy);
-        font-size: .95rem;
-        font-weight: 700;
-        letter-spacing: .5px;
-        color: #fff;
-        margin: 0;
-    }
-    .ds-count {
-        margin-left: auto;
-        font-size: .75rem;
-        font-weight: 600;
-        color: #e2e8f0;
-        padding: .15rem .7rem;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, .12);
+    /* PANEL -------------------------------------------------- */
+    .ic-panel {
+        display: flex; flex-direction: column;
+        background: var(--glass);
+        -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%);
+        border: 1px solid rgba(91, 181, 200, .25); border-radius: 20px; overflow: hidden;
+        box-shadow: 0 14px 36px rgba(0, 0, 0, .4);
     }
 
-    /* ---------- Tabla ---------- */
-    .ds-scroll { max-height: 640px; overflow-y: auto; }
-    .ds-table { width: 100%; margin: 0; border-collapse: collapse; }
-    .ds-table thead th {
-        position: sticky;
-        top: 0;
-        z-index: 1;
-        background: rgba(248, 250, 252, .92);
-        color: var(--ds-muted);
-        font-size: .78rem;
-        font-weight: 600;
-        padding: .6rem 1.2rem;
-        border-bottom: 1px solid var(--ds-line);
-        white-space: nowrap;
+    /* BARRA SUPERIOR ----------------------------------------- */
+    .ic-top {
+        display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;
+        padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--line);
+        background: linear-gradient(100deg, rgba(91, 181, 200, .1), rgba(143, 191, 106, .03) 60%, transparent);
     }
-    .ds-table tbody td {
-        padding: .8rem 1.2rem;
-        border-bottom: 1px solid var(--ds-line);
-        vertical-align: middle;
-        font-size: .9rem;
-        color: #334155;
-        background: transparent;
-    }
-    .ds-table tbody tr:last-child td { border-bottom: 0; }
-    .ds-table tbody tr:hover td { background: rgba(255, 255, 255, .6); }
-    .ds-plate { font-weight: 700; color: var(--ds-ink); letter-spacing: .03em; }
-    .ds-sub-line { display: block; color: var(--ds-muted); font-size: .82rem; }
+    .ic-top-icon { width: 44px; height: 44px; flex: none; object-fit: contain; border-radius: 10px; }
+    .ic-title { font-family: var(--ic-fancy); font-weight: 700; font-size: 1.4rem; margin: 0; color: #fff; }
+    .ic-subtitle { margin: 0; color: var(--mute); font-size: .85rem; }
+    .ic-actions { margin-left: auto; display: flex; gap: .5rem; flex-wrap: wrap; }
 
-    /* ---------- Chips de estado ---------- */
-    .ds-tag {
-        display: inline-flex;
-        align-items: center;
-        padding: .15rem .65rem;
-        border-radius: 999px;
-        font-size: .76rem;
-        font-weight: 600;
-        background: rgba(248, 250, 252, .9);
-        color: var(--ds-muted);
-        border: 1px solid var(--ds-line);
-        white-space: nowrap;
+    /* BOTONES ------------------------------------------------ */
+    .ic-btn {
+        display: inline-flex; align-items: center; gap: .4rem; border-radius: 999px;
+        padding: .45rem 1.05rem; font-size: .83rem; font-weight: 600; text-decoration: none;
+        color: var(--ink); border: 1px solid var(--line); background: rgba(2, 8, 20, .5);
+        cursor: pointer; transition: all .15s;
     }
-    .ds-tag.ok   { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
-    .ds-tag.warn { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+    .ic-btn:hover { border-color: var(--volt); color: #fff; box-shadow: 0 0 0 1px var(--volt); }
+    .ic-btn:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+    .ic-btn-main { background: var(--volt); border-color: var(--volt); color: #04141b; }
+    .ic-btn-main:hover { background: #7cc6d6; border-color: #7cc6d6; color: #04141b; box-shadow: none; }
 
-    /* ---------- Botones de acción ---------- */
-    .ds-ibtn {
-        display: inline-grid;
-        place-items: center;
-        width: 34px;
-        height: 34px;
-        border-radius: 10px;
-        border: 1px solid var(--ds-line);
-        background: rgba(255, 255, 255, .9);
-        text-decoration: none;
-        transition: all .15s;
+    /* ENCABEZADO DE SECCIÓN: 01 Título ........ [contador] --- */
+    .ic-sec-head {
+        position: relative; display: flex; align-items: center; gap: .6rem;
+        padding: .95rem 1.5rem .7rem; border-bottom: 1px solid var(--line);
+        background: linear-gradient(100deg, rgba(91, 181, 200, .1), rgba(143, 191, 106, .03) 60%, transparent);
     }
-    .ds-ibtn:hover { background: #fff; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0, 0, 0, .12); }
-    .ds-ibtn img { width: 22px; height: 22px; object-fit: contain; border-radius: 4px; }
+    .ic-sec-head::after {
+        content: ""; position: absolute; left: 0; bottom: -1px; width: 64px; height: 2px; background: var(--lime);
+    }
+    .ic-step { font-family: var(--ic-mono); font-size: .8rem; font-weight: 700; color: var(--lime); }
+    .ic-panel-title { font-family: var(--ic-mono); font-weight: 700; font-size: .95rem; color: #fff; margin: 0; }
+    .ic-head-right { margin-left: auto; display: flex; align-items: center; gap: .5rem; }
+    .ic-count {
+        background: rgba(91, 181, 200, .1); border: 1px solid var(--line); color: var(--volt);
+        border-radius: 999px; padding: .15rem .75rem; font-size: .78rem; font-weight: 600;
+    }
 
-    .ds-empty { padding: 2rem 1.2rem; text-align: center; color: var(--ds-muted); font-size: .9rem; }
+    /* TABLA -------------------------------------------------- */
+    .ic-scroll { max-height: 640px; overflow: auto; }
+    .ic-table { width: 100%; margin: 0; border-collapse: collapse; color: var(--ink); }
+    .ic-table thead th {
+        position: sticky; top: 0; z-index: 1;
+        background: #08121f; color: var(--mute);
+        font-size: .78rem; font-weight: 600; padding: .75rem 1.2rem; text-align: left;
+        border-bottom: 1px solid var(--line); white-space: nowrap;
+    }
+    .ic-table thead th.ic-right { text-align: right; }
+    .ic-table tbody td {
+        padding: .75rem 1.2rem; border-top: 1px solid rgba(91, 181, 200, .12);
+        vertical-align: middle; font-size: .88rem; background: transparent; color: var(--ink);
+    }
+    .ic-table tbody tr:hover td { background: rgba(91, 181, 200, .06); }
+    .ic-right { text-align: right; }
+    .ic-nowrap { white-space: nowrap; }
+
+    .ic-plate {
+        display: inline-flex; align-items: center; gap: .4rem;
+        font-weight: 600; font-size: .8rem; color: var(--ink); letter-spacing: .06em;
+        padding: .15rem .7rem; border-radius: 999px;
+        background: rgba(91, 181, 200, .1); border: 1px solid rgba(91, 181, 200, .32);
+    }
+    .ic-plate::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--volt); }
+    .ic-sub { display: block; color: var(--mute); font-size: .8rem; margin-top: .3rem; padding-left: .2rem; }
+
+    /* ETIQUETAS ---------------------------------------------- */
+    .ic-tag {
+        display: inline-flex; align-items: center; gap: .3rem; padding: .15rem .7rem; border-radius: 999px;
+        font-size: .74rem; font-weight: 600; white-space: nowrap;
+        color: var(--mute); background: rgba(138, 160, 189, .08); border: 1px solid rgba(138, 160, 189, .4);
+    }
+    .ic-tag.ok   { color: var(--lime);  background: rgba(143, 191, 106, .1); border-color: rgba(143, 191, 106, .4); }
+    .ic-tag.warn { color: var(--amber); background: rgba(217, 168, 64, .1);  border-color: rgba(217, 168, 64, .4); }
+    .ic-tag.bad  { color: var(--red2);  background: rgba(217, 119, 122, .1); border-color: rgba(217, 119, 122, .4); }
+
+    /* ACCIONES ----------------------------------------------- */
+    .ic-ibtn {
+        display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 10px;
+        border: 1px solid var(--line); background: rgba(2, 8, 20, .6); text-decoration: none; transition: all .15s;
+    }
+    .ic-ibtn:hover { border-color: var(--volt); box-shadow: 0 0 0 1px var(--volt); transform: translateY(-1px); }
+    .ic-ibtn:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+    .ic-ibtn img { width: 22px; height: 22px; object-fit: contain; border-radius: 4px; }
+
+    /* VACÍO -------------------------------------------------- */
+    .ic-empty { padding: 2rem 1.2rem !important; text-align: center; color: var(--mute); font-size: .9rem; }
+
+    /* PAGINADOR: 10 filas por página ------------------------- */
+    .ic-pager {
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem;
+        padding: .8rem 1.5rem; border-top: 1px solid var(--line); background: rgba(91, 181, 200, .05);
+    }
+    .ic-pager[hidden] { display: none; }
+    .ic-pager-info { font-size: .82rem; color: var(--mute); }
+    .ic-pager-info b { color: var(--volt); font-weight: 700; }
+    .ic-pages { display: flex; flex-wrap: wrap; gap: .35rem; }
+    .ic-pg {
+        min-width: 36px; height: 36px; padding: 0 .7rem; border-radius: 10px; cursor: pointer;
+        font-family: var(--ic-fancy); font-weight: 600; font-size: .8rem; color: var(--ink);
+        border: 1px solid var(--line); background: rgba(2, 8, 20, .6); transition: all .15s;
+    }
+    .ic-pg:hover:not(:disabled):not(.on) { border-color: var(--volt); box-shadow: 0 0 0 1px var(--volt); }
+    .ic-pg:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+    .ic-pg.on { background: var(--volt); border-color: var(--volt); color: #04141b; cursor: default; }
+    .ic-pg:disabled { opacity: .35; cursor: not-allowed; }
+    .ic-dots { align-self: center; color: var(--mute); padding: 0 .2rem; }
+
+    @media (max-width: 767px) {
+        .ic-title { font-size: 1.2rem; }
+        .ic-actions { width: 100%; margin-left: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .ic-btn, .ic-ibtn, .ic-pg { transition: none; }
+    }
 </style>
 
-<div class="ds-wrap">
+<div class="ic-dash">
 
-    <!-- Encabezado -->
-    <div class="ds-head">
-        <div>
-            <div class="ds-title-row">
-                <img class="ds-title-ico" src="{% static 'img/iconos/camion.jpg' %}" alt="">
-                <h1 class="ds-title">Desplazamientos</h1>
+    <section class="ic-panel">
+
+        <!-- Barra superior -->
+        <div class="ic-top">
+            <img class="ic-top-icon" src="{% static 'img/iconos/camion.jpg' %}" alt="">
+            <div>
+                <h1 class="ic-title">Desplazamientos</h1>
+                <p class="ic-subtitle">{{ desplazamientos|length }} en total</p>
             </div>
-            <span class="ds-sub">{{ desplazamientos|length }} en total</span>
+            <div class="ic-actions">
+                <a href="{% url 'panel' %}" class="ic-btn">Volver al panel</a>
+                <a href="{% url 'mapa_gps' %}" class="ic-btn ic-btn-main">Trazar recorrido</a>
+            </div>
         </div>
-        <div class="ds-actions">
-            <a href="/" class="ds-btn">Volver al panel</a>
-            <a href="{% url 'mapa_gps' %}" class="ds-btn ds-btn-primary">Trazar recorrido</a>
-        </div>
-    </div>
 
-    <!-- 01 TODOS -->
-    <section class="ds-panel">
-        <div class="ds-panel-head">
-            <span class="ds-step">01</span>
-            <h2 class="ds-panel-title">Todos los desplazamientos</h2>
-            <span class="ds-count">{{ desplazamientos|length }}</span>
+        <!-- Encabezado de sección -->
+        <div class="ic-sec-head">
+            <span class="ic-step">01</span>
+            <h2 class="ic-panel-title">Todos los desplazamientos</h2>
+            <div class="ic-head-right">
+                <span class="ic-count">{{ desplazamientos|length }}</span>
+            </div>
         </div>
-        <div class="table-responsive ds-scroll">
-            <table class="ds-table">
+
+        <!-- Tabla -->
+        <div class="ic-scroll" id="ic-scroll">
+            <table class="ic-table">
                 <thead>
                     <tr>
                         <th>Fecha</th>
                         <th>Ruta</th>
-                        <th>Vehículo / Conductor</th>
+                        <th>Vehículo y conductor</th>
                         <th>Estado</th>
-                        <th></th>
+                        <th class="ic-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for d in desplazamientos %}
                     <tr>
-                        <td class="text-nowrap">{{ d.fecha_desplazamiento|date:"d/m/Y" }}</td>
+                        <td class="ic-nowrap">{{ d.fecha_desplazamiento|date:"d/m/Y" }}</td>
                         <td><strong>{{ d.ruta.codigo }}</strong></td>
                         <td>
-                            <span class="ds-plate">{{ d.vehiculo.placa }}</span>
-                            <span class="ds-sub-line">{{ d.conductor.nombre }}</span>
+                            <span class="ic-plate">{{ d.vehiculo.placa }}</span>
+                            <span class="ic-sub">{{ d.conductor.nombre }}</span>
                         </td>
                         <td>
                             {% if d.estado_emparejamiento == "auto" or d.estado_emparejamiento == "manual" %}
-                                <span class="ds-tag ok">{{ d.get_estado_emparejamiento_display }}</span>
+                                <span class="ic-tag ok">{{ d.get_estado_emparejamiento_display }}</span>
                             {% elif d.estado_emparejamiento == "pendiente" %}
-                                <span class="ds-tag warn">{{ d.get_estado_emparejamiento_display }}</span>
+                                <span class="ic-tag warn">{{ d.get_estado_emparejamiento_display }}</span>
                             {% else %}
-                                <span class="ds-tag">{{ d.get_estado_emparejamiento_display }}</span>
+                                <span class="ic-tag">{{ d.get_estado_emparejamiento_display }}</span>
                             {% endif %}
                         </td>
-                        <td class="text-end text-nowrap">
-                            <a href="{% url 'ver_tarjeta_ruta' d.ruta_id %}?desplazamiento={{ d.pk }}" class="ds-ibtn" title="Tarjeta de ruta" aria-label="Tarjeta de ruta"><img src="{% static 'img/iconos/excel.jpg' %}" alt=""></a>
-                            <a href="{% url 'planificar_desplazamiento' d.pk %}" class="ds-ibtn" title="Planificar" aria-label="Planificar"><img src="{% static 'img/iconos/word.jpg' %}" alt=""></a>
+                        <td class="ic-right ic-nowrap">
+                            <a href="{% url 'ver_tarjeta_ruta' d.ruta_id %}?desplazamiento={{ d.pk }}" class="ic-ibtn" title="Tarjeta de ruta" aria-label="Tarjeta de ruta"><img src="{% static 'img/iconos/excel.jpg' %}" alt=""></a>
+                            <a href="{% url 'planificar_desplazamiento' d.pk %}" class="ic-ibtn" title="Planificar" aria-label="Planificar"><img src="{% static 'img/iconos/word.jpg' %}" alt=""></a>
                         </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="5" class="ds-empty">Aún no hay desplazamientos. Crea el primero con "Trazar recorrido".</td></tr>
+                    <tr>
+                        <td colspan="5" class="ic-empty">Aún no hay desplazamientos. Crea el primero con "Trazar recorrido".</td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+
+        <!-- Paginador -->
+        <nav class="ic-pager" id="ic-pager" aria-label="Paginación" hidden>
+            <span class="ic-pager-info" id="ic-info"></span>
+            <div class="ic-pages" id="ic-pages"></div>
+        </nav>
+
     </section>
 
 </div>
+{% endblock %}
 
+{% block extra_js %}
+<script>
+  // Paginador: 10 desplazamientos por página.
+  (function () {
+    var POR_PAGINA = 10;
+    var filas = Array.prototype.slice.call(document.querySelectorAll('.ic-table tbody tr'))
+      .filter(function (f) { return !f.querySelector('.ic-empty'); });
+    var pager = document.getElementById('ic-pager');
+    if (!pager || filas.length <= POR_PAGINA) return;   // con 10 o menos no hace falta paginar
+
+    var total = Math.ceil(filas.length / POR_PAGINA);
+    var actual = 1;
+    var info = document.getElementById('ic-info');
+    var cont = document.getElementById('ic-pages');
+    var scroll = document.getElementById('ic-scroll');
+    pager.hidden = false;
+
+    function boton(texto, pagina, op) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'ic-pg' + (op && op.on ? ' on' : '');
+      b.textContent = texto;
+      if (op && op.label) b.setAttribute('aria-label', op.label);
+      if (op && op.on) b.setAttribute('aria-current', 'page');
+      if (op && op.off) b.disabled = true;
+      else b.addEventListener('click', function () { ir(pagina); });
+      return b;
+    }
+
+    function visibles() {
+      var lista = [];
+      for (var p = 1; p <= total; p++) {
+        if (p === 1 || p === total || Math.abs(p - actual) <= 1) lista.push(p);
+      }
+      return lista;
+    }
+
+    function ir(pagina) {
+      actual = Math.min(Math.max(pagina, 1), total);
+      var desde = (actual - 1) * POR_PAGINA;
+      filas.forEach(function (f, i) {
+        f.style.display = (i >= desde && i < desde + POR_PAGINA) ? '' : 'none';
+      });
+      if (scroll) scroll.scrollTop = 0;
+      var hasta = Math.min(desde + POR_PAGINA, filas.length);
+      info.innerHTML = 'Mostrando <b>' + (desde + 1) + '–' + hasta + '</b> de <b>' + filas.length + '</b>';
+
+      cont.innerHTML = '';
+      cont.appendChild(boton('Anterior', actual - 1, { off: actual === 1, label: 'Página anterior' }));
+      var previa = 0;
+      visibles().forEach(function (p) {
+        if (previa && p - previa > 1) {
+          var puntos = document.createElement('span');
+          puntos.className = 'ic-dots';
+          puntos.textContent = '…';
+          cont.appendChild(puntos);
+        }
+        cont.appendChild(boton(p, p, { on: p === actual, label: 'Página ' + p }));
+        previa = p;
+      });
+      cont.appendChild(boton('Siguiente', actual + 1, { off: actual === total, label: 'Página siguiente' }));
+    }
+
+    ir(1);
+  })();
+</script>
 {% endblock %}

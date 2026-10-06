@@ -33,6 +33,7 @@ OSRM_URL = "https://router.project-osrm.org/route/v1/driving"
 OVERPASS_ENDPOINTS = [
     "https://overpass-api.de/api/interpreter",
     "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass.private.coffee/api/interpreter",
 ]
 OVERPASS_DIAS_CACHE = 30
 
@@ -41,11 +42,11 @@ TOLERANCIA_DISTANCIA_OSRM_PCT = 25
 
 
 VENTANA_CURVA_M = 40
-GIRO_MINIMO_GRADOS = 60       
-GIRO_MAXIMO_GRADOS = 150     
-SEPARACION_MINIMA_ENTRE_CURVAS_M = 400   
+GIRO_MINIMO_GRADOS = 60
+GIRO_MAXIMO_GRADOS = 150
+SEPARACION_MINIMA_ENTRE_CURVAS_M = 400
 DISTANCIA_MIN_DEDUP_CURVAS_GEO_M = 40
-MAX_CURVAS_MAPA = 25         
+MAX_CURVAS_MAPA = 25
 
 
 RADIO_POR_TIPO = {
@@ -74,7 +75,6 @@ class ErrorOSRM(Exception):
 
 class ErrorOverpass(Exception):
     pass
-
 
 
 def parsear_coordenadas(texto):
@@ -127,6 +127,13 @@ def _num(valor, decimales=2, sufijo=""):
     return "-" if valor is None else f"{float(valor):.{decimales}f}{sufijo}"
 
 
+def _h(texto):
+    """Escapa HTML y además los caracteres que rompen las plantillas de JavaScript
+    donde Folium mete los popups (comillas invertidas, $ y \\)."""
+    return (html.escape(str(texto))
+            .replace("\\", "&#92;")
+            .replace("`", "&#96;")
+            .replace("$", "&#36;"))
 
 
 def pedir_ruta_osrm(origen, destino, intentos=2):
@@ -166,7 +173,7 @@ def resolver_ruta(viaje, origen, destino):
     viaje.geometria_osrm = [[round(lat, 5), round(lon, 5)] for lat, lon in geometria]
     viaje.distancia_osrm_km = round(km, 2)
     viaje.save(update_fields=["geometria_osrm", "distancia_osrm_km"])
-    time.sleep(0.3)  
+    time.sleep(0.3)
     return geometria, km, True
 
 
@@ -191,8 +198,6 @@ def preparar_viaje(viaje, indice):
         geometria, km, real = resolver_ruta(viaje, origen, destino)
         info.update(geometria=geometria, distancia_osrm_km=km, ruta_real=real)
     return info
-
-
 
 
 def detectar_tramos_criticos(ruta, ventana_m=VENTANA_CURVA_M,
@@ -279,8 +284,6 @@ def detectar_curvas_de_viajes(infos, maximo=MAX_CURVAS_MAPA):
     return len(brutas), unicas
 
 
-
-
 def _archivo_cache_overpass(query):
     try:
         from django.conf import settings
@@ -330,8 +333,6 @@ def consultar_overpass(query, dias_cache=OVERPASS_DIAS_CACHE):
     raise ErrorOverpass(str(ultimo_error))
 
 
-
-
 def _adelgazar(ruta, paso_m=100):
     """Se queda con un punto cada ~paso_m metros, para no comparar miles de puntos."""
     if not ruta:
@@ -368,7 +369,7 @@ def buscar_puntos_riesgo(coords_ruta, radio_metros=500):
     if not ruta:
         return []
     lats, lons = [p[0] for p in ruta], [p[1] for p in ruta]
-    margen = 0.05  
+    margen = 0.05
     bbox = f"{min(lats) - margen},{min(lons) - margen},{max(lats) + margen},{max(lons) + margen}"
 
     filtros = [
@@ -413,8 +414,6 @@ def buscar_puntos_riesgo(coords_ruta, radio_metros=500):
     return resultados
 
 
-
-
 def generar_mapa_html(infos, maniobras, puntos_riesgo, curvas, umbral_km, titulo, avisos=()):
     """Devuelve el HTML completo del mapa, o None si no hay nada que dibujar.
 
@@ -431,7 +430,6 @@ def generar_mapa_html(infos, maniobras, puntos_riesgo, curvas, umbral_km, titulo
     if not todos:
         return None
 
-    
     mapa = folium.Map(
         location=[sum(p[0] for p in todos) / len(todos), sum(p[1] for p in todos) / len(todos)],
         zoom_start=12,
@@ -442,7 +440,7 @@ def generar_mapa_html(infos, maniobras, puntos_riesgo, curvas, umbral_km, titulo
         attr="Esri", name="Mapa", control=False,
     ).add_to(mapa)
 
-    
+    # ---- Una capa por viaje ----
     for info in infos:
         v, color, n = info["viaje"], info["color"], info["indice"]
         dist_filpac = float(v.distancia_total) if v.distancia_total is not None else None
@@ -468,10 +466,10 @@ def generar_mapa_html(infos, maniobras, puntos_riesgo, curvas, umbral_km, titulo
         popup_html = (
             f"<b>Viaje {n}</b><br>"
             f"{_fecha_hora(v.fecha_hora_inicio)} &rarr; {_hora(v.fecha_hora_fin)}<br>"
-            f"Duracion: {html.escape(str(v.duracion_total or '-'))} · FILPAC: {_num(dist_filpac)} km<br>"
+            f"Duracion: {_h(v.duracion_total or '-')} · FILPAC: {_num(dist_filpac)} km<br>"
             f"Vel. max: {_num(v.velocidad_maxima, 0)} km/h · prom: {_num(v.velocidad_promedio, 0)} km/h<br>"
-            f"Desde: {html.escape(v.direccion_origen or '-')}<br>"
-            f"Hasta: {html.escape(v.direccion_destino or '-')}{aviso}"
+            f"Desde: {_h(v.direccion_origen or '-')}<br>"
+            f"Hasta: {_h(v.direccion_destino or '-')}{aviso}"
         )
 
         if len(info["geometria"]) > 1:
@@ -494,7 +492,7 @@ def generar_mapa_html(infos, maniobras, puntos_riesgo, curvas, umbral_km, titulo
             ).add_to(grupo)
         grupo.add_to(mapa)
 
-    
+    # ---- Maniobras menores (capa apagada por defecto) ----
     if maniobras:
         g_man = folium.FeatureGroup(
             name=f"Maniobras menores ({len(maniobras)}, &lt; {umbral_km * 1000:.0f} m)", show=False)
@@ -506,11 +504,11 @@ def generar_mapa_html(infos, maniobras, puntos_riesgo, curvas, umbral_km, titulo
             folium.CircleMarker(
                 c, radius=4, color="#666", fill=True, fill_color="#aaa", fill_opacity=0.9,
                 popup=(f"{_fecha_hora(m.inicio)} &rarr; {_hora(m.fin)}<br>{metros:.0f} m<br>"
-                       f"{html.escape(m.direccion_inicio or '-')}"),
+                       f"{_h(m.direccion_inicio or '-')}"),
             ).add_to(g_man)
         g_man.add_to(mapa)
 
-    
+    # ---- Puntos de apoyo y riesgo (Overpass) ----
     iconos = {
         "hospital": ("red", "plus-sign", "Hospitales"),
         "red_cross": ("lightred", "heart", "Cruz Roja"),
@@ -526,13 +524,13 @@ def generar_mapa_html(infos, maniobras, puntos_riesgo, curvas, umbral_km, titulo
     grupos_riesgo = {}
     for p in puntos_riesgo:
         if p["tipo"] == "roundabout":
-            continue  
+            continue
         color, icono, nombre_capa = iconos.get(p["tipo"], ("gray", "info-sign", "Otros"))
         if nombre_capa not in grupos_riesgo:
             grupos_riesgo[nombre_capa] = folium.FeatureGroup(name=nombre_capa, show=True)
-        detalle = f"{html.escape(p['tipo'].upper())}: {html.escape(p['nombre'])} ({p['distancia_a_ruta_m']} m de la ruta)"
+        detalle = f"{_h(p['tipo'].upper())}: {_h(p['nombre'])} ({p['distancia_a_ruta_m']} m de la ruta)"
         if p.get("telefono"):
-            detalle += f"<br>Tel. {html.escape(p['telefono'])}"
+            detalle += f"<br>Tel. {_h(p['telefono'])}"
         folium.Marker(
             [p["lat"], p["lon"]],
             popup=folium.Popup(detalle, max_width=260),
@@ -541,7 +539,7 @@ def generar_mapa_html(infos, maniobras, puntos_riesgo, curvas, umbral_km, titulo
     for g in grupos_riesgo.values():
         g.add_to(mapa)
 
-    
+    # ---- Curvas cerradas ----
     if curvas:
         g_curvas = folium.FeatureGroup(
             name=f'<span style="color:#FFC400">&#9650;</span> Curvas cerradas ({len(curvas)})', show=True)
@@ -568,7 +566,7 @@ def generar_mapa_html(infos, maniobras, puntos_riesgo, curvas, umbral_km, titulo
     mapa.fit_bounds([[min(p[0] for p in todos), min(p[1] for p in todos)],
                      [max(p[0] for p in todos), max(p[1] for p in todos)]])
 
-    
+    # ---- Control de capas y estilo ----
     folium.LayerControl(collapsed=True).add_to(mapa)
     mapa.get_root().header.add_child(folium.Element(
         "<style>"
@@ -579,7 +577,7 @@ def generar_mapa_html(infos, maniobras, puntos_riesgo, curvas, umbral_km, titulo
         "</style>"))
 
     # Recuadro con el titulo y los avisos (por ejemplo, si Overpass no respondio)
-    cuerpo = html.escape(titulo) + "".join(f"<br><span style='color:#b00'>{html.escape(a)}</span>" for a in avisos)
+    cuerpo = _h(titulo) + "".join(f"<br><span style='color:#b00'>{_h(a)}</span>" for a in avisos)
     mapa.get_root().html.add_child(folium.Element(
         '<div style="position:fixed; top:10px; left:60px; z-index:9999; background:white; '
         'padding:6px 10px; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,.4); '

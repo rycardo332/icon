@@ -1,15 +1,16 @@
 from django.urls import path
 from . import views
+from . import copia_seguridad
 
 urlpatterns = [
-    # Panel Principal (Raíz)
+    # Panel principal (raíz)
     path('', views.panel, name='panel'),
 
     # Importador GPS
     path('gps/importar/', views.importar_gps, name='importar_gps'),
 
-    # Mapas GPS
-    path('gps/mapa/', views.mapa_gps, name='mapa_gps'), # Corregido el name
+    # Mapa GPS (mapa_gps se borra al final, cuando todo funcione)
+    path('gps/mapa/', views.mapa_gps, name='mapa_gps'),
     path('gps/mapa/ver/', views.mapa_gps_render, name='mapa_gps_render'),
     path('gps/mapa/guardar/', views.guardar_trazado, name='guardar_trazado'),
 
@@ -41,4 +42,24 @@ urlpatterns = [
 
     # Inspecciones
     path('gps/inspecciones/', views.listar_inspecciones, name='listar_inspecciones'),
+    path('gps/inspecciones/<int:desplazamiento_id>/hacer/', views.hacer_inspeccion, name='hacer_inspeccion'),
+
+    # Indicador de velocidad
+    path('gps/indicador-velocidad/', views.indicador_velocidad, name='indicador_velocidad'),
+    path('gps/indicador-velocidad/excel/', views.descargar_indicador_velocidad, name='descargar_indicador_velocidad'),
+
+    # Usuarios (solo administradores)
+    path('usuarios/', views.listar_usuarios, name='listar_usuarios'),
+    path('usuarios/nuevo/', views.crear_usuario, name='crear_usuario'),
+    path('usuarios/<int:pk>/editar/', views.editar_usuario, name='editar_usuario'),
+    path('usuarios/<int:pk>/enlace/', views.reenviar_enlace_usuario, name='reenviar_enlace_usuario'),
+    path('usuarios/<int:pk>/alternar/', views.alternar_usuario, name='alternar_usuario'),
+    path('gps/importar/estado/', views.importar_estado, name='importar_estado'),
+    path('excel-fondo/estado/', views.excel_fondo_estado, name='excel_fondo_estado'),
+    path('excel-fondo/<str:clave>/archivo/', views.excel_fondo_archivo, name='excel_fondo_archivo'),
+    path('excel-fondo/<str:clave>/cerrar/', views.excel_fondo_cerrar, name='excel_fondo_cerrar'),
+
+    # Copia de seguridad (solo administradores)
+    path('copia-seguridad/', copia_seguridad.descargar_backup, name='descargar_backup'),
+    path('copia-seguridad/restaurar/', copia_seguridad.restaurar_backup, name='restaurar_backup'),
 ]

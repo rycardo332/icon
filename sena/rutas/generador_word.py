@@ -24,10 +24,17 @@ Qué se llena y de dónde sale:
   INSPECCIÓN (mecánica)    -> InspeccionVehiculo/ItemInspeccion (solo si ya se hizo la inspección)
   INSPECCIÓN (documentos)  -> se calcula con las fechas de vencimiento vs. la fecha del desplazamiento
   RIESGOS                  -> textos base + condiciones de la Ruta + RutaRiesgo
-  PUNTOS CRÍTICOS          -> PuntoRuta de la ruta (punto crítico / intersección / zona escolar)
-  DESCANSO / CLIMA / ALCOHOLEMIA / PARADAS -> campos del Desplazamiento
+  PUNTOS CRÍTICOS          -> los mismos tramos de la sección 5 del Excel (curvas cerradas, glorietas,
+                              zonas escolares), calculados con las funciones de generador_excel; si no se
+                              pueden calcular, PuntoRuta de la ruta (punto crítico / intersección / zona escolar)
+  PUNTOS DE PARADA         -> solo el municipio de cada descanso programado (calculado con el GPS);
+                              sin GPS, lo escrito a mano en el Desplazamiento
+  DESTINO FINAL            -> siempre la oficina de ICON (OFICINA_ICON)
+  DESCANSO                 -> pausas entre los viajes GPS del día (descansos.py); si no hay GPS, campos del Desplazamiento
+  CLIMA / ALCOHOLEMIA      -> campos del Desplazamiento
   EQUIPO / ACCIÓN PREVENTIVA / LÍMITES DE VELOCIDAD -> textos estándar (constantes al inicio)
-  RESPONSABLE              -> Desplazamiento.planificado_por
+  RESPONSABLE              -> InspeccionVehiculo.realizada_por (lo que se escribe en "Realizada por");
+                              si está vacío, Desplazamiento.planificado_por
 """
 import logging
 import os
@@ -40,12 +47,17 @@ import docx
 from docx.oxml import OxmlElement, parse_xml
 from docx.oxml.ns import qn
 
+from .descansos import descansos_desde_gps
+
 log = logging.getLogger(__name__)
 
 MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto",
          "septiembre", "octubre", "noviembre", "diciembre"]
 
 W14 = "{http://schemas.microsoft.com/office/word/2010/wordml}"
+
+# Último punto de parada de todo desplazamiento: la oficina donde llegan.
+OFICINA_ICON = "Oficina ICON Cra. 18 # 24B-47. Duitama, Boyacá."
 
 
 RIESGOS_BASE = [
@@ -162,6 +174,22 @@ def _lineas(texto):
     return [l.strip() for l in str(texto or "").splitlines() if l.strip()]
 
 
+def _paradas_programadas(descansos, manuales):
+    """Puntos de parada segura: solo el municipio de cada descanso programado
+    (ej. '1. 9 min en KRA 27 CON CLL 11, SOGAMOSO (8:10 am – 8:18 am)' -> 'Sogamoso').
+    Sin descansos de GPS usa lo escrito a mano; si tampoco hay, 'Ninguna'."""
+    lugares = []
+    for linea in descansos or []:
+        m = re.search(r"\ben\s+(.+?)\s*\(", str(linea))
+        if not m:
+            continue
+        lugar = m.group(1).split(",")[-1].strip().title()   # lo que va después de la última coma
+        if lugar and lugar not in lugares:
+            lugares.append(lugar)
+    if not lugares:               # sin descansos de GPS: lo escrito a mano en el desplazamiento
+        lugares = list(manuales)
+    return lugares or ["Ninguna"]
+
 
 def _sin_ids(p):
     """Quita los w14:paraId/textId de un párrafo copiado (no deben repetirse)."""
@@ -248,7 +276,7 @@ def _numid_vineta(doc):
         '<w:lvl w:ilvl="0"><w:start w:val="1"/><w:numFmt w:val="bullet"/><w:lvlText w:val="\u2022"/>'
         '<w:lvlJc w:val="left"/><w:pPr><w:ind w:left="360" w:hanging="360"/></w:pPr>'
         '<w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/></w:rPr></w:lvl></w:abstractNum>')
-    primer_num = numbering.find(qn("w:num"))  
+    primer_num = numbering.find(qn("w:num"))
     if primer_num is not None:
         primer_num.addprevious(abstracto)
     else:
@@ -320,7 +348,6 @@ def _agregar_texto(celda, texto):
     p.append(_nuevo_run(texto, rpr))
 
 
-
 def _tabla(doc, titulo):
     clave = _norm(titulo)
     for t in doc.tables:
@@ -341,7 +368,6 @@ def _fila(tabla, etiqueta, despues=False, col_etiqueta=0):
             if j < len(tabla.rows):
                 return tabla.rows[j]
     raise ValueError(f"No encontré la fila '{etiqueta}' en la plantilla Word.")
-
 
 
 def _vigente(hasta, fecha):
@@ -365,7 +391,6 @@ def _riesgos_de_ruta(ruta):
         if valor in RIESGOS_POR_CONDICION:
             items.append(RIESGOS_POR_CONDICION[valor])
 
-    
     try:
         for rr in ruta.riesgos.select_related("riesgo").all():
             medida = rr.medida_preventiva
@@ -393,6 +418,87 @@ def _puntos_criticos(ruta):
         return []
 
 
+def _viajes_del_dia(d):
+    """Viajes GPS del vehículo en la fecha del desplazamiento (los mismos que muestra el mapa)."""
+    try:
+        from datetime import datetime, time, timedelta
+        from django.utils import timezone
+        from .models import Viaje
+        ini = timezone.make_aware(datetime.combine(d.fecha_desplazamiento, time.min))
+        fin = ini + timedelta(days=1)
+        return list(Viaje.objects.filter(
+            vehiculo_id=d.vehiculo_id,
+            fecha_hora_inicio__gte=ini,
+            fecha_hora_inicio__lt=fin,
+        ).order_by("fecha_hora_inicio"))
+    except Exception:
+        log.exception("No se pudieron leer los viajes GPS del día")
+        return []
+
+
+def _criticos_como_excel(d, viajes):
+    """[(titulo, texto), ...] con los MISMOS tramos críticos de la sección 5 del Excel.
+
+    Usa las funciones de generador_excel (_armar_criticos, etc.), así que los dos documentos
+    siempre dicen lo mismo. Si el desplazamiento ya tiene el entorno guardado (se guarda al
+    generar el Excel) es rápido; si no, consulta Overpass igual que el Excel (puede tardar).
+    Devuelve [] si no se pudo calcular (sin viajes GPS, error, etc.)."""
+    viajes = list(viajes) if viajes else _viajes_del_dia(d)
+    if not viajes:
+        return []
+    try:
+        from . import generador_excel as gx
+        from .geocodificacion import texto_ubicacion
+
+        cache = d.cache_entorno or {}
+        avisos = []
+        if cache:
+            infos, curvas, _ = gx.datos_mapa_de_viajes(viajes, con_riesgos=False, avisos=avisos)
+            riesgos = cache.get("riesgos") or []
+        else:
+            infos, curvas, riesgos = gx.datos_mapa_de_viajes(viajes, con_riesgos=True, avisos=avisos)
+
+        perfiles = gx._perfiles_de_ruta(infos)
+        criticos = gx._armar_criticos(curvas, riesgos, perfiles)
+
+        por_indice = {i["indice"]: i for i in infos}
+        sentidos = {}
+        items = []
+        for it in criticos[:gx.FILAS_TRAMOS]:
+            n_viaje = it["n_viaje"]
+            if n_viaje not in sentidos:
+                info = por_indice.get(n_viaje)
+                sentidos[n_viaje] = gx._sentido_de_viaje(info) if info else ""
+
+            calle = texto_ubicacion(it["lat"], it["lon"])
+            if it["tipo"] == "curva":
+                titulo, lugar = f"Curva {it['n']} – Precaución curva cerrada", calle
+            elif it["tipo"] == "glorieta":
+                titulo = f"Glorieta {it['n']} – Precaución glorieta"
+                lugar = f"{it['nombre']}, {calle}" if it["nombre"] else calle
+            else:
+                titulo = f"Zona escolar {it['n']} – Precaución zona escolar"
+                lugar = f"{it['nombre']}, {calle}" if it["nombre"] else calle
+
+            sentido = sentidos[n_viaje]
+            texto = f" {lugar}"
+            if sentido and sentido != "-":
+                texto += f" ({sentido})"
+            items.append((f"{titulo}:", texto))
+        return items
+    except Exception:
+        log.exception("No se pudieron calcular los puntos críticos como en el Excel")
+        return []
+
+
+def _puntos_criticos_documento(d, ruta, viajes):
+    """Puntos críticos para el Word: los del Excel; si no hay, los guardados a mano en la ruta."""
+    items = _criticos_como_excel(d, viajes)
+    if items:
+        return items
+    return [("", linea) for linea in _puntos_criticos(ruta)]
+
+
 def _clave_mecanica(nombre):
     n = _norm(nombre) + " "
     for clave, palabras in CLAVES_MECANICAS.items():
@@ -404,7 +510,7 @@ def _clave_mecanica(nombre):
 def _inspeccion(desplazamiento):
     """({clave: 'X'|'n/a'|''}, texto_para_'Otros') a partir de la inspección presencial, si existe."""
     marcas, otros = {}, []
-    insp = getattr(desplazamiento, "inspeccion", None)  
+    insp = getattr(desplazamiento, "inspeccion", None)
     if insp is None:
         return marcas, ""
     for it in insp.items.select_related("item").all():
@@ -423,6 +529,19 @@ def _inspeccion(desplazamiento):
     if insp.observaciones:
         otros.append(insp.observaciones)
     return marcas, "; ".join(otros)
+
+
+def _responsable(desplazamiento):
+    """Nombre que va en 'NOMBRE DEL RESPONSABLE': primero quien realizó la inspección
+    (lo escrito en 'Realizada por'); si está vacío, el usuario que planificó el desplazamiento."""
+    insp = getattr(desplazamiento, "inspeccion", None)
+    realizador = (getattr(insp, "realizada_por", "") or "").strip() if insp else ""
+    if realizador:
+        return realizador
+    if desplazamiento.planificado_por_id:
+        u = desplazamiento.planificado_por
+        return (u.get_full_name() or u.get_username()).strip()
+    return ""
 
 
 def _ruta_desde_gps(viajes):
@@ -444,11 +563,14 @@ def armar_datos(d, viajes=None):
     ruta, veh, cond = d.ruta, d.vehiculo, d.conductor
     fecha = d.fecha_desplazamiento
 
-    
     ruta_lineas = (_ruta_desde_gps(viajes) or _lineas(ruta.instrucciones_recorrido)
                    or _lineas(ruta.descripcion_ruta))
     if not ruta_lineas:
         ruta_lineas = [f"{ruta.origen} → {ruta.destino}"]
+
+    # Descansos: se calculan con las pausas entre los viajes GPS del día; si no hay GPS,
+    # se usa lo escrito a mano en el desplazamiento.
+    descanso_gps = descansos_desde_gps(viajes if viajes else _viajes_del_dia(d))
 
     marcas, otros = _inspeccion(d)
     marcas.update({
@@ -458,11 +580,6 @@ def armar_datos(d, viajes=None):
         "conduccion": _vigente(cond.licencia_conduccion_vigente_hasta, fecha),
         "transito": "X" if veh.licencia_transito_vigente else "NO",
     })
-
-    planificador = ""
-    if d.planificado_por_id:
-        u = d.planificado_por
-        planificador = (u.get_full_name() or u.get_username()).strip()
 
     return {
         "conductor": cond.nombre,
@@ -477,20 +594,24 @@ def armar_datos(d, viajes=None):
         "marcas": marcas,
         "otros": otros,
         "riesgos": _riesgos_de_ruta(ruta),
-        "puntos_criticos": _puntos_criticos(ruta),
-        "paradas": _lineas(d.puntos_parada_segura) or ["Ninguna"],
-        "sin_descanso": d.tiempo_conduccion_sin_descanso or "Ninguno",
-        "descansos": _lineas(d.tiempos_descanso_programados) or ["1. Ninguno", "2. Ninguno"],
+        "puntos_criticos": _puntos_criticos_documento(d, ruta, viajes),
+        "paradas": _paradas_programadas(
+            descanso_gps["descansos"] if descanso_gps else [],
+            _lineas(d.puntos_parada_segura),
+        ),
+        "sin_descanso": (descanso_gps["sin_descanso"] if descanso_gps
+                         else d.tiempo_conduccion_sin_descanso or "Ninguno"),
+        "descansos": (descanso_gps["descansos"] if descanso_gps
+                      else _lineas(d.tiempos_descanso_programados) or ["1. Ninguno", "2. Ninguno"]),
         "clima": d.condiciones_climaticas_esperadas or "",
         "alcoholemia_fecha": _fecha_hora(d.alcoholemia_fecha_hora),
         "alcoholemia_resultado": _lineas(d.alcoholemia_resultado),
-        "responsable": planificador,
+        "responsable": _responsable(d),
     }
 
 
-
 def _llenar_documento(doc, datos):
-    
+
     t = _tabla(doc, "INFORMACIÓN GENERAL")
     for etiqueta, clave in (
         ("nombre del conductor", "conductor"),
@@ -502,17 +623,14 @@ def _llenar_documento(doc, datos):
     ):
         _escribir_celda(_fila(t, etiqueta).cells[1], [datos[clave]])
 
-    
     t = _tabla(doc, "RUTA Y DESTINO")
     _escribir_celda(_fila(t, "ruta a seguir", despues=True).cells[0], datos["ruta_lineas"])
-    _escribir_celda(_fila(t, "destino final", despues=True).cells[0], [datos["destino"]])
+    _escribir_celda(_fila(t, "destino final", despues=True).cells[0], [OFICINA_ICON])
 
-    
     t = _tabla(doc, "VEHÍCULO Y EQUIPO USADO")
     _escribir_celda(_fila(t, "vehiculo asignado").cells[1], [datos["vehiculo"]])
     _escribir_celda(_fila(t, "equipo adicional").cells[1], EQUIPO_ADICIONAL)
 
-    
     t = _tabla(doc, "INSPECCIÓN DEL VEHÍCULO")
     filas_check = (
         ("neumatic", "neumatic"), ("luces", "luces"), ("freno", "freno"),
@@ -526,15 +644,17 @@ def _llenar_documento(doc, datos):
     if datos["otros"]:
         _agregar_texto(_fila(t, "otros", col_etiqueta=1).cells[1], " " + datos["otros"])
 
-    
     vineta = _numid_vineta(doc)
     t = _tabla(doc, "PLAN DE SEGURIDAD Y RIESGOS")
     _escribir_vinetas(_fila(t, "riesgos asociados", despues=True).cells[0], datos["riesgos"], vineta)
-    _escribir_celda(_fila(t, "puntos criticos", despues=True).cells[0], datos["puntos_criticos"])
+    celda_criticos = _fila(t, "puntos criticos", despues=True).cells[0]
+    if datos["puntos_criticos"]:
+        _escribir_vinetas(celda_criticos, datos["puntos_criticos"], vineta)
+    else:
+        _escribir_celda(celda_criticos, [])
     _escribir_celda(_fila(t, "puntos de parada", despues=True).cells[0], datos["paradas"])
     _escribir_vinetas(_fila(t, "accion preventiva", despues=True).cells[0], ACCION_PREVENTIVA, vineta)
 
-   
     t = _tabla(doc, "TIEMPOS DE DESCANSO Y CONDUCCIÓN")
     _escribir_celda(_fila(t, "tiempo estimado").cells[1], [datos["sin_descanso"]])
     _escribir_celda(_fila(t, "programados").cells[1], datos["descansos"])
@@ -543,17 +663,15 @@ def _llenar_documento(doc, datos):
     _escribir_vinetas(_fila(t, "limites de velocidad").cells[1], LIMITES_VELOCIDAD, vineta)
     _escribir_celda(_fila(t, "condiciones climaticas").cells[1], [datos["clima"]] if datos["clima"] else [])
 
-    
     t = _tabla(doc, "CONTROL DE ALCOHOLEMIA")
     _escribir_celda(_fila(t, "fecha y hora programada").cells[1],
                     [datos["alcoholemia_fecha"]] if datos["alcoholemia_fecha"] else [])
     _escribir_celda(_fila(t, "resultado").cells[1], datos["alcoholemia_resultado"])
 
-    
     t = _tabla(doc, "NOMBRE DEL RESPONSABLE")
     celda = t.rows[1].cells[0]
     parrafos = celda._tc.findall(qn("w:p"))
-    
+
     destino = next((p for p in parrafos if p.find(qn("w:pPr")) is not None
                     and p.find(qn("w:pPr")).find(qn("w:jc")) is not None), parrafos[0])
     _reemplazar_texto_de_parrafo(destino, datos["responsable"])

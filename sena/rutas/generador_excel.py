@@ -20,7 +20,7 @@ from .mapa_viajes import ErrorOverpass, distancia_metros
 log = logging.getLogger(__name__)
 
 
-MAPA_COL_INI, MAPA_COL_FIN = 1, 11  
+MAPA_COL_INI, MAPA_COL_FIN = 1, 11
 MAPA_FILA_INI, MAPA_FILA_FIN = 20, 26
 
 
@@ -36,7 +36,7 @@ TRAFICO_PREFIJOS = {
     "automoviles": "MAYORÍA AUTOMÓVILES",
     "mixto": "MIXTO",
 }
-SUPERFICIE_PREFIJOS = {  
+SUPERFICIE_PREFIJOS = {
     "pavimentada": "PAVIMENTADA",
     "trocha": "TROCHA",
     "con_huecos": "CON HUECOS",
@@ -45,7 +45,7 @@ SUPERFICIE_PREFIJOS = {
     "amplia": "AMPLIA",
     "angosta": "ANGOSTA",
 }
-CONDICION_PREFIJOS = {  
+CONDICION_PREFIJOS = {
     "inestabilidad": "INESTAB. GEOLÓGICA",
     "caida_bancada": "CAÍDA DE BANCADA",
     "hundimientos": "HUNDIMIENTOS",
@@ -59,22 +59,22 @@ MESES_ES = {1: "ENERO", 2: "FEBRERO", 3: "MARZO", 4: "ABRIL", 5: "MAYO", 6: "JUN
 FILA_MES = {nombre: 11 + num for num, nombre in MESES_ES.items()}
 
 
-FILAS_TRAMOS = 7      
-FILAS_ZONAS = 8       
-FILAS_AGUA = 2        
-FILAS_APOYO = 8       
+FILAS_TRAMOS = 7
+FILAS_ZONAS = 8
+FILAS_AGUA = 2
+FILAS_APOYO = 8
 
-SIN_NOMBRE = "(sin nombre)"  
+SIN_NOMBRE = "(sin nombre)"
 ESCOLARES = ("school", "college", "university")
 
 
-DIST_ESCOLAR_CRITICO_M = 150   
-DIST_GLORIETA_CRITICA_M = 60  
-MAX_ESCOLARES_CRITICOS = 2     
-MAX_GLORIETAS_CRITICAS = 2     
+DIST_ESCOLAR_CRITICO_M = 150
+DIST_GLORIETA_CRITICA_M = 60
+MAX_ESCOLARES_CRITICOS = 2
+MAX_GLORIETAS_CRITICAS = 2
 
 
-RADIO_MUNICIPIO_M = 6000      
+RADIO_MUNICIPIO_M = 6000
 ETIQUETAS_APOYO = {
     "fire_station": "BOMBEROS",
     "police": "POLICÍA NACIONAL",
@@ -106,6 +106,24 @@ def _norm(texto):
     return "".join(c for c in t if unicodedata.category(c) != "Mn").lower().strip()
 
 
+def _celdas_con_formula(ws):
+    """Coordenadas de las celdas que ya traen una fórmula en la plantilla (las legítimas),
+    más la columna P del resumen mensual, donde el código escribe fórmulas a propósito."""
+    legitimas = {c.coordinate for fila in ws.iter_rows() for c in fila if c.data_type == "f"}
+    legitimas.update(f"P{fila}" for fila in FILA_MES.values())
+    return legitimas
+
+
+def _neutralizar_formulas(ws, legitimas):
+    """Un nombre o dirección que empiece por '=' (viene de un Excel subido o de OpenStreetMap,
+    que edita cualquiera) lo guardaría openpyxl como fórmula, y se ejecutaría al abrir el
+    reporte. Aquí toda celda con fórmula que no sea de la plantilla se deja como texto."""
+    for fila in ws.iter_rows():
+        for c in fila:
+            if c.data_type == "f" and c.coordinate not in legitimas:
+                c.data_type = "s"
+
+
 def _tam_area_px(ws):
     """Tamaño aproximado en píxeles de A20:K26, para que el mapa no salga deformado."""
     ancho_def = ws.sheet_format.defaultColWidth or 8.43
@@ -122,6 +140,16 @@ def _tam_area_px(ws):
     return ancho, int(alto_pt * 96 / 72)
 
 
+def _igualar_filas_mapa(ws):
+    """Reparte en partes iguales la altura de las filas del mapa (20-26), para que los
+    meses de la tabla M-P que caen ahí no queden en filas desparejas. El total no
+    cambia, así que el mapa conserva su tamaño."""
+    filas = range(MAPA_FILA_INI, MAPA_FILA_FIN + 1)
+    total = sum(ws.row_dimensions[r].height or 15 for r in filas)
+    for r in filas:
+        ws.row_dimensions[r].height = total / len(filas)
+
+
 def _escribir(ws, celda, valor, envolver=False):
     """Escribe en la celda ancla (esquina superior izquierda) sin tocar las combinadas."""
     ws[celda].value = valor
@@ -130,8 +158,6 @@ def _escribir(ws, celda, valor, envolver=False):
         ws[celda].alignment = Alignment(
             horizontal=al.horizontal or "center", vertical="center", wrap_text=True
         )
-
-
 
 
 def _marcar_celda_unica(ws, celda):
@@ -188,7 +214,6 @@ def _llenar_condiciones_via(ws, ruta):
             ws["I18"].value = ruta.restriccion_hasta.strftime("%H:%M")
         if ruta.restriccion_dias:
             ws["J18"].value = ruta.restriccion_dias
-
 
 
 def _perfiles_de_ruta(infos):
@@ -652,9 +677,10 @@ def generar_excel_tarjeta_ruta(ruta_obj, viajes=None, mapa_png_path=None, con_ri
     # 2. ABRIR PLANTILLA
     wb = openpyxl.load_workbook(plantilla_path)
     ws = wb.active
+    formulas_legitimas = _celdas_con_formula(ws)  # para neutralizar las que vengan de texto externo
 
     ws._charts = []
-
+    _igualar_filas_mapa(ws)
     # 3. DATOS GENERALES DE LA RUTA
     nombre_ruta = ruta_obj.nombre or "TRAMO URBANO / REGIONAL"
 
@@ -699,20 +725,23 @@ def generar_excel_tarjeta_ruta(ruta_obj, viajes=None, mapa_png_path=None, con_ri
             if tiempo_estimado:
                 resumen += f"  ·  {tiempo_estimado} aprox."
     _escribir(ws, "A12", resumen, envolver=True)  # A12:K12  1. RUTA PRINCIPAL
+
     # 5. DATOS DERIVADOS DEL MAPA (curvas, puntos de riesgo/apoyo, entorno). Se calculan una
-    # sola vez y se usan tanto para el PNG como para las tablas 5 a 8.
-        # 5. DATOS DERIVADOS DEL MAPA (curvas, puntos de riesgo/apoyo, entorno). Se calculan una
     # sola vez y se usan tanto para el PNG como para las tablas 5 a 8.
     avisos = []
     infos, curvas, riesgos = [], [], []
-    cache_usado = bool(desplazamiento is not None and desplazamiento.cache_entorno)
+    cache_usado = bool(
+        desplazamiento is not None
+        and desplazamiento.cache_entorno
+        and desplazamiento.cache_entorno.get("completo")
+    )
 
     if viajes:
         infos, curvas, riesgos = datos_mapa_de_viajes(
             viajes, con_riesgos=(con_riesgos and not cache_usado), avisos=avisos
         )
 
-        lugares, aguas = [], []
+    lugares, aguas = [], []
     if cache_usado:
         cache = desplazamiento.cache_entorno
         lugares = cache.get("lugares", [])
@@ -752,6 +781,7 @@ def generar_excel_tarjeta_ruta(ruta_obj, viajes=None, mapa_png_path=None, con_ri
                         desplazamiento.cache_entorno = {
                             "lugares": lugares_guardar, "aguas": aguas_guardar,
                             "curvas": [list(c) for c in curvas], "riesgos": riesgos,
+                            "completo": not (error_lugares or error_aguas) and bool(aguas_guardar),
                         }
                         desplazamiento.cache_entorno_actualizado = _tz.now()
                         desplazamiento.save(update_fields=["cache_entorno", "cache_entorno_actualizado"])
@@ -770,9 +800,8 @@ def generar_excel_tarjeta_ruta(ruta_obj, viajes=None, mapa_png_path=None, con_ri
     zonas = _elegir_zonas(riesgos, lugares, perfiles)
     filas_apoyo = _armar_filas_apoyo(ruta_obj.puntos_apoyo_emergencia, riesgos, lugares, perfiles)
 
-    
     _llenar_condiciones_via(ws, ruta_obj)
-    
+
     if not (mapa_png_path and os.path.exists(mapa_png_path)) and infos:
         colegios_tabla = [p for clase, p in zonas if clase == "colegio"]
         riesgos_mapa = [p for p in riesgos
@@ -799,32 +828,29 @@ def generar_excel_tarjeta_ruta(ruta_obj, viajes=None, mapa_png_path=None, con_ri
         # (la leyenda de íconos se dibuja encima del mapa, arriba a la derecha).
         ws._images.insert(0, img)
 
-    
     _llenar_tramos_criticos(ws, criticos, infos, ruta_obj)
     _llenar_zonas_urbanas(ws, zonas)
     _llenar_cuerpos_de_agua(ws, ruta_obj.cuerpos_de_agua, aguas)
     _llenar_puntos_apoyo(ws, filas_apoyo)
 
-    
     anio_filtro = None
     if desplazamiento and getattr(desplazamiento, "fecha_desplazamiento", None):
         anio_filtro = desplazamiento.fecha_desplazamiento.year
 
-    _llenar_resumen_mensual(
-        ws, ruta_obj, distancia_km=distancia_km,
-        anio=anio_filtro,
-    )
+        # _llenar_resumen_mensual(
+    #     ws, ruta_obj, distancia_km=distancia_km,
+    #     anio=anio_filtro,
+    # )
 
-    
     if avisos:
         c = Comment("AVISOS DEL SISTEMA\n" + "\n".join(avisos), "Sistema")
         c.width, c.height = 420, 180
         ws["A5"].comment = c
 
-    # 11. GUARDAR
+    # 11. GUARDAR (antes, se neutraliza cualquier texto externo que empiece por "=")
+    _neutralizar_formulas(ws, formulas_legitimas)
     wb.save(salida_path)
     return salida_path
-
 
 
 import time as _time

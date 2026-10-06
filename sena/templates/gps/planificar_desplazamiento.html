@@ -1,226 +1,344 @@
 {% extends "base.html" %}
 {% load static %}
 
+{% block title %}Planificación del desplazamiento{% endblock %}
+
 {% block content %}
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
 <style>
-  .pl-wrap{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:1.25rem}
-  .pl-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
-  .pl-title-box{display:flex;align-items:center;gap:.9rem}
-  .pl-title-box img{width:44px;height:44px;object-fit:contain;border-radius:10px}
-  .pl-title{font-family:'Space Mono',monospace;font-weight:700;font-size:1.7rem;color:#fff;margin:0;text-shadow:0 2px 8px rgba(0,0,0,.45)}
-  .pl-sub{color:#e2e8f0;font-size:.9rem;margin:0;text-shadow:0 1px 4px rgba(0,0,0,.4)}
-  .pl-sub strong{color:#fff}
-  .pl-actions{display:flex;gap:.6rem;flex-wrap:wrap}
+  /* PLANIFICACIÓN DEL DESPLAZAMIENTO - mismo estilo del Panel de control (prefijo ic-) · sin animaciones */
+  .ic-dash {
+    --volt: #5bb5c8; --lime: #8fbf6a; --amber: #d9a840; --red2: #d9777a;
+    --ink: #dbe4f0; --mute: #8696ad; --line: rgba(91, 181, 200, .28);
+    --glass: rgba(6, 14, 28, .82);
+    --ic-fancy: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    max-width: 1100px; margin: 0 auto;
+    color: var(--ink); font-family: var(--ic-fancy); font-variant-numeric: tabular-nums;
+    display: flex; flex-direction: column; gap: 1.5rem;
+  }
 
-  .pl-btn{display:inline-flex;align-items:center;gap:.45rem;border-radius:999px;padding:.5rem 1.1rem;font-size:.85rem;font-weight:600;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:transform .15s,filter .15s,background .15s,color .15s}
-  .pl-btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
-  .pl-btn img{width:18px;height:18px;object-fit:contain;border-radius:4px}
-  .pl-btn-sec{background:rgba(255,255,255,.88);color:#0f172a;border-color:rgba(255,255,255,.7)}
-  .pl-btn-sec:hover{background:var(--dark-2);color:#fff}
-  .pl-btn-main{background:var(--red);color:#fff}
-  .pl-btn-main:hover{color:#fff}
-  .pl-btn-dark{background:var(--dark);color:#fff;padding:.65rem 1.5rem}
-  .pl-btn-dark:hover{color:#fff}
-  .pl-btn-sm{padding:.3rem .85rem;font-size:.78rem}
-  .pl-btn-ghost{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.25)}
-  .pl-btn-ghost:hover{background:rgba(255,255,255,.22);color:#fff}
+  /* PANEL --------------------------------------------------- */
+  .ic-panel {
+    display: flex; flex-direction: column;
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%);
+    border: 1px solid rgba(91, 181, 200, .25); border-radius: 20px; overflow: hidden;
+    box-shadow: 0 14px 36px rgba(0, 0, 0, .4);
+  }
 
-  .pl-panel{background:rgba(255,255,255,.84);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(255,255,255,.7);border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.18)}
-  .pl-panel-head{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;padding:.9rem 1.25rem;background:linear-gradient(90deg,var(--dark),var(--dark-2))}
-  .pl-step{font-family:'Space Mono',monospace;font-weight:700;color:#a3e635}
-  .pl-panel-title{font-family:'Space Mono',monospace;font-weight:700;font-size:.95rem;color:#fff;margin:0}
-  .pl-panel-right{margin-left:auto}
-  .pl-body{padding:1.25rem}
-  .pl-note{color:#64748b;font-size:.82rem;margin:0 0 .9rem}
+  /* BARRA SUPERIOR ------------------------------------------ */
+  .ic-top {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;
+    padding: 1.1rem 1.5rem;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(100deg, rgba(91, 181, 200, .1), rgba(143, 191, 106, .03) 60%, transparent);
+  }
+  .ic-top-icon { width: 44px; height: 44px; flex: none; object-fit: contain; border-radius: 10px; }
+  .ic-title { font-weight: 700; font-size: 1.4rem; margin: 0; color: #fff; }
+  .ic-subtitle { margin: 0; color: var(--mute); font-size: .85rem; }
+  .ic-subtitle strong { color: #fff; font-weight: 600; }
+  .ic-actions { margin-left: auto; display: flex; gap: .5rem; flex-wrap: wrap; }
 
-  .pl-body label{font-size:.82rem;font-weight:600;color:#334155;margin-bottom:.3rem;display:block}
-  .pl-body input:not([type=radio]):not([type=checkbox]),.pl-body select,.pl-body textarea{width:100%;border-radius:10px;border:1px solid rgba(15,23,42,.15);background:rgba(255,255,255,.9);padding:.5rem .75rem;font-size:.88rem;color:#0f172a}
-  .pl-body input:not([type=radio]):not([type=checkbox]):focus,.pl-body select:focus,.pl-body textarea:focus{outline:none;border-color:var(--dark-2);box-shadow:none}
-  .pl-err{color:#b91c1c;font-size:.78rem;margin-top:.2rem}
-  .pl-alert{background:#fef2f2;color:#b91c1c;border-radius:14px;padding:.7rem 1rem;font-size:.88rem;margin-bottom:.9rem}
+  /* BOTONES ------------------------------------------------- */
+  .ic-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: .4rem; border-radius: 999px;
+    padding: .45rem 1.05rem; font-size: .83rem; font-weight: 600; text-decoration: none;
+    color: var(--ink); border: 1px solid var(--line); background: rgba(2, 8, 20, .5);
+    cursor: pointer; font-family: var(--ic-fancy); transition: all .15s;
+  }
+  .ic-btn img { width: 16px; height: 16px; border-radius: 3px; }
+  .ic-btn:hover { border-color: var(--volt); color: #fff; box-shadow: 0 0 0 1px var(--volt); }
+  .ic-btn:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+  .ic-btn-main { background: var(--volt); border-color: var(--volt); color: #04141b; }
+  .ic-btn-main:hover { background: #7cc6d6; border-color: #7cc6d6; color: #04141b; box-shadow: none; }
+  .ic-btn-lg { padding: .6rem 1.6rem; font-size: .88rem; }
+  .ic-btn-sm { padding: .3rem .85rem; font-size: .78rem; margin-left: auto; }
 
-  .pl-docs{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
-  .pl-doc{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;font-size:.88rem;color:#334155}
-  .pl-doc small{color:#64748b}
-  .pl-pill{display:inline-block;border-radius:999px;padding:.2rem .7rem;font-size:.75rem;font-weight:600;border:1px solid}
-  .pl-ok{background:#f0fdf4;color:#15803d;border-color:#bbf7d0}
-  .pl-bad{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
-  .pl-neutral{background:#f1f5f9;color:#475569;border-color:#e2e8f0}
+  /* SECCIONES ----------------------------------------------- */
+  .ic-body { padding: 1.5rem; }
+  .ic-section { margin-bottom: 1.9rem; }
+  .ic-section:last-of-type { margin-bottom: 0; }
+  .ic-sec-head {
+    position: relative; display: flex; align-items: center; gap: .6rem;
+    padding-bottom: .6rem; margin-bottom: 1rem; border-bottom: 1px solid var(--line);
+  }
+  .ic-sec-head::after {
+    content: ""; position: absolute; left: 0; bottom: -1px; width: 64px; height: 2px; background: var(--lime);
+  }
+  .ic-panel-title { font-weight: 700; font-size: .95rem; color: #fff; margin: 0; }
+  .ic-note { color: var(--mute); font-size: .82rem; margin: 0 0 .9rem; }
 
-  .pl-cat{font-family:'Space Mono',monospace;font-weight:700;font-size:.8rem;color:#64748b;text-transform:uppercase;margin:1.1rem 0 .5rem}
-  .pl-cat:first-of-type{margin-top:0}
-  .pl-item{display:grid;grid-template-columns:220px auto 1fr;gap:.75rem;align-items:center;padding:.55rem 0;border-top:1px solid rgba(15,23,42,.09)}
-  .pl-item-name{font-weight:600;color:#0f172a;font-size:.88rem}
-  .pl-seg{display:inline-flex;background:rgba(255,255,255,.9);border:1px solid rgba(15,23,42,.15);border-radius:999px;padding:3px;gap:2px}
-  .pl-seg input{position:absolute;opacity:0;pointer-events:none}
-  .pl-seg label{margin:0;cursor:pointer;border-radius:999px;border:1px solid transparent;padding:.3rem .8rem;font-size:.76rem;font-weight:600;color:#475569;white-space:nowrap;transition:background .15s,color .15s}
-  .pl-seg label:hover{background:rgba(15,23,42,.05)}
-  .pl-seg input:checked + label.pl-l-ok{background:#f0fdf4;color:#15803d;border-color:#bbf7d0}
-  .pl-seg input:checked + label.pl-l-bad{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
-  .pl-seg input:checked + label.pl-l-na{background:#e2e8f0;color:#334155;border-color:#cbd5e1}
-  .pl-seg input:focus-visible + label{outline:2px solid #60a5fa}
-  .pl-empty{background:#fffbeb;color:#b45309;border-radius:14px;padding:.75rem 1rem;font-size:.88rem}
-  .pl-foot{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid rgba(15,23,42,.09)}
-  .pl-foot .pl-full{grid-column:1/-1}
-  .pl-submit{display:flex;justify-content:flex-end}
+  /* CAMPOS -------------------------------------------------- */
+  .ic-body label { display: block; font-size: .8rem; font-weight: 600; color: var(--mute); margin-bottom: .3rem; }
+  .ic-body input:not([type=radio]):not([type=checkbox]),
+  .ic-body select,
+  .ic-body textarea {
+    width: 100%; border-radius: 10px; border: 1px solid var(--line);
+    background: rgba(2, 8, 20, .6); padding: .5rem .8rem; font-size: .88rem; color: var(--ink);
+    font-family: var(--ic-fancy); color-scheme: dark;
+  }
+  .ic-body select option { background: #08121f; color: var(--ink); }
+  .ic-body input::placeholder, .ic-body textarea::placeholder { color: rgba(134, 150, 173, .7); }
+  .ic-body input:not([type=radio]):not([type=checkbox]):focus,
+  .ic-body select:focus,
+  .ic-body textarea:focus {
+    outline: none; border-color: var(--volt); box-shadow: 0 0 0 1px var(--volt);
+  }
+  .ic-body input:not([type=radio]):not([type=checkbox]):disabled,
+  .ic-body textarea:disabled {
+    background: rgba(255, 255, 255, .05); color: var(--mute); cursor: not-allowed;
+  }
+  .ic-hint { color: var(--mute); font-size: .76rem; margin-top: .25rem; }
+  .ic-err { color: var(--red2); font-size: .78rem; margin-top: .25rem; }
+  .ic-alert {
+    background: rgba(217, 119, 122, .1); color: #f3c4c6; border: 1px solid rgba(217, 119, 122, .4);
+    border-radius: 14px; padding: .7rem 1rem; font-size: .88rem; margin-bottom: .9rem;
+  }
+  .ic-alert ul { list-style: none; margin: 0; padding: 0; }
 
-  .pl-msg{display:flex;justify-content:space-between;align-items:center;gap:1rem;border-radius:14px;padding:.75rem 1rem;font-size:.88rem;font-weight:500}
-  .pl-msg button{background:none;border:0;color:inherit;font-size:1.1rem;line-height:1;cursor:pointer;opacity:.7}
-  .pl-msg-success{background:#f0fdf4;color:#15803d}
-  .pl-msg-error,.pl-msg-danger{background:#fef2f2;color:#b91c1c}
-  .pl-msg-warning{background:#fffbeb;color:#b45309}
-  .pl-msg-info,.pl-msg-debug{background:#eff6ff;color:#1d4ed8}
+  /* DOCUMENTACIÓN ------------------------------------------- */
+  .ic-docs { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; }
+  .ic-doc {
+    display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; font-size: .88rem;
+    padding: .6rem .8rem; border-radius: 12px;
+    border: 1px solid rgba(91, 181, 200, .18); background: rgba(255, 255, 255, .03);
+  }
+  .ic-doc small { color: var(--mute); }
+  .ic-pill { display: inline-block; border-radius: 999px; padding: .15rem .65rem; font-size: .74rem; font-weight: 600; border: 1px solid; }
+  .ic-ok { color: var(--lime); border-color: rgba(143, 191, 106, .5); background: rgba(143, 191, 106, .1); }
+  .ic-bad { color: var(--red2); border-color: rgba(217, 119, 122, .5); background: rgba(217, 119, 122, .1); }
+  .ic-neutral { color: var(--mute); border-color: rgba(134, 150, 173, .4); background: rgba(134, 150, 173, .08); }
 
-  @media (max-width:767px){
-    .pl-title{font-size:1.3rem}
-    .pl-actions{width:100%}
-    .pl-docs{grid-template-columns:1fr}
-    .pl-item{grid-template-columns:1fr}
-    .pl-foot{grid-template-columns:1fr}
-    .pl-submit .pl-btn{width:100%;justify-content:center}
+  /* INSPECCIÓN ---------------------------------------------- */
+  .ic-cat { font-weight: 700; font-size: .88rem; color: var(--volt); margin: 1.2rem 0 .4rem; }
+  .ic-cat:first-of-type { margin-top: 0; }
+  .ic-item {
+    display: grid; grid-template-columns: 220px auto 1fr; gap: .75rem; align-items: center;
+    padding: .55rem 0; border-top: 1px solid rgba(91, 181, 200, .12);
+  }
+  .ic-item-name { font-weight: 600; font-size: .88rem; }
+  .ic-seg {
+    display: inline-flex; background: rgba(2, 8, 20, .6); border: 1px solid var(--line);
+    border-radius: 999px; padding: 3px; gap: 2px;
+  }
+  .ic-seg input { position: absolute; opacity: 0; pointer-events: none; }
+  .ic-seg label {
+    margin: 0; cursor: pointer; border-radius: 999px; border: 1px solid transparent;
+    padding: .3rem .8rem; font-size: .76rem; font-weight: 600; color: var(--mute);
+    white-space: nowrap; transition: background .15s, color .15s;
+  }
+  .ic-seg label:hover { background: rgba(91, 181, 200, .1); color: var(--ink); }
+  .ic-seg input:checked + label.ic-l-ok { background: rgba(143, 191, 106, .18); color: var(--lime); border-color: rgba(143, 191, 106, .55); }
+  .ic-seg input:checked + label.ic-l-bad { background: rgba(217, 119, 122, .18); color: var(--red2); border-color: rgba(217, 119, 122, .55); }
+  .ic-seg input:checked + label.ic-l-na { background: rgba(134, 150, 173, .18); color: var(--ink); border-color: rgba(134, 150, 173, .5); }
+  .ic-seg input:focus-visible + label { outline: 2px solid var(--lime); }
+  .ic-empty {
+    background: rgba(217, 168, 64, .1); border: 1px solid rgba(217, 168, 64, .4); color: var(--amber);
+    border-radius: 12px; padding: .75rem 1rem; font-size: .88rem;
+  }
+  .ic-foot {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+    margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--line);
+  }
+  .ic-foot .ic-full { grid-column: 1 / -1; }
+
+  .ic-submit {
+    display: flex; justify-content: flex-end; padding: 1rem 1.5rem;
+    background: rgba(91, 181, 200, .05); border-top: 1px solid var(--line);
+  }
+
+  /* MENSAJES ------------------------------------------------ */
+  .ic-msg {
+    display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    border-radius: 14px; padding: .75rem 1rem; font-size: .88rem; font-weight: 500;
+    background: rgba(6, 14, 28, .88); border: 1px solid;
+  }
+  .ic-msg button { background: none; border: 0; color: inherit; font-size: 1.1rem; line-height: 1; cursor: pointer; opacity: .7; }
+  .ic-msg-success { color: var(--lime); border-color: rgba(143, 191, 106, .5); }
+  .ic-msg-error, .ic-msg-danger { color: #f3c4c6; border-color: rgba(217, 119, 122, .5); }
+  .ic-msg-warning { color: var(--amber); border-color: rgba(217, 168, 64, .5); }
+  .ic-msg-info, .ic-msg-debug { color: #bfe6ee; border-color: rgba(91, 181, 200, .5); }
+
+  /* CALENDARIO Y RELOJ (Flatpickr) con los colores del panel.
+     Colores fijos: el calendario se agrega al body, fuera de .ic-dash */
+  .flatpickr-calendar {
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #0b1626; border: 1px solid rgba(91, 181, 200, .3); border-radius: 14px;
+    box-shadow: 0 14px 36px rgba(0, 0, 0, .5);
+  }
+  .flatpickr-calendar.arrowTop:before { border-bottom-color: rgba(91, 181, 200, .3); }
+  .flatpickr-calendar.arrowTop:after { border-bottom-color: #08121f; }
+  .flatpickr-calendar.arrowBottom:before { border-top-color: rgba(91, 181, 200, .3); }
+  .flatpickr-calendar.arrowBottom:after { border-top-color: #0b1626; }
+  .flatpickr-months .flatpickr-month { background: #08121f; color: #fff; fill: #fff; border-radius: 14px 14px 0 0; height: 44px; }
+  .flatpickr-current-month { font-size: 1rem; padding-top: 8px; }
+  .flatpickr-current-month input.cur-year,
+  .flatpickr-current-month span.cur-month { color: #fff; font-weight: 700; }
+  .flatpickr-current-month span.cur-month:hover { background: transparent; }
+  .numInputWrapper:hover { background: transparent; }
+  .numInputWrapper span.arrowUp:after { border-bottom-color: rgba(219, 228, 240, .7); }
+  .numInputWrapper span.arrowDown:after { border-top-color: rgba(219, 228, 240, .7); }
+  .flatpickr-months .flatpickr-prev-month,
+  .flatpickr-months .flatpickr-next-month { fill: #dbe4f0; color: #dbe4f0; }
+  .flatpickr-months .flatpickr-prev-month:hover svg,
+  .flatpickr-months .flatpickr-next-month:hover svg { fill: #5bb5c8; }
+  .flatpickr-weekdays, span.flatpickr-weekday { background: transparent; color: #8696ad; font-weight: 600; }
+  .flatpickr-day { border-radius: 10px; font-weight: 500; color: #dbe4f0; }
+  .flatpickr-day.prevMonthDay, .flatpickr-day.nextMonthDay { color: rgba(134, 150, 173, .5); }
+  .flatpickr-day:hover, .flatpickr-day:focus {
+    background: rgba(91, 181, 200, .18); border-color: rgba(91, 181, 200, .18); color: #fff;
+  }
+  .flatpickr-day.today { border-color: #5bb5c8; }
+  .flatpickr-day.today:hover { background: #5bb5c8; border-color: #5bb5c8; color: #04141b; }
+  .flatpickr-day.selected, .flatpickr-day.selected:hover { background: #5bb5c8; border-color: #5bb5c8; color: #04141b; }
+
+  .flatpickr-calendar.hasTime.noCalendar { width: 190px; }
+  .flatpickr-time { height: 56px; max-height: 56px; line-height: 56px; border-radius: 0 0 14px 14px; background: transparent; border-top: 1px solid rgba(91, 181, 200, .2); }
+  .flatpickr-calendar.noCalendar .flatpickr-time { border-top: 0; border-radius: 14px; }
+  .flatpickr-time .numInputWrapper { height: 56px; }
+  .flatpickr-time input, .flatpickr-time .flatpickr-time-separator { font-size: 1.35rem; font-weight: 700; color: #fff; background: transparent; }
+  .flatpickr-time .flatpickr-am-pm { font-size: 1rem; font-weight: 700; color: #5bb5c8; }
+  .flatpickr-time input:hover, .flatpickr-time input:focus,
+  .flatpickr-time .flatpickr-am-pm:hover, .flatpickr-time .flatpickr-am-pm:focus { background: rgba(91, 181, 200, .15); }
+
+  @media (max-width: 767px) {
+    .ic-title { font-size: 1.2rem; }
+    .ic-actions { width: 100%; margin-left: 0; }
+    .ic-docs { grid-template-columns: 1fr; }
+    .ic-item { grid-template-columns: 1fr; }
+    .ic-foot { grid-template-columns: 1fr; }
+    .ic-submit .ic-btn { width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ic-btn, .ic-seg label { transition: none; }
   }
 </style>
 
-<div class="pl-wrap">
+<div class="ic-dash">
 
   {% if messages %}
     {% for message in messages %}
-      <div class="pl-msg pl-msg-{{ message.tags }}" role="alert">
+      <div class="ic-msg ic-msg-{{ message.tags }}" role="alert">
         <span>{{ message }}</span>
         <button type="button" onclick="this.parentNode.remove()" aria-label="Cerrar">&times;</button>
       </div>
     {% endfor %}
   {% endif %}
 
-  <div class="pl-head">
-    <div class="pl-title-box">
-      <img src="{% static 'img/iconos/desplazamientos.jpg' %}" alt="">
+  <form method="post" class="ic-panel">
+    {% csrf_token %}
+
+    <div class="ic-top">
+      <img class="ic-top-icon" src="{% static 'img/iconos/desplazamientos.jpg' %}" alt="">
       <div>
-        <h1 class="pl-title">Planificación del desplazamiento</h1>
-        <p class="pl-sub">
+        <h1 class="ic-title">Planificación del desplazamiento</h1>
+        <p class="ic-subtitle">
           Ruta: <strong>{{ desplazamiento.ruta.codigo }}</strong> ·
           Vehículo: <strong>{{ desplazamiento.vehiculo.placa }}</strong> ·
           Fecha: <strong>{{ desplazamiento.fecha_desplazamiento|date:"d/m/Y" }}</strong>
         </p>
       </div>
+      <div class="ic-actions">
+        <a href="{% url 'panel' %}" class="ic-btn">Panel</a>
+        <a href="{% url 'ver_tarjeta_ruta' desplazamiento.ruta_id %}?desplazamiento={{ desplazamiento.pk }}" class="ic-btn">Volver a la tarjeta de ruta</a>
+        <a href="{% url 'exportar_word_control_planificacion' desplazamiento.pk %}" class="ic-btn">
+          <img src="{% static 'img/iconos/word.jpg' %}" alt=""> Descargar Word
+        </a>
+      </div>
     </div>
-    <div class="pl-actions">
-      <a href="{% url 'panel' %}" class="pl-btn pl-btn-sec">Panel</a>
-      <a href="{% url 'ver_tarjeta_ruta' desplazamiento.ruta_id %}?desplazamiento={{ desplazamiento.pk }}" class="pl-btn pl-btn-sec">Volver a la tarjeta de ruta</a>
-      <a href="{% url 'exportar_word_control_planificacion' desplazamiento.pk %}" class="pl-btn pl-btn-sec">
-        <img src="{% static 'img/iconos/word.jpg' %}" alt=""> Descargar Word
-      </a>
-    </div>
-  </div>
 
-  <form method="post">
-    {% csrf_token %}
-    <div class="pl-wrap">
+    <div class="ic-body">
 
-      <div class="pl-panel">
-        <div class="pl-panel-head">
-          <span class="pl-step">01</span>
-          <h2 class="pl-panel-title">Datos del desplazamiento</h2>
-        </div>
-        <div class="pl-body">
-          {% if form.non_field_errors %}
-            <div class="pl-alert">{{ form.non_field_errors }}</div>
-          {% endif %}
-          <div class="row g-3">
-            {% for field in form %}
+      <section class="ic-section">
+        <div class="ic-sec-head"><h2 class="ic-panel-title">Datos del desplazamiento</h2></div>
+        {% if form.non_field_errors %}
+          <div class="ic-alert">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <div class="row g-3">
+          {% for field in form %}
+            {% if field.name != 'tiempo_conduccion_sin_descanso' and field.name != 'tiempos_descanso_programados' %}
             <div class="{% if field.field.widget.attrs.rows %}col-12{% else %}col-md-4{% endif %}">
               <label for="{{ field.id_for_label }}">{{ field.label }}</label>
               {{ field }}
-              {% for e in field.errors %}<div class="pl-err">{{ e }}</div>{% endfor %}
+              {% if field.help_text %}<div class="ic-hint">{{ field.help_text }}</div>{% endif %}
+              {% for e in field.errors %}<div class="ic-err">{{ e }}</div>{% endfor %}
             </div>
-            {% endfor %}
-          </div>
-        </div>
-      </div>
-
-      <div class="pl-panel">
-        <div class="pl-panel-head">
-          <span class="pl-step">02</span>
-          <h2 class="pl-panel-title">Documentación (se calcula sola)</h2>
-        </div>
-        <div class="pl-body">
-          <p class="pl-note">
-            Se compara la fecha de vencimiento con el día del desplazamiento. Para cambiarla, edita el vehículo o el conductor en el admin.
-          </p>
-          <div class="pl-docs">
-            {% for doc in documentos %}
-            <div class="pl-doc">
-              <span class="pl-pill {% if doc.estado == 'ok' %}pl-ok{% elif doc.estado == 'na' %}pl-neutral{% else %}pl-bad{% endif %}">
-                {% if doc.estado == 'ok' %}Vigente{% elif doc.estado == 'na' %}N/A{% else %}Vencido{% endif %}
-              </span>
-              <span>{{ doc.nombre }}{% if doc.hasta %} <small>({{ doc.hasta|date:"d/m/Y" }})</small>{% endif %}</span>
-            </div>
-            {% endfor %}
-          </div>
-        </div>
-      </div>
-
-      <div class="pl-panel">
-        <div class="pl-panel-head">
-          <span class="pl-step">03</span>
-          <h2 class="pl-panel-title">Inspección del vehículo</h2>
-          <button type="button" class="pl-btn pl-btn-ghost pl-btn-sm pl-panel-right" id="marcar-todo">Marcar todo como "Cumple"</button>
-        </div>
-        <div class="pl-body">
-
-          {% if not filas %}
-            <div class="pl-empty">
-              No hay ítems en el catálogo de inspección. Créalos en el admin (Catálogo items inspección).
-            </div>
-          {% endif %}
-
-          {% regroup filas by item.get_categoria_display as grupos %}
-          {% for g in grupos %}
-            <div class="pl-cat">{{ g.grouper }}</div>
-            {% for f in g.list %}
-            <div class="pl-item">
-              <div class="pl-item-name">{{ f.item.nombre }}</div>
-              <div class="pl-seg" role="group">
-                <input type="radio" name="estado_{{ f.item.id }}" id="c{{ f.item.id }}" value="cumple" {% if f.estado == 'cumple' %}checked{% endif %}>
-                <label class="pl-l-ok" for="c{{ f.item.id }}">Cumple</label>
-                <input type="radio" name="estado_{{ f.item.id }}" id="n{{ f.item.id }}" value="no_cumple" {% if f.estado == 'no_cumple' %}checked{% endif %}>
-                <label class="pl-l-bad" for="n{{ f.item.id }}">No cumple</label>
-                <input type="radio" name="estado_{{ f.item.id }}" id="a{{ f.item.id }}" value="no_aplica" {% if f.estado == 'no_aplica' %}checked{% endif %}>
-                <label class="pl-l-na" for="a{{ f.item.id }}">No aplica</label>
-              </div>
-              <div>
-                <input type="text" name="obs_{{ f.item.id }}" value="{{ f.obs }}" placeholder="Observación (obligatoria si no cumple)">
-              </div>
-            </div>
-            {% endfor %}
+            {% endif %}
           {% endfor %}
+        </div>
+      </section>
 
-          <div class="pl-foot">
-            <div>
-              <label>Realizada por</label>
-              <input type="text" name="insp_realizada_por" value="{{ insp_datos.realizada_por }}">
+      <section class="ic-section">
+        <div class="ic-sec-head"><h2 class="ic-panel-title">Documentación</h2></div>
+        <p class="ic-note">Se calcula sola: se compara la fecha de vencimiento con el día del desplazamiento. Para cambiarla, edita el vehículo o el conductor.</p>
+        <div class="ic-docs">
+          {% for doc in documentos %}
+          <div class="ic-doc">
+            <span class="ic-pill {% if doc.estado == 'ok' %}ic-ok{% elif doc.estado == 'na' %}ic-neutral{% else %}ic-bad{% endif %}">
+              {% if doc.estado == 'ok' %}Vigente{% elif doc.estado == 'na' %}N/A{% else %}Vencido{% endif %}
+            </span>
+            <span>{{ doc.nombre }}{% if doc.hasta %} <small>({{ doc.hasta|date:"d/m/Y" }})</small>{% endif %}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="ic-section">
+        <div class="ic-sec-head">
+          <h2 class="ic-panel-title">Inspección del vehículo</h2>
+          <button type="button" class="ic-btn ic-btn-sm" id="marcar-todo">Marcar todo como "Cumple"</button>
+        </div>
+
+        {% if not filas %}
+          <div class="ic-empty">No hay ítems en el catálogo de inspección. Créalos en el admin (Catálogo items inspección).</div>
+        {% endif %}
+
+        {% regroup filas by item.get_categoria_display as grupos %}
+        {% for g in grupos %}
+          <div class="ic-cat">{{ g.grouper }}</div>
+          {% for f in g.list %}
+          <div class="ic-item">
+            <div class="ic-item-name">{{ f.item.nombre }}</div>
+            <div class="ic-seg" role="group">
+              <input type="radio" name="estado_{{ f.item.id }}" id="c{{ f.item.id }}" value="cumple" {% if f.estado == 'cumple' %}checked{% endif %}>
+              <label class="ic-l-ok" for="c{{ f.item.id }}">Cumple</label>
+              <input type="radio" name="estado_{{ f.item.id }}" id="n{{ f.item.id }}" value="no_cumple" {% if f.estado == 'no_cumple' %}checked{% endif %}>
+              <label class="ic-l-bad" for="n{{ f.item.id }}">No cumple</label>
+              <input type="radio" name="estado_{{ f.item.id }}" id="a{{ f.item.id }}" value="no_aplica" {% if f.estado == 'no_aplica' %}checked{% endif %}>
+              <label class="ic-l-na" for="a{{ f.item.id }}">No aplica</label>
             </div>
             <div>
-              <label>Resultado general</label>
-              <select name="insp_resultado">
-                {% for valor, etiqueta in resultados %}
-                <option value="{{ valor }}" {% if insp_datos.resultado == valor %}selected{% endif %}>{{ etiqueta }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="pl-full">
-              <label>Observaciones generales</label>
-              <textarea name="insp_observaciones" rows="2">{{ insp_datos.observaciones }}</textarea>
+              <input type="text" name="obs_{{ f.item.id }}" value="{{ f.obs }}" placeholder="Observación (obligatoria si no cumple)">
             </div>
           </div>
+          {% endfor %}
+        {% endfor %}
+
+        <div class="ic-foot">
+          <div>
+            <label>Realizada por</label>
+            <input type="text" name="insp_realizada_por" value="{{ insp_datos.realizada_por }}">
+          </div>
+          <div>
+            <label>Resultado general</label>
+            <select name="insp_resultado">
+              {% for valor, etiqueta in resultados %}
+              <option value="{{ valor }}" {% if insp_datos.resultado == valor %}selected{% endif %}>{{ etiqueta }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="ic-full">
+            <label>Observaciones generales</label>
+            <textarea name="insp_observaciones" rows="2">{{ insp_datos.observaciones }}</textarea>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div class="pl-submit">
-        <button type="submit" class="pl-btn pl-btn-dark">Guardar planificación</button>
-      </div>
+    </div>
 
+    <div class="ic-submit">
+      <button type="submit" class="ic-btn ic-btn-main ic-btn-lg">Guardar planificación</button>
     </div>
   </form>
 
@@ -228,6 +346,32 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
+<script>
+  (function () {
+    if (typeof flatpickr === "undefined") return;
+
+    ["hora_salida", "hora_llegada_estimada", "hora_llegada_real"].forEach(function (nombre) {
+      var campo = document.getElementById("id_" + nombre);
+      if (!campo) return;
+      flatpickr(campo, {
+        locale: "es", enableTime: true, noCalendar: true,
+        dateFormat: "H:i", altInput: true, altFormat: "h:i K",
+        time_24hr: false, minuteIncrement: 1, allowInput: true, disableMobile: true
+      });
+    });
+
+    var alc = document.getElementById("id_alcoholemia_fecha_hora");
+    if (alc) {
+      flatpickr(alc, {
+        locale: "es", monthSelectorType: "static", enableTime: true,
+        dateFormat: "Y-m-d H:i", altInput: true, altFormat: "d/m/Y h:i K",
+        time_24hr: false, minuteIncrement: 5, allowInput: true, disableMobile: true
+      });
+    }
+  })();
+</script>
 <script>
   document.getElementById('marcar-todo').addEventListener('click', function () {
     document.querySelectorAll('input[type=radio][value=cumple]').forEach(function (r) { r.checked = true; });

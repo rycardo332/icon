@@ -1,8 +1,27 @@
+# Entorno y secretos
 .env
+*.env
 .venv/
 venv/
+
+# Python
 __pycache__/
 *.pyc
+
+# Archivos generados
 staticfiles/
 media/
+*.log
+
+# Bases de datos locales
 db.sql
+db.sqlite3
+*.sqlite3
+
+# Copias de seguridad y datos exportados (contienen hashes de contraseñas)
+backup_*.zip
+datos.json
+*.bak
+
+# Editor
+.vscode/

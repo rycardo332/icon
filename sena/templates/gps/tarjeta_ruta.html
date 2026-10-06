@@ -4,336 +4,461 @@
 {% block title %}Tarjeta de Ruta - {{ ruta.codigo|default:"Ruta GPS" }}{% endblock %}
 
 {% block content %}
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
-  .tj-wrap{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:1.25rem}
-  .tj-bar{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.6rem}
-  .tj-group{display:flex;flex-wrap:wrap;gap:.6rem}
-  .tj-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
-  .tj-title-box{display:flex;align-items:center;gap:.9rem}
-  .tj-title-box img{width:44px;height:44px;object-fit:contain;border-radius:10px}
-  .tj-title{font-family:'Space Mono',monospace;font-weight:700;font-size:1.7rem;color:#fff;margin:0;text-shadow:0 2px 8px rgba(0,0,0,.45)}
-  .tj-sub{color:#e2e8f0;font-size:.9rem;margin:0;text-shadow:0 1px 4px rgba(0,0,0,.4)}
-  .tj-sub strong{color:#fff}
+    /* TARJETA DE RUTA - mismo estilo del Panel de control (prefijo ic-) · sin animaciones */
+    .ic-dash {
+        --volt: #5bb5c8; --lime: #8fbf6a; --amber: #d9a840; --red2: #d9777a;
+        --ink: #dbe4f0; --mute: #8696ad; --line: rgba(91, 181, 200, .28);
+        --glass: rgba(6, 14, 28, .82);
+        --ic-fancy: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        --ic-mono: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        max-width: 1200px; margin: 0 auto;
+        color: var(--ink); font-family: var(--ic-fancy); font-variant-numeric: tabular-nums;
+        display: flex; flex-direction: column; gap: 1.5rem;
+    }
 
-  .tj-btn{display:inline-flex;align-items:center;gap:.45rem;border-radius:999px;padding:.5rem 1.1rem;font-size:.85rem;font-weight:600;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:transform .15s,filter .15s,background .15s,color .15s}
-  .tj-btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
-  .tj-btn img{width:18px;height:18px;object-fit:contain;border-radius:4px}
-  .tj-btn-sec{background:rgba(255,255,255,.88);color:#0f172a;border-color:rgba(255,255,255,.7)}
-  .tj-btn-sec:hover{background:var(--dark-2);color:#fff}
-  .tj-btn-main{background:var(--red);color:#fff}
-  .tj-btn-main:hover{color:#fff}
-  .tj-btn-dark{background:var(--dark);color:#fff;padding:.65rem 1.5rem}
-  .tj-btn-dark:hover{color:#fff}
-  .tj-btn-sm{padding:.3rem .85rem;font-size:.78rem}
+    /* PANEL -------------------------------------------------- */
+    .ic-panel {
+        display: flex; flex-direction: column;
+        background: var(--glass);
+        -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%);
+        border: 1px solid rgba(91, 181, 200, .25); border-radius: 20px; overflow: hidden;
+        box-shadow: 0 14px 36px rgba(0, 0, 0, .4);
+    }
 
-  .tj-pill{display:inline-block;border-radius:999px;padding:.25rem .8rem;font-size:.78rem;font-weight:600;border:1px solid}
-  .tj-ok{background:#f0fdf4;color:#15803d;border-color:#bbf7d0}
-  .tj-warn{background:#fffbeb;color:#b45309;border-color:#fde68a}
+    /* BARRA SUPERIOR ----------------------------------------- */
+    .ic-top {
+        display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;
+        padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--line);
+        background: linear-gradient(100deg, rgba(91, 181, 200, .1), rgba(143, 191, 106, .03) 60%, transparent);
+    }
+    .ic-top-icon { width: 44px; height: 44px; flex: none; object-fit: contain; border-radius: 10px; }
+    .ic-title { font-family: var(--ic-fancy); font-weight: 700; font-size: 1.4rem; margin: 0; color: #fff; }
+    .ic-subtitle { margin: 0; color: var(--mute); font-size: .85rem; }
+    .ic-subtitle strong { color: #fff; font-weight: 600; }
+    .ic-actions { margin-left: auto; display: flex; gap: .5rem; flex-wrap: wrap; }
 
-  .tj-msg{border-radius:14px;padding:.75rem 1rem;font-size:.88rem;font-weight:500}
-  .tj-msg-success{background:#f0fdf4;color:#15803d}
-  .tj-msg-error,.tj-msg-danger{background:#fef2f2;color:#b91c1c}
-  .tj-msg-warning{background:#fffbeb;color:#b45309}
-  .tj-msg-info,.tj-msg-debug{background:#eff6ff;color:#1d4ed8}
+    /* BOTONES ------------------------------------------------ */
+    .ic-btn {
+        display: inline-flex; align-items: center; gap: .5rem; border-radius: 999px;
+        padding: .45rem 1.05rem; font-size: .83rem; font-weight: 600; text-decoration: none;
+        color: var(--ink); border: 1px solid var(--line); background: rgba(2, 8, 20, .5);
+        cursor: pointer; transition: all .15s;
+    }
+    .ic-btn:hover { border-color: var(--volt); color: #fff; box-shadow: 0 0 0 1px var(--volt); }
+    .ic-btn:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+    .ic-btn-main { background: var(--volt); border-color: var(--volt); color: #04141b; }
+    .ic-btn-main:hover { background: #7cc6d6; border-color: #7cc6d6; color: #04141b; box-shadow: none; }
+    .ic-btn-sm { padding: .3rem .85rem; font-size: .78rem; }
+    .ic-btn-lg { padding: .6rem 1.6rem; font-size: .88rem; }
 
-  .tj-sel{display:flex;flex-wrap:wrap;align-items:center;gap:.7rem;padding:.7rem 1.1rem;border-radius:18px;background:rgba(255,255,255,.84);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(255,255,255,.7);box-shadow:0 10px 30px rgba(0,0,0,.18)}
-  .tj-sel label{margin:0;font-size:.82rem;font-weight:600;color:#334155}
+    /* Botón de Excel: verde */
+    .ic-btn-excel { background: #1f8f55; border-color: #1f8f55; color: #fff; padding-left: .7rem; }
+    .ic-btn-excel:hover { background: #26a566; border-color: #26a566; color: #fff; box-shadow: none; }
+    .ic-btn-excel img { width: 22px; height: 22px; object-fit: contain; border-radius: 4px; }
 
-  .tj-form{display:flex;flex-direction:column;gap:1.25rem}
-  .tj-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:1.25rem;align-items:stretch}
+    /* FILTRO DE TRAZADO (franja dentro del panel) ------------ */
+    .ic-filtros {
+        display: flex; flex-wrap: wrap; align-items: center; gap: .75rem;
+        padding: .85rem 1.5rem; background: rgba(91, 181, 200, .04);
+    }
+    .ic-filtros label { margin: 0; font-size: .8rem; font-weight: 600; color: var(--mute); }
+    .ic-select {
+        min-width: 200px; padding: .45rem .8rem; border-radius: 10px; font-size: .86rem;
+        color: var(--ink); background: rgba(2, 8, 20, .6); border: 1px solid var(--line);
+        color-scheme: dark; cursor: pointer;
+    }
+    .ic-select:focus { outline: none; border-color: var(--volt); box-shadow: 0 0 0 1px var(--volt); }
+    .ic-select option { background: #08121f; color: var(--ink); }
 
-  .tj-panel{display:flex;flex-direction:column;background:rgba(255,255,255,.84);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(255,255,255,.7);border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.18)}
-  .tj-panel-head{display:flex;align-items:center;flex-wrap:wrap;gap:.75rem;padding:.9rem 1.25rem;background:linear-gradient(90deg,var(--dark),var(--dark-2))}
-  .tj-step{font-family:'Space Mono',monospace;font-weight:700;color:#a3e635}
-  .tj-panel-title{font-family:'Space Mono',monospace;font-weight:700;font-size:.95rem;color:#fff;margin:0}
-  .tj-panel-right{margin-left:auto;display:flex;flex-wrap:wrap;gap:.5rem}
+    /* ENCABEZADO DE SECCIÓN: 01 Título ........ [acciones] --- */
+    .ic-sec-head {
+        position: relative; display: flex; align-items: center; flex-wrap: wrap; gap: .6rem;
+        padding: .95rem 1.5rem .7rem; border-bottom: 1px solid var(--line);
+        background: linear-gradient(100deg, rgba(91, 181, 200, .1), rgba(143, 191, 106, .03) 60%, transparent);
+    }
+    .ic-sec-head::after {
+        content: ""; position: absolute; left: 0; bottom: -1px; width: 64px; height: 2px; background: var(--lime);
+    }
+    .ic-step { font-family: var(--ic-mono); font-size: .8rem; font-weight: 700; color: var(--lime); }
+    .ic-panel-title { font-family: var(--ic-mono); font-weight: 700; font-size: .95rem; color: #fff; margin: 0; }
+    .ic-head-right { margin-left: auto; display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; }
+    .ic-count {
+        background: rgba(91, 181, 200, .1); border: 1px solid var(--line); color: var(--volt);
+        border-radius: 999px; padding: .15rem .75rem; font-size: .78rem; font-weight: 600;
+    }
 
-  .tj-map{position:relative;flex:1 1 auto;min-height:460px;background:#eef2f7}
-  .tj-map iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-  .tj-map-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:1rem;color:#64748b;font-size:.88rem}
+    /* ETIQUETAS ---------------------------------------------- */
+    .ic-tag {
+        display: inline-flex; align-items: center; gap: .3rem; padding: .15rem .7rem; border-radius: 999px;
+        font-size: .74rem; font-weight: 600; white-space: nowrap;
+        color: var(--mute); background: rgba(138, 160, 189, .08); border: 1px solid rgba(138, 160, 189, .4);
+    }
+    .ic-tag.ok   { color: var(--lime);  background: rgba(143, 191, 106, .1); border-color: rgba(143, 191, 106, .4); }
+    .ic-tag.warn { color: var(--amber); background: rgba(217, 168, 64, .1);  border-color: rgba(217, 168, 64, .4); }
 
-  .tj-cond{padding:1.1rem 1.3rem;max-height:620px;overflow-y:auto}
-  .tj-grp{font-family:'Space Mono',monospace;font-weight:700;font-size:.78rem;color:#64748b;text-transform:uppercase;border-bottom:1px solid rgba(15,23,42,.09);padding-bottom:.3rem;margin:1.2rem 0 .6rem}
-  .tj-grp:first-child{margin-top:0}
-  .tj-cond .form-check-label{font-size:.88rem;color:#334155}
-  .tj-cond .form-check-input:checked{background-color:var(--dark-2);border-color:var(--dark-2)}
-  .tj-cond .form-check-input:focus{border-color:var(--dark-2);box-shadow:none}
-  .tj-cond .form-control,.tj-sel .form-select{border-radius:10px;border:1px solid rgba(15,23,42,.15);background-color:rgba(255,255,255,.9);font-size:.88rem;color:#0f172a}
-  .tj-cond .form-control:focus,.tj-sel .form-select:focus{border-color:var(--dark-2);box-shadow:none}
-  .tj-cond .form-label{font-size:.82rem;font-weight:600;color:#334155}
+    /* MENSAJES ----------------------------------------------- */
+    .ic-msg {
+        border-radius: 14px; padding: .75rem 1rem; font-size: .88rem; font-weight: 500;
+        background: rgba(6, 14, 28, .88); border: 1px solid;
+    }
+    .ic-msg-success { color: var(--lime); border-color: rgba(143, 191, 106, .45); }
+    .ic-msg-error, .ic-msg-danger { color: #f3c4c6; border-color: rgba(217, 119, 122, .5); }
+    .ic-msg-warning { color: var(--amber); border-color: rgba(217, 168, 64, .45); }
+    .ic-msg-info, .ic-msg-debug { color: #bfe6ee; border-color: rgba(91, 181, 200, .45); }
 
-  .tj-scroll{max-height:640px;overflow:auto}
-  .tj-table{width:100%;border-collapse:collapse;font-size:.88rem;color:#334155}
-  .tj-table thead th{position:sticky;top:0;z-index:1;background:rgba(248,250,252,.92);color:#64748b;font-size:.78rem;font-weight:600;text-align:center;padding:.75rem 1rem;white-space:nowrap}
-  .tj-table td{padding:.7rem 1rem;border-top:1px solid rgba(15,23,42,.09);text-align:center;vertical-align:middle}
-  .tj-table tbody tr:hover{background:rgba(255,255,255,.6)}
-  .tj-table tbody tr.tj-actual{background:rgba(96,165,250,.14)}
-  .tj-empty{color:#64748b;padding:2rem 1rem!important}
-  .tj-submit{display:flex;justify-content:flex-end}
+    /* FORMULARIO Y CUADRÍCULA -------------------------------- */
+    .ic-form { display: flex; flex-direction: column; gap: 1.5rem; }
+    .ic-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 1.5rem; align-items: stretch; }
 
-  .tj-tools{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem;padding:.75rem 1.25rem;font-size:.82rem;color:#64748b}
-  .tj-tools[hidden]{display:none}
-  .tj-tools label{display:flex;align-items:center;gap:.5rem;margin:0}
-  .tj-tools .form-select{width:auto;border-radius:10px;border:1px solid rgba(15,23,42,.15);background-color:rgba(255,255,255,.9);font-size:.85rem;padding:.3rem 2rem .3rem .7rem}
-  .tj-tools .form-control{width:210px;border-radius:10px;border:1px solid rgba(15,23,42,.15);background:rgba(255,255,255,.9);font-size:.85rem;padding:.3rem .7rem}
-  .tj-tools .form-select:focus,.tj-tools .form-control:focus{border-color:var(--dark-2);box-shadow:none}
-  .tj-pager{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem;padding:.75rem 1.25rem;border-top:1px solid rgba(15,23,42,.09);background:rgba(248,250,252,.92)}
-  .tj-pager[hidden]{display:none}
-  .tj-pager-info{font-size:.8rem;color:#64748b}
-  .tj-pager-btns{display:flex;flex-wrap:wrap;gap:.4rem}
-  .tj-pg{min-width:34px;border-radius:999px;padding:.3rem .8rem;font-size:.78rem;font-weight:600;background:#fff;color:#0f172a;border:1px solid rgba(15,23,42,.15);cursor:pointer;transition:transform .15s,background .15s,color .15s}
-  .tj-pg:hover:not(:disabled){background:var(--dark-2);color:#fff;transform:translateY(-1px)}
-  .tj-pg.on{background:var(--dark);color:#fff;border-color:var(--dark)}
-  .tj-pg:disabled{opacity:.45;cursor:default}
-  .tj-pg-gap{align-self:center;color:#64748b;padding:0 .2rem}
+    /* MAPA --------------------------------------------------- */
+    .ic-map { position: relative; flex: 1 1 auto; min-height: 460px; background: #08121f; }
+    .ic-map iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+    .ic-map-empty {
+        position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+        text-align: center; padding: 1rem; color: var(--mute); font-size: .88rem;
+    }
 
-  @media (max-width:991px){
-    .tj-grid{grid-template-columns:1fr}
-  }
-  @media (max-width:767px){
-    .tj-title{font-size:1.3rem}
-    .tj-map{min-height:340px}
-    .tj-submit .tj-btn{width:100%;justify-content:center}
-  }
-  @media print{
-    .no-print{display:none!important}
-    .tj-panel,.tj-sel{box-shadow:none!important}
-    .tj-cond,.tj-scroll{max-height:none!important;overflow:visible!important}
-  }
+    /* CONDICIONES DE LA VÍA ---------------------------------- */
+    .ic-cond { padding: 1.1rem 1.5rem; max-height: 620px; overflow-y: auto; }
+    .ic-grp {
+        font-weight: 700; font-size: .75rem; color: var(--mute); text-transform: uppercase; letter-spacing: .06em;
+        border-bottom: 1px solid var(--line); padding-bottom: .35rem; margin: 1.3rem 0 .65rem;
+    }
+    .ic-grp:first-child { margin-top: 0; }
+    .ic-cond .form-check-label { font-size: .88rem; color: var(--ink); }
+    .ic-cond .form-check-input {
+        background-color: rgba(2, 8, 20, .6); border: 1px solid rgba(91, 181, 200, .45);
+    }
+    .ic-cond .form-check-input:checked { background-color: var(--volt); border-color: var(--volt); }
+    .ic-cond .form-check-input:focus { border-color: var(--volt); box-shadow: 0 0 0 1px var(--volt); }
+    .ic-cond .form-label { font-size: .8rem; font-weight: 600; color: var(--mute); }
+    .ic-cond .form-control {
+        border-radius: 10px; border: 1px solid var(--line); background-color: rgba(2, 8, 20, .6);
+        font-size: .88rem; color: var(--ink); color-scheme: dark;
+    }
+    .ic-cond .form-control::placeholder { color: rgba(134, 150, 173, .7); }
+    .ic-cond .form-control:focus { border-color: var(--volt); box-shadow: 0 0 0 1px var(--volt); background-color: rgba(2, 8, 20, .6); color: var(--ink); }
+
+    /* HERRAMIENTAS DE LA TABLA (mostrar N, buscar) ----------- */
+    .ic-tools {
+        display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .75rem;
+        padding: .75rem 1.5rem; font-size: .82rem; color: var(--mute);
+        border-bottom: 1px solid var(--line); background: rgba(91, 181, 200, .04);
+    }
+    .ic-tools[hidden] { display: none; }
+    .ic-tools label { display: flex; align-items: center; gap: .5rem; margin: 0; }
+    .ic-tools .ic-select { min-width: 0; padding: .3rem 1.8rem .3rem .7rem; font-size: .85rem; }
+    .ic-tools .ic-input {
+        width: 210px; padding: .3rem .7rem; border-radius: 10px; font-size: .85rem;
+        color: var(--ink); background: rgba(2, 8, 20, .6); border: 1px solid var(--line); color-scheme: dark;
+    }
+    .ic-tools .ic-input:focus { outline: none; border-color: var(--volt); box-shadow: 0 0 0 1px var(--volt); }
+
+    /* TABLA -------------------------------------------------- */
+    .ic-scroll { max-height: 640px; overflow: auto; }
+    .ic-table { width: 100%; margin: 0; border-collapse: collapse; color: var(--ink); }
+    .ic-table thead th {
+        position: sticky; top: 0; z-index: 1;
+        background: #08121f; color: var(--mute);
+        font-size: .78rem; font-weight: 600; padding: .75rem 1.2rem; text-align: center;
+        border-bottom: 1px solid var(--line); white-space: nowrap;
+    }
+    .ic-table tbody td {
+        padding: .75rem 1.2rem; border-top: 1px solid rgba(91, 181, 200, .12);
+        vertical-align: middle; text-align: center; font-size: .88rem; background: transparent; color: var(--ink);
+    }
+    .ic-table tbody tr:hover td { background: rgba(91, 181, 200, .06); }
+    .ic-table tbody tr.ic-actual td { background: rgba(91, 181, 200, .14); }
+    .ic-empty { padding: 2rem 1.2rem !important; color: var(--mute); font-size: .9rem; }
+
+    /* PAGINADOR ---------------------------------------------- */
+    .ic-pager {
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem;
+        padding: .8rem 1.5rem; border-top: 1px solid var(--line); background: rgba(91, 181, 200, .05);
+    }
+    .ic-pager[hidden] { display: none; }
+    .ic-pager-info { font-size: .82rem; color: var(--mute); }
+    .ic-pager-btns { display: flex; flex-wrap: wrap; gap: .35rem; }
+    .ic-pg {
+        min-width: 36px; height: 36px; padding: 0 .7rem; border-radius: 10px; cursor: pointer;
+        font-family: var(--ic-fancy); font-weight: 600; font-size: .8rem; color: var(--ink);
+        border: 1px solid var(--line); background: rgba(2, 8, 20, .6); transition: all .15s;
+    }
+    .ic-pg:hover:not(:disabled):not(.on) { border-color: var(--volt); box-shadow: 0 0 0 1px var(--volt); }
+    .ic-pg:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+    .ic-pg.on { background: var(--volt); border-color: var(--volt); color: #04141b; cursor: default; }
+    .ic-pg:disabled { opacity: .35; cursor: not-allowed; }
+    .ic-pg-gap { align-self: center; color: var(--mute); padding: 0 .2rem; }
+
+    /* GUARDAR ------------------------------------------------ */
+    .ic-submit { display: flex; justify-content: flex-end; }
+
+    @media (max-width: 991px) {
+        .ic-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 767px) {
+        .ic-title { font-size: 1.2rem; }
+        .ic-actions { width: 100%; margin-left: 0; }
+        .ic-map { min-height: 340px; }
+        .ic-submit .ic-btn { width: 100%; justify-content: center; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .ic-btn, .ic-pg { transition: none; }
+    }
+
+    /* IMPRESIÓN: fondo claro para ahorrar tinta */
+    @media print {
+        .no-print { display: none !important; }
+        .ic-dash { --ink: #111; --mute: #555; --line: #cbd5e1; color: #111; }
+        .ic-panel { background: #fff; box-shadow: none !important; border: 1px solid #cbd5e1; backdrop-filter: none; -webkit-backdrop-filter: none; }
+        .ic-top, .ic-sec-head { background: none; }
+        .ic-title, .ic-panel-title, .ic-subtitle strong { color: #000; }
+        .ic-table thead th { background: #f1f5f9; }
+        .ic-table tbody td { color: #111; }
+        .ic-table tbody tr.ic-actual td { background: #e8f3f6; }
+        .ic-cond .form-check-label { color: #111; }
+        .ic-map { background: #fff; }
+        .ic-cond, .ic-scroll { max-height: none !important; overflow: visible !important; }
+    }
 </style>
 
-<div class="tj-wrap">
+<div class="ic-dash">
 
-  {% for message in messages %}
-  <div class="tj-msg tj-msg-{{ message.tags }} no-print">{{ message }}</div>
-  {% endfor %}
+    {% for message in messages %}
+    <div class="ic-msg ic-msg-{{ message.tags }} no-print">{{ message }}</div>
+    {% endfor %}
 
-  <div class="tj-bar no-print">
-    <div class="tj-group">
-      <a href="{% url 'importar_gps' %}" class="tj-btn tj-btn-sec">Volver a Importaciones</a>
-      <a href="{% url 'panel' %}" class="tj-btn tj-btn-sec">Panel</a>
-    </div>
-    <div class="tj-group">
-      <a href="{% url 'exportar_tarjeta_ruta' ruta.id %}?desplazamiento={{ desplazamiento.pk|default:'' }}" class="tj-btn tj-btn-sec">
-        <img src="{% static 'img/iconos/excel.jpg' %}" alt=""> Descargar Excel
-      </a>
-    </div>
-  </div>
+    <!-- Encabezado: título, datos, acciones y selector de trazado -->
+    <section class="ic-panel">
 
-  <div class="tj-head">
-    <div class="tj-title-box">
-      <img src="{% static 'img/iconos/ruta.jpg' %}" alt="">
-      <div>
-        <h1 class="tj-title">Tarjeta de control de ruta #{{ ruta.id }}</h1>
-        <p class="tj-sub">
-          Vehículo: <strong>{{ desplazamiento.vehiculo.placa|default:"—" }}</strong> ·
-          Conductor: <strong>{{ desplazamiento.conductor.nombre|default:"No asignado" }}</strong> ·
-          Fecha: <strong>{{ desplazamiento.fecha_desplazamiento|date:"d/m/Y"|default:"—" }}</strong>
-        </p>
-      </div>
-    </div>
-    <div>
-      {% if ruta.visibilidad %}
-        <span class="tj-pill tj-ok">Condiciones de la vía registradas</span>
-      {% else %}
-        <span class="tj-pill tj-warn">Condiciones de la vía pendientes</span>
-      {% endif %}
-    </div>
-  </div>
-
-  <form method="get" class="tj-sel no-print">
-    <label for="sel_trazado">Fecha del trazado:</label>
-    <select id="sel_trazado" name="desplazamiento" class="form-select w-auto" onchange="this.form.submit()">
-      {% for d in desplazamientos %}
-      <option value="{{ d.pk }}" {% if d.pk == desplazamiento.pk %}selected{% endif %}>
-        {{ d.fecha_desplazamiento|date:"d/m/Y" }} · {{ d.vehiculo.placa }}
-      </option>
-      {% empty %}
-      <option value="">Sin trazados guardados</option>
-      {% endfor %}
-    </select>
-    <a href="{% url 'mapa_gps' %}?ruta={{ ruta.id }}" class="tj-btn tj-btn-sec tj-btn-sm">+ Trazar otra fecha</a>
-  </form>
-
-  <form method="POST" class="tj-form">
-    {% csrf_token %}
-    <input type="hidden" name="desplazamiento" value="{{ desplazamiento.pk }}">
-
-    <div class="tj-grid">
-
-      <div class="tj-panel">
-        <div class="tj-panel-head">
-          <span class="tj-step">01</span>
-          <h2 class="tj-panel-title">Mapa del recorrido</h2>
-          {% if desplazamiento %}
-          <div class="tj-panel-right no-print">
-            <a href="{% url 'mapa_gps_render' %}?desplazamiento={{ desplazamiento.pk }}&riesgos=1" target="_blank" class="tj-btn tj-btn-sec tj-btn-sm">Ver con puntos de riesgo</a>
-            <a href="{% url 'planificar_desplazamiento' desplazamiento.pk %}" class="tj-btn tj-btn-main tj-btn-sm">Planificar viaje</a>
-          </div>
-          {% endif %}
+        <div class="ic-top">
+            <img class="ic-top-icon" src="{% static 'img/iconos/ruta.jpg' %}" alt="">
+            <div>
+                <h1 class="ic-title">Tarjeta de control de ruta #{{ ruta.id }}</h1>
+                <p class="ic-subtitle">
+                    Vehículo: <strong>{{ desplazamiento.vehiculo.placa|default:"—" }}</strong> ·
+                    Conductor: <strong>{{ desplazamiento.conductor.nombre|default:"No asignado" }}</strong> ·
+                    Fecha: <strong>{{ desplazamiento.fecha_desplazamiento|date:"d/m/Y"|default:"—" }}</strong>
+                </p>
+                <div class="mt-2">
+                    {% if ruta.visibilidad %}
+                        <span class="ic-tag ok">Condiciones de la vía registradas</span>
+                    {% else %}
+                        <span class="ic-tag warn">Condiciones de la vía pendientes</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="ic-actions no-print">
+                <a href="{% url 'importar_gps' %}" class="ic-btn">Volver a Importaciones</a>
+                <a href="{% url 'panel' %}" class="ic-btn">Panel</a>
+                <a href="{% url 'exportar_tarjeta_ruta' ruta.id %}?desplazamiento={{ desplazamiento.pk|default:'' }}" class="ic-btn ic-btn-excel">
+                    <img src="{% static 'img/iconos/excel.jpg' %}" alt=""> Descargar Excel
+                </a>
+            </div>
         </div>
-        <div class="tj-map">
-          {% if desplazamiento %}
-          <iframe src="{% url 'mapa_gps_render' %}?desplazamiento={{ desplazamiento.pk }}" title="Mapa del recorrido"></iframe>
-          {% else %}
-          <div class="tj-map-empty">Esta ruta aún no tiene trazados. Usa "Trazar otra fecha" para guardar el primero.</div>
-          {% endif %}
+
+        <form method="get" class="ic-filtros no-print">
+            <label for="sel_trazado">Fecha del trazado:</label>
+            <select id="sel_trazado" name="desplazamiento" class="ic-select" onchange="this.form.submit()">
+                {% for d in desplazamientos %}
+                <option value="{{ d.pk }}" {% if d.pk == desplazamiento.pk %}selected{% endif %}>
+                    {{ d.fecha_desplazamiento|date:"d/m/Y" }} · {{ d.vehiculo.placa }}
+                </option>
+                {% empty %}
+                <option value="">Sin trazados guardados</option>
+                {% endfor %}
+            </select>
+            <a href="{% url 'mapa_gps' %}?ruta={{ ruta.id }}" class="ic-btn ic-btn-sm">+ Trazar otra fecha</a>
+        </form>
+
+    </section>
+
+    <form method="POST" class="ic-form">
+        {% csrf_token %}
+        <input type="hidden" name="desplazamiento" value="{{ desplazamiento.pk }}">
+
+        <div class="ic-grid">
+
+            <!-- 01 Mapa -->
+            <section class="ic-panel">
+                <div class="ic-sec-head">
+                    <span class="ic-step">01</span>
+                    <h2 class="ic-panel-title">Mapa del recorrido</h2>
+                    {% if desplazamiento %}
+                    <div class="ic-head-right no-print">
+                        <a href="{% url 'mapa_gps_render' %}?desplazamiento={{ desplazamiento.pk }}&riesgos=1" target="_blank" class="ic-btn ic-btn-sm">Ver con puntos de riesgo</a>
+                        <a href="{% url 'planificar_desplazamiento' desplazamiento.pk %}" class="ic-btn ic-btn-main ic-btn-sm">Planificar viaje</a>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="ic-map">
+                    {% if desplazamiento %}
+                    <iframe src="{% url 'mapa_gps_render' %}?desplazamiento={{ desplazamiento.pk }}" title="Mapa del recorrido"></iframe>
+                    {% else %}
+                    <div class="ic-map-empty">Esta ruta aún no tiene trazados. Usa "Trazar otra fecha" para guardar el primero.</div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <!-- 02 Condiciones de la vía -->
+            <section class="ic-panel">
+                <div class="ic-sec-head">
+                    <span class="ic-step">02</span>
+                    <h2 class="ic-panel-title">Condiciones de la vía</h2>
+                </div>
+                <div class="ic-cond">
+
+                    <div class="ic-grp">Visibilidad</div>
+                    {% for valor, etiqueta in ruta.Visibilidad.choices %}
+                    <div class="form-check mb-1">
+                        <input class="form-check-input" type="checkbox" id="vis_{{ valor }}"
+                               name="visibilidad" value="{{ valor }}"
+                               {% if valor in ruta.visibilidad %}checked{% endif %}>
+                        <label class="form-check-label" for="vis_{{ valor }}">{{ etiqueta }}</label>
+                    </div>
+                    {% endfor %}
+
+                    <div class="ic-grp">Condiciones de tráfico</div>
+                    {% for valor, etiqueta in ruta.Trafico.choices %}
+                    <div class="form-check mb-1">
+                        <input class="form-check-input" type="radio" id="traf_{{ valor }}"
+                               name="trafico" value="{{ valor }}"
+                               {% if ruta.trafico == valor %}checked{% endif %}>
+                        <label class="form-check-label" for="traf_{{ valor }}">{{ etiqueta }}</label>
+                    </div>
+                    {% endfor %}
+
+                    <div class="ic-grp">Tipo de superficie</div>
+                    {% for valor, etiqueta in ruta.TipoSuperficie.choices %}
+                    <div class="form-check mb-1">
+                        <input class="form-check-input" type="checkbox" id="sup_{{ valor }}"
+                               name="tipo_superficie" value="{{ valor }}"
+                               {% if valor in ruta.tipo_superficie %}checked{% endif %}>
+                        <label class="form-check-label" for="sup_{{ valor }}">{{ etiqueta }}</label>
+                    </div>
+                    {% endfor %}
+
+                    <div class="ic-grp">Condiciones generales</div>
+                    {% for valor, etiqueta in ruta.CondicionGeneral.choices %}
+                    <div class="form-check mb-1">
+                        <input class="form-check-input" type="checkbox" id="cond_{{ valor }}"
+                               name="condiciones_generales" value="{{ valor }}"
+                               {% if valor in ruta.condiciones_generales %}checked{% endif %}>
+                        <label class="form-check-label" for="cond_{{ valor }}">{{ etiqueta }}</label>
+                    </div>
+                    {% endfor %}
+
+                    <div class="ic-grp">Restricciones de horario</div>
+                    <div class="d-flex gap-4 mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="tiene_restriccion"
+                                   id="restr_si" value="si"
+                                   {% if ruta.tiene_restriccion_horario %}checked{% endif %}>
+                            <label class="form-check-label" for="restr_si">Sí</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="tiene_restriccion"
+                                   id="restr_no" value="no"
+                                   {% if not ruta.tiene_restriccion_horario %}checked{% endif %}>
+                            <label class="form-check-label" for="restr_no">No</label>
+                        </div>
+                    </div>
+                    <div id="restr_detalle" class="row g-2" style="display:none;">
+                        <div class="col-6">
+                            <label class="form-label mb-1">Desde</label>
+                            <input type="time" class="form-control" name="restriccion_desde"
+                                   value="{{ ruta.restriccion_desde|time:'H:i' }}">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label mb-1">Hasta</label>
+                            <input type="time" class="form-control" name="restriccion_hasta"
+                                   value="{{ ruta.restriccion_hasta|time:'H:i' }}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label mb-1">Días</label>
+                            <input type="text" class="form-control" name="restriccion_dias"
+                                   placeholder="Ej: Lunes a viernes"
+                                   value="{{ ruta.restriccion_dias }}">
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
         </div>
-      </div>
 
-      <div class="tj-panel">
-        <div class="tj-panel-head">
-          <span class="tj-step">02</span>
-          <h2 class="tj-panel-title">Condiciones de la vía</h2>
+        <!-- 03 Trazados guardados -->
+        <section class="ic-panel">
+            <div class="ic-sec-head">
+                <span class="ic-step">03</span>
+                <h2 class="ic-panel-title">Trazados guardados en esta ruta</h2>
+                <div class="ic-head-right">
+                    <span class="ic-count">{{ desplazamientos|length }}</span>
+                </div>
+            </div>
+            <div class="ic-tools no-print" id="ic-tools" hidden>
+                <label>Mostrar
+                    <select id="ic-size" class="ic-select">
+                        <option value="5" selected>5</option>
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                    </select>
+                    registros
+                </label>
+                <label>Buscar:
+                    <input type="search" id="ic-buscar" class="ic-input" autocomplete="off">
+                </label>
+            </div>
+            <div class="ic-scroll">
+                <table class="ic-table" id="ic-tabla">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Fecha</th>
+                            <th>Origen</th>
+                            <th>Destino</th>
+                            <th>Hora salida</th>
+                            <th>Hora llegada</th>
+                            <th>Condiciones climáticas</th>
+                            <th class="no-print"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in desplazamientos %}
+                        <tr {% if d.pk == desplazamiento.pk %}class="ic-actual"{% endif %}>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ d.fecha_desplazamiento|date:"d/m/Y" }}</td>
+                            <td>{{ d.viaje_gps.direccion_origen|default:"Punto Origen GPS" }}</td>
+                            <td>{{ d.viaje_gps.direccion_destino|default:"Punto Destino GPS" }}</td>
+                            <td>{{ d.hora_salida|time:"H:i" }}</td>
+                            <td>{{ d.hora_llegada_real|time:"H:i"|default:"—" }}</td>
+                            <td>{{ d.condiciones_climaticas_esperadas|default:"Normal" }}</td>
+                            <td class="no-print">
+                                {% if d.pk != desplazamiento.pk %}
+                                <a href="?desplazamiento={{ d.pk }}" class="ic-btn ic-btn-sm">Ver</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="8" class="ic-empty">No hay trazados guardados en esta ruta.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="ic-pager no-print" id="ic-pager" hidden>
+                <span class="ic-pager-info" id="ic-pager-info"></span>
+                <div class="ic-pager-btns" id="ic-pager-btns"></div>
+            </div>
+        </section>
+
+        <div class="ic-submit no-print">
+            <button type="submit" class="ic-btn ic-btn-main ic-btn-lg">Guardar cambios en la tarjeta</button>
         </div>
-        <div class="tj-cond">
-
-          <div class="tj-grp">Visibilidad</div>
-          {% for valor, etiqueta in ruta.Visibilidad.choices %}
-          <div class="form-check mb-1">
-            <input class="form-check-input" type="checkbox" id="vis_{{ valor }}"
-                   name="visibilidad" value="{{ valor }}"
-                   {% if valor in ruta.visibilidad %}checked{% endif %}>
-            <label class="form-check-label" for="vis_{{ valor }}">{{ etiqueta }}</label>
-          </div>
-          {% endfor %}
-
-          <div class="tj-grp">Condiciones de tráfico</div>
-          {% for valor, etiqueta in ruta.Trafico.choices %}
-          <div class="form-check mb-1">
-            <input class="form-check-input" type="radio" id="traf_{{ valor }}"
-                   name="trafico" value="{{ valor }}"
-                   {% if ruta.trafico == valor %}checked{% endif %}>
-            <label class="form-check-label" for="traf_{{ valor }}">{{ etiqueta }}</label>
-          </div>
-          {% endfor %}
-
-          <div class="tj-grp">Tipo de superficie</div>
-          {% for valor, etiqueta in ruta.TipoSuperficie.choices %}
-          <div class="form-check mb-1">
-            <input class="form-check-input" type="checkbox" id="sup_{{ valor }}"
-                   name="tipo_superficie" value="{{ valor }}"
-                   {% if valor in ruta.tipo_superficie %}checked{% endif %}>
-            <label class="form-check-label" for="sup_{{ valor }}">{{ etiqueta }}</label>
-          </div>
-          {% endfor %}
-
-          <div class="tj-grp">Condiciones generales</div>
-          {% for valor, etiqueta in ruta.CondicionGeneral.choices %}
-          <div class="form-check mb-1">
-            <input class="form-check-input" type="checkbox" id="cond_{{ valor }}"
-                   name="condiciones_generales" value="{{ valor }}"
-                   {% if valor in ruta.condiciones_generales %}checked{% endif %}>
-            <label class="form-check-label" for="cond_{{ valor }}">{{ etiqueta }}</label>
-          </div>
-          {% endfor %}
-
-          <div class="tj-grp">Restricciones de horario</div>
-          <div class="d-flex gap-4 mb-2">
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="tiene_restriccion"
-                     id="restr_si" value="si"
-                     {% if ruta.tiene_restriccion_horario %}checked{% endif %}>
-              <label class="form-check-label" for="restr_si">Sí</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="tiene_restriccion"
-                     id="restr_no" value="no"
-                     {% if not ruta.tiene_restriccion_horario %}checked{% endif %}>
-              <label class="form-check-label" for="restr_no">No</label>
-            </div>
-          </div>
-          <div id="restr_detalle" class="row g-2" style="display:none;">
-            <div class="col-6">
-              <label class="form-label mb-1">Desde</label>
-              <input type="time" class="form-control" name="restriccion_desde"
-                     value="{{ ruta.restriccion_desde|time:'H:i' }}">
-            </div>
-            <div class="col-6">
-              <label class="form-label mb-1">Hasta</label>
-              <input type="time" class="form-control" name="restriccion_hasta"
-                     value="{{ ruta.restriccion_hasta|time:'H:i' }}">
-            </div>
-            <div class="col-12">
-              <label class="form-label mb-1">Días</label>
-              <input type="text" class="form-control" name="restriccion_dias"
-                     placeholder="Ej: Lunes a viernes"
-                     value="{{ ruta.restriccion_dias }}">
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-    </div>
-
-    <div class="tj-panel">
-      <div class="tj-panel-head">
-        <span class="tj-step">03</span>
-        <h2 class="tj-panel-title">Trazados guardados en esta ruta</h2>
-        <span class="tj-panel-right" style="background:rgba(255,255,255,.12);color:#fff;border-radius:999px;padding:.2rem .75rem;font-size:.78rem;font-weight:600">{{ desplazamientos|length }}</span>
-      </div>
-      <div class="tj-tools no-print" id="tj-tools" hidden>
-        <label>Mostrar
-          <select id="tj-size" class="form-select">
-            <option value="5" selected>5</option>
-            <option value="10">10</option>
-            <option value="25">25</option>
-            <option value="50">50</option>
-          </select>
-          registros
-        </label>
-        <label>Buscar:
-          <input type="search" id="tj-buscar" class="form-control" autocomplete="off">
-        </label>
-      </div>
-      <div class="tj-scroll">
-        <table class="tj-table" id="tj-tabla">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Fecha</th>
-              <th>Origen</th>
-              <th>Destino</th>
-              <th>Hora salida</th>
-              <th>Hora llegada</th>
-              <th>Condiciones climáticas</th>
-              <th class="no-print"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for d in desplazamientos %}
-            <tr {% if d.pk == desplazamiento.pk %}class="tj-actual"{% endif %}>
-              <td>{{ forloop.counter }}</td>
-              <td>{{ d.fecha_desplazamiento|date:"d/m/Y" }}</td>
-              <td>{{ d.viaje_gps.direccion_origen|default:"Punto Origen GPS" }}</td>
-              <td>{{ d.viaje_gps.direccion_destino|default:"Punto Destino GPS" }}</td>
-              <td>{{ d.hora_salida|time:"H:i" }}</td>
-              <td>{{ d.hora_llegada_real|time:"H:i"|default:"—" }}</td>
-              <td>{{ d.condiciones_climaticas_esperadas|default:"Normal" }}</td>
-              <td class="no-print">
-                {% if d.pk != desplazamiento.pk %}
-                <a href="?desplazamiento={{ d.pk }}" class="tj-btn tj-btn-sec tj-btn-sm">Ver</a>
-                {% endif %}
-              </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="8" class="tj-empty">No hay trazados guardados en esta ruta.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      <div class="tj-pager no-print" id="tj-pager" hidden>
-        <span class="tj-pager-info" id="tj-pager-info"></span>
-        <div class="tj-pager-btns" id="tj-pager-btns"></div>
-      </div>
-    </div>
-
-    <div class="tj-submit no-print">
-      <button type="submit" class="tj-btn tj-btn-dark">Guardar cambios en la tarjeta</button>
-    </div>
-  </form>
+    </form>
 
 </div>
 {% endblock %}
@@ -353,15 +478,15 @@
 
   // Tabla de trazados: elegir cuántos ver, buscar y pasar de página con números
   (function () {
-    var tabla = document.getElementById('tj-tabla');
-    var tools = document.getElementById('tj-tools');
-    var pager = document.getElementById('tj-pager');
-    var info = document.getElementById('tj-pager-info');
-    var btns = document.getElementById('tj-pager-btns');
-    var sel = document.getElementById('tj-size');
-    var q = document.getElementById('tj-buscar');
+    var tabla = document.getElementById('ic-tabla');
+    var tools = document.getElementById('ic-tools');
+    var pager = document.getElementById('ic-pager');
+    var info = document.getElementById('ic-pager-info');
+    var btns = document.getElementById('ic-pager-btns');
+    var sel = document.getElementById('ic-size');
+    var q = document.getElementById('ic-buscar');
     var filas = [].slice.call(tabla.querySelectorAll('tbody tr'))
-      .filter(function (tr) { return !tr.querySelector('.tj-empty'); });
+      .filter(function (tr) { return !tr.querySelector('.ic-empty'); });
     if (!filas.length) return;
 
     tools.hidden = false;
@@ -370,7 +495,7 @@
     var visibles = filas.slice();
     var pagina = 0;
     var sinRes = document.createElement('tr');
-    sinRes.innerHTML = '<td colspan="8" class="tj-empty">Sin resultados para la búsqueda.</td>';
+    sinRes.innerHTML = '<td colspan="8" class="ic-empty">Sin resultados para la búsqueda.</td>';
     sinRes.style.display = 'none';
     tabla.tBodies[0].appendChild(sinRes);
 
@@ -378,13 +503,13 @@
 
     // Empieza en la página donde está el trazado que se está viendo
     for (var i = 0; i < filas.length; i++) {
-      if (filas[i].classList.contains('tj-actual')) { pagina = Math.floor(i / porPagina()); break; }
+      if (filas[i].classList.contains('ic-actual')) { pagina = Math.floor(i / porPagina()); break; }
     }
 
     function boton(texto, destino, activo, off) {
       var b = document.createElement('button');
       b.type = 'button';
-      b.className = 'tj-pg' + (activo ? ' on' : '');
+      b.className = 'ic-pg' + (activo ? ' on' : '');
       b.textContent = texto;
       b.disabled = !!off;
       b.addEventListener('click', function () { pagina = destino; pintar(); });
@@ -421,7 +546,7 @@
       paginasVisibles(total).forEach(function (n) {
         if (previo >= 0 && n - previo > 1) {
           var pts = document.createElement('span');
-          pts.className = 'tj-pg-gap';
+          pts.className = 'ic-pg-gap';
           pts.textContent = '…';
           btns.appendChild(pts);
         }

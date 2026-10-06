@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Copias de seguridad{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+    /* COPIAS DE SEGURIDAD - mismo estilo del panel (prefijo ic-) */
+    .ic-dash {
+        --volt: #5bb5c8; --lime: #8fbf6a; --amber: #d9a840; --red2: #d9777a;
+        --ink: #dbe4f0; --mute: #8696ad; --line: rgba(91, 181, 200, .28);
+        --glass: rgba(6, 14, 28, .82);
+        --ic-fancy: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        color: var(--ink); font-family: var(--ic-fancy);
+        display: flex; flex-direction: column; gap: 1.5rem;
+        width: 100%; max-width: 860px; margin: 0 auto;
+    }
+
+    /* PANELES */
+    .ic-panel {
+        display: flex; flex-direction: column;
+        background: var(--glass);
+        -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%);
+        border: 1px solid rgba(91, 181, 200, .25); border-radius: 20px; overflow: hidden;
+        box-shadow: 0 14px 36px rgba(0, 0, 0, .4);
+    }
+    .ic-sec-head {
+        position: relative; display: flex; align-items: center; gap: .6rem;
+        padding: .95rem 1.5rem .7rem; border-bottom: 1px solid var(--line);
+        background: linear-gradient(100deg, rgba(91, 181, 200, .1), rgba(143, 191, 106, .03) 60%, transparent);
+    }
+    .ic-sec-head::after {
+        content: ""; position: absolute; left: 0; bottom: -1px; width: 64px; height: 2px;
+        background: var(--lime);
+    }
+    .ic-step { font-size: .8rem; font-weight: 700; color: var(--lime); }
+    .ic-panel-title { font-weight: 700; font-size: .95rem; color: #fff; margin: 0; display: flex; align-items: center; gap: .6rem; }
+    .ic-panel-title i { color: var(--volt); font-size: 1.1rem; }
+    .ic-head-right { margin-left: auto; }
+    .ic-body { padding: 1.4rem 1.5rem 1.5rem; }
+    .ic-text { color: var(--mute); font-size: .9rem; margin: 0 0 1rem; }
+
+    /* ETIQUETAS */
+    .ic-tag {
+        display: inline-flex; align-items: center; gap: .3rem; padding: .15rem .7rem; border-radius: 999px;
+        font-size: .74rem; font-weight: 600; white-space: nowrap;
+        color: var(--mute); background: rgba(138, 160, 189, .08); border: 1px solid rgba(138, 160, 189, .4);
+    }
+    .ic-tag.ok   { color: var(--lime);  background: rgba(143, 191, 106, .1); border-color: rgba(143, 191, 106, .4); }
+    .ic-tag.warn { color: var(--amber); background: rgba(217, 168, 64, .1);  border-color: rgba(217, 168, 64, .4); }
+
+    /* AVISOS */
+    .ic-note {
+        font-size: .86rem; padding: .85rem 1rem; border-radius: 12px; margin-bottom: 1rem;
+        color: var(--amber); background: rgba(217, 168, 64, .08); border: 1px solid rgba(217, 168, 64, .35);
+    }
+    .ic-note strong { color: #f0c866; }
+        .ic-msgs { display: flex; flex-direction: column; gap: .7rem; }
+    .ic-msg {
+        display: flex; align-items: flex-start; gap: .85rem;
+        padding: 1rem 1.2rem; border-radius: 14px;
+        font-size: .95rem; font-weight: 500; line-height: 1.45;
+        
+        box-shadow: 0 8px 22px rgba(0, 0, 0, .45);
+    }
+    .ic-msg i { font-size: 1.3rem; margin-top: .1rem; flex-shrink: 0; }
+    .ic-msg.success { color: #e6f7da; background: rgba(16, 38, 24, .96); border-color: #8fbf6a; }
+    .ic-msg.success i { color: #8fbf6a; }
+    .ic-msg.error   { color: #ffe3e4; background: rgba(46, 14, 18, .96); border-color: #e0656a; }
+    .ic-msg.error i { color: #ff8a8f; }
+    .ic-msg.warning { color: #fff0cf; background: rgba(46, 33, 8, .96); border-color: #d9a840; }
+    .ic-msg.warning i { color: #f0c866; }
+    .ic-msg.info    { color: #dff3f8; background: rgba(8, 32, 42, .96); border-color: #5bb5c8; }
+    .ic-msg.info i  { color: #7fd0e2; }
+
+    /* BOTONES */
+    .ic-btn {
+        display: inline-flex; align-items: center; gap: .55rem;
+        padding: .6rem 1.3rem; border-radius: 12px; font-size: .88rem; font-weight: 600;
+        font-family: var(--ic-fancy); cursor: pointer; transition: all .15s;
+        color: var(--volt); background: rgba(91, 181, 200, .1); border: 1px solid rgba(91, 181, 200, .45);
+    }
+    .ic-btn:hover:not(:disabled) { color: #fff; border-color: var(--volt); box-shadow: 0 0 0 1px var(--volt); transform: translateY(-1px); }
+    .ic-btn.danger { color: var(--red2); background: rgba(217, 119, 122, .1); border-color: rgba(217, 119, 122, .45); }
+    .ic-btn.danger:hover:not(:disabled) { color: #fff; border-color: var(--red2); box-shadow: 0 0 0 1px var(--red2); }
+    .ic-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .ic-btn:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+
+    /* ZONA DE ARRASTRE */
+    .ic-drop {
+        border: 2px dashed rgba(91, 181, 200, .4); border-radius: 16px;
+        background: rgba(2, 8, 20, .45);
+        padding: 2.4rem 1rem; text-align: center; cursor: pointer; transition: all .15s;
+    }
+    .ic-drop:hover, .ic-drop.arrastrando { border-color: var(--volt); background: rgba(91, 181, 200, .08); }
+    .ic-drop.listo { border-color: var(--lime); background: rgba(143, 191, 106, .08); }
+    .ic-drop i { font-size: 2.2rem; color: var(--volt); margin-bottom: .6rem; }
+    .ic-drop.listo i { color: var(--lime); }
+    .ic-drop-text { color: var(--ink); font-size: .92rem; }
+    .ic-drop-name { margin-top: .5rem; font-weight: 600; color: var(--lime); font-size: .88rem; word-break: break-all; }
+
+    .ic-check { display: flex; align-items: center; gap: .6rem; margin: 1rem 0 1.1rem; font-size: .88rem; color: var(--ink); cursor: pointer; }
+    .ic-check input { width: 18px; height: 18px; accent-color: var(--red2); cursor: pointer; }
+</style>
+
+<div class="ic-dash">
+
+        {% if messages %}
+    <div class="ic-msgs">
+        {% for m in messages %}
+        <div class="ic-msg {{ m.tags }}" role="alert">
+            <i class="fa-solid {% if 'success' in m.tags %}fa-circle-check{% elif 'error' in m.tags %}fa-circle-xmark{% else %}fa-triangle-exclamation{% endif %}"></i>
+            <div>{{ m }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Descargar -->
+    <section class="ic-panel">
+        <div class="ic-sec-head">
+            <span class="ic-step">01</span>
+            <h2 class="ic-panel-title"><i class="fa-solid fa-cloud-arrow-down"></i>Descargar copia</h2>
+            <div class="ic-head-right"><span class="ic-tag ok">Recomendado cada semana</span></div>
+        </div>
+        <div class="ic-body">
+            <p class="ic-text">
+                Genera un .zip con todos los datos del sistema (usuarios incluidos) y los archivos subidos.
+                Guárdalo en un lugar privado.
+            </p>
+            <form method="post" action="{% url 'descargar_backup' %}">
+                {% csrf_token %}
+                <button type="submit" class="ic-btn"><i class="fa-solid fa-database"></i>Descargar copia de seguridad</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Restaurar -->
+    <section class="ic-panel">
+        <div class="ic-sec-head">
+            <span class="ic-step">02</span>
+            <h2 class="ic-panel-title"><i class="fa-solid fa-cloud-arrow-up"></i>Restaurar copia</h2>
+            <div class="ic-head-right"><span class="ic-tag warn">Solo administradores</span></div>
+        </div>
+        <div class="ic-body">
+            <p class="ic-text">
+                Sube el .zip que descargaste. El sistema revisa que sea una copia válida y con datos antes de cargarla.
+            </p>
+
+            <div class="ic-note">
+                <strong>Ten en cuenta:</strong> la copia actualiza los registros que ya existan con el mismo ID
+                (incluidos usuarios y contraseñas) y agrega los que falten. No borra los registros creados después de la copia.
+                Si la base está vacía o es nueva, queda igual que cuando se hizo la copia.
+            </div>
+
+            <form method="post" enctype="multipart/form-data" action="{% url 'restaurar_backup' %}" id="formRestaurar">
+                {% csrf_token %}
+                <div class="ic-drop" id="zona">
+                    <i class="fa-solid fa-box-archive"></i>
+                    <div class="ic-drop-text">Arrastra aquí el archivo .zip o haz clic para elegirlo</div>
+                    <div class="ic-drop-name" id="nombreArchivo"></div>
+                    <input type="file" name="archivo" id="archivo" accept=".zip" hidden>
+                </div>
+
+                <label class="ic-check" for="confirmo">
+                    <input type="checkbox" name="confirmo" id="confirmo">
+                    Entiendo que esto modificará los datos actuales del sistema.
+                </label>
+
+                <button type="submit" class="ic-btn danger" id="btnRestaurar" disabled>
+                    <i class="fa-solid fa-rotate-left"></i>Restaurar copia
+                </button>
+            </form>
+        </div>
+    </section>
+
+</div>
+
+<script>
+(function () {
+    var zona = document.getElementById('zona');
+    var input = document.getElementById('archivo');
+    var nombre = document.getElementById('nombreArchivo');
+    var check = document.getElementById('confirmo');
+    var boton = document.getElementById('btnRestaurar');
+    var form = document.getElementById('formRestaurar');
+
+    function actualizar() {
+        var hayArchivo = input.files.length > 0;
+        zona.classList.toggle('listo', hayArchivo);
+        nombre.textContent = hayArchivo ? input.files[0].name : '';
+        boton.disabled = !(hayArchivo && check.checked);
+    }
+
+    zona.addEventListener('click', function () { input.click(); });
+    input.addEventListener('change', actualizar);
+    check.addEventListener('change', actualizar);
+
+    ['dragenter', 'dragover'].forEach(function (ev) {
+        zona.addEventListener(ev, function (e) { e.preventDefault(); zona.classList.add('arrastrando'); });
+    });
+    ['dragleave', 'drop'].forEach(function (ev) {
+        zona.addEventListener(ev, function (e) { e.preventDefault(); zona.classList.remove('arrastrando'); });
+    });
+    zona.addEventListener('drop', function (e) {
+        if (e.dataTransfer.files.length) {
+            input.files = e.dataTransfer.files;
+            actualizar();
+        }
+    });
+
+    form.addEventListener('submit', function () {
+        boton.disabled = true;
+        boton.innerHTML = 'Restaurando...';
+    });
+})();
+</script>
+{% endblock %}

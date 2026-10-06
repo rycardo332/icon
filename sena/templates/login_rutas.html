@@ -11,17 +11,15 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --azul-1: #0b63d6;
-    --azul-3: #06285e;
-    --noche:  #050b24;
-    --cian:   #35c4ff;
-    --naranja:#ff7a2f;
-    --blanco: #ffffff;
+    --azul: #0b63d6;
+    --azul-osc: #06285e;
+    --cian: #35c4ff;
+    --rojo: #e0201b;
+    --tarjeta: #eef2f8;
   }
   html, body { height: 100%; }
   body {
-    min-height: 100vh; font-family: 'Outfit', sans-serif; color: var(--blanco);
-    /* Cielo: noche arriba, atardecer en el horizonte */
+    min-height: 100vh; font-family: 'Outfit', sans-serif; color: var(--azul-osc);
     background:
       radial-gradient(ellipse 90% 45% at 50% 108%, rgba(255,140,50,.95) 0%, rgba(232,80,40,.55) 40%, transparent 75%),
       linear-gradient(180deg, #040918 0%, #0a1a4a 38%, #16357f 62%, #5a3a7a 82%, #c8552e 100%);
@@ -32,81 +30,48 @@
   /* ---------- Escena de fondo ---------- */
   .escena { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
   .escena svg { width: 100%; height: 100%; display: block; }
-
-  /* Estrellas */
   .estrella { fill: #cfe8ff; animation: titila 4s ease-in-out infinite; }
   .estrella:nth-child(2n) { animation-duration: 5.5s; animation-delay: -2s; }
   .estrella:nth-child(3n) { animation-duration: 3.2s; animation-delay: -1s; }
   @keyframes titila { 0%,100% { opacity: .15; } 50% { opacity: .9; } }
-
-  /* Nubes que derivan lentamente */
   .nube { fill: #ff9a5c; opacity: .22; filter: blur(14px); animation: deriva 60s linear infinite; }
   .nube.b { fill: #b56fc0; opacity: .18; animation-duration: 85s; animation-delay: -30s; }
   @keyframes deriva { from { transform: translateX(-260px); } to { transform: translateX(1900px); } }
-
-  /* Cables: resplandor + núcleo + pulso de energía viajando */
-  .cable-glow  { stroke: var(--cian); stroke-width: 9; opacity: .22; }
-  .cable-core  { stroke: #4fd0ff; stroke-width: 2.2; }
-  .cable-pulso {
-    stroke: #ffffff; stroke-width: 3.6; stroke-linecap: round;
-    stroke-dasharray: 26 974; stroke-dashoffset: 1000;
-    animation: viaja 4.2s linear infinite;
-  }
+  .cable-glow { stroke: var(--cian); stroke-width: 9; opacity: .22; animation: latido 3.5s ease-in-out infinite; }
+  .cable-core { stroke: #4fd0ff; stroke-width: 2.2; }
+  .cable-pulso { stroke: #fff; stroke-width: 3.6; stroke-linecap: round; stroke-dasharray: 26 974; stroke-dashoffset: 1000; animation: viaja 4.2s linear infinite; }
   .pulsos { filter: drop-shadow(0 0 5px #35c4ff); }
-  .cable-pulso.p2 { animation-duration: 5.4s; animation-delay: -1.5s; }
-  .cable-pulso.p3 { animation-duration: 3.6s; animation-delay: -2.4s; }
-  .cable-pulso.p4 { animation-duration: 6.2s; animation-delay: -3.5s; }
   @keyframes viaja { to { stroke-dashoffset: 0; } }
-  /* Latido suave de todo el resplandor, como carga en la línea */
-  .cable-glow { animation: latido 3.5s ease-in-out infinite; }
   @keyframes latido { 0%,100% { opacity: .16; } 50% { opacity: .36; } }
-
   .torre { stroke: #040918; fill: none; stroke-width: 4.2; stroke-linejoin: round; stroke-linecap: round; }
   .torre .pie { fill: #040918; stroke-width: 2; }
   .luz-torre { fill: #ff4d4d; animation: aviso 2.4s ease-in-out infinite; }
   @keyframes aviso { 0%,100% { opacity: .15; } 50% { opacity: 1; } }
 
-  /* ---------- Tarjeta dividida ---------- */
+  /* ---------- Tarjeta única ---------- */
   @property --ang { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
 
   .card {
     position: relative; z-index: 1;
-    width: 100%; max-width: 900px; margin-bottom: 6vh;
-    display: grid; grid-template-columns: 340px 1fr;
-    background: linear-gradient(160deg, rgba(4,20,64,.94), rgba(2,9,34,.97));
-    border: 1px solid rgba(90,150,230,.30); border-radius: 22px; overflow: hidden;
-    box-shadow: 0 30px 80px rgba(1,6,24,.75), 0 0 40px rgba(11,99,214,.2);
+    width: 100%; max-width: 320px; margin-bottom: 4vh; left: -3vw;
+    background: var(--tarjeta);
+    border-radius: 20px; overflow: hidden;
+    box-shadow: 0 30px 80px rgba(1,6,24,.7), 0 0 50px rgba(53,196,255,.18);
     animation: entra .8s cubic-bezier(.2,.8,.2,1) both;
   }
   @keyframes entra { from { opacity: 0; transform: translateY(26px) scale(.98); } to { opacity: 1; transform: none; } }
 
-  /* Franja roja diagonal entre los dos paneles */
-  .franja {
-    position: absolute; top: 0; bottom: 0; left: 0; width: 392px; z-index: 1;
-    background: linear-gradient(180deg, #ff3b30, #b0130f);
-    clip-path: polygon(0 0, 100% 0, calc(100% - 46px) 100%, 0 100%);
-  }
+  .contenido { padding: 14px 24px 22px; }
 
-  /* Panel izquierdo: marca + mapa animado */
-  .marca {
-    position: relative; z-index: 2; width: 380px; margin-right: -40px;
-    padding: 26px 62px 26px 26px;
-    display: flex; flex-direction: column; gap: 14px;
-    background: linear-gradient(155deg, #0a52b8 0%, #06306f 50%, #031438 100%);
-    clip-path: polygon(0 0, 100% 0, calc(100% - 46px) 100%, 0 100%);
-  }
-  .logo-placa {
-    background: var(--blanco); border-radius: 12px; padding: 6px 10px;
-    box-shadow: 0 8px 22px rgba(0,0,0,.35);
-  }
-  .logo-placa img { display: block; width: 100%; height: auto; }
+  .logo { padding: 0 26px; }
+  .logo img { display: block; width: 100%; height: auto; mix-blend-mode: multiply; }
 
-  .mapa { width: 100%; height: auto; flex: 1; min-height: 120px; }
-  .ruta-base { stroke: rgba(255,255,255,.28); stroke-width: 2; stroke-dasharray: 2 7; stroke-linecap: round; fill: none; }
+  .mapa { display: block; width: 100%; height: 68px; margin-top: 0; }
+  .ruta-base { stroke: rgba(6,40,94,.35); stroke-width: 2; stroke-dasharray: 2 7; stroke-linecap: round; fill: none; }
   .ruta-viva {
-    fill: none; stroke: var(--cian); stroke-width: 3.4; stroke-linecap: round;
+    fill: none; stroke: #0b63d6; stroke-width: 3.4; stroke-linecap: round;
     stroke-dasharray: 100; stroke-dashoffset: 100;
-    filter: drop-shadow(0 0 5px #35c4ff);
+    filter: drop-shadow(0 0 4px rgba(11,99,214,.5));
     animation: traza 6s linear infinite;
   }
   @keyframes traza {
@@ -115,66 +80,62 @@
     90%  { stroke-dashoffset: 0;   opacity: 1; }
     100% { stroke-dashoffset: 0;   opacity: 0; }
   }
-  .onda { fill: none; stroke: #ff5a4f; stroke-width: 1.6; transform-box: fill-box; transform-origin: center; animation: onda 2.4s ease-out infinite; }
+  .onda { fill: none; stroke: #e0201b; stroke-width: 1.6; transform-box: fill-box; transform-origin: center; animation: onda 2.4s ease-out infinite; }
   .onda.b { animation-delay: -1.2s; }
   @keyframes onda { from { transform: scale(1); opacity: .9; } to { transform: scale(5); opacity: 0; } }
 
-  .sistema { font-size: 1.55rem; font-weight: 600; display: flex; align-items: center; gap: 10px; }
-  .sistema i { color: #ff5a4f; }
-  .marca-texto p + p { margin-top: 4px; font-size: .85rem; font-weight: 300; color: #bfe0ff; }
+  .sistema {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin: 0 0 8px; font-size: .92rem; font-weight: 600; color: var(--azul-osc);
+    letter-spacing: .4px;
+  }
+  .sistema i { color: var(--rojo); }
+  .sistema::before, .sistema::after { content: ""; height: 1px; flex: 1; background: linear-gradient(90deg, transparent, rgba(6,40,94,.25)); }
+  .sistema::after { background: linear-gradient(270deg, transparent, rgba(6,40,94,.25)); }
 
-  /* Panel derecho: formulario */
-  .acceso { padding: 34px 44px 26px 76px; display: flex; flex-direction: column; justify-content: center; }
-  h1 { font-size: 1.75rem; font-weight: 600; }
-  .sub { font-size: .86rem; color: #a9c8ee; margin: 4px 0 22px; }
+  .sub { font-size: .78rem; color: #4a6288; text-align: center; margin-bottom: 8px; }
 
   .alerta-general, .alerta-campo { font-size: .8rem; display: flex; gap: 8px; align-items: flex-start; }
-  .alerta-general {
-    background: rgba(255,80,80,.18); border: 1px solid rgba(255,140,140,.5);
-    border-radius: 10px; padding: 10px 12px; margin-bottom: 16px;
-  }
-  .alerta-campo { margin-top: 6px; color: #ffb3b3; }
+  .alerta-general { background: #fde8e8; border: 1px solid #f3b0b0; color: #9b1c1c; border-radius: 10px; padding: 10px 12px; margin-bottom: 14px; }
+  .alerta-campo { margin-top: 6px; color: #b3261e; }
 
-  .campo { margin-bottom: 14px; }
-  .campo label { display: block; font-size: .78rem; font-weight: 500; margin-bottom: 6px; color: #d4e6ff; }
+  .campo { margin-bottom: 8px; }
+  .campo label { display: block; font-size: .75rem; font-weight: 600; margin-bottom: 4px; color: var(--azul-osc); }
   .input-wrap { position: relative; }
-  .input-wrap .ico { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #6fa8ef; font-size: .9rem; pointer-events: none; transition: color .2s; }
+  .input-wrap .ico { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--azul); font-size: .85rem; pointer-events: none; }
   .input-wrap input {
-    width: 100%; height: 46px; padding: 0 44px 0 40px;
-    background: rgba(255,255,255,.07); color: #fff; border: 1.5px solid rgba(120,170,255,.35);
-    border-radius: 10px; font: inherit; font-size: .92rem; outline: none;
-    transition: border-color .2s, box-shadow .2s, background .2s;
+    width: 100%; height: 38px; padding: 0 42px 0 38px;
+    background: #fff; color: var(--azul-osc);
+    border: 1.5px solid #c3d0e4; border-radius: 10px;
+    font: inherit; font-size: .88rem; outline: none;
+    transition: border-color .2s, box-shadow .2s;
   }
-  .input-wrap input::placeholder { color: #7f9cc7; }
-  .input-wrap input:focus { border-color: var(--cian); background: rgba(53,196,255,.09); box-shadow: 0 0 0 4px rgba(53,196,255,.2); }
-  .input-wrap:focus-within .ico { color: var(--cian); }
-  .input-wrap input.field-error { border-color: #ff6b6b; }
+  .input-wrap input::placeholder { color: #8fa3c2; }
+  .input-wrap input:focus { border-color: var(--azul); box-shadow: 0 0 0 4px rgba(11,99,214,.18); }
+  .input-wrap input.field-error { border-color: #e04848; }
   .input-wrap input:-webkit-autofill {
-    -webkit-text-fill-color: #fff; caret-color: #fff;
-    -webkit-box-shadow: 0 0 0 100px #0a2350 inset; border-color: rgba(120,170,255,.5);
+    -webkit-text-fill-color: var(--azul-osc); caret-color: var(--azul-osc);
+    -webkit-box-shadow: 0 0 0 100px #fff inset;
   }
-  .ojo {
-    position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
-    width: 38px; height: 38px; border: 0; background: none; color: #8db4ea; cursor: pointer; border-radius: 8px;
-  }
-  .ojo:hover { color: #fff; }
+  .ojo { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; border: 0; background: none; color: #6b86ad; cursor: pointer; border-radius: 8px; }
+  .ojo:hover { color: var(--azul); }
 
-  .fila { display: flex; justify-content: space-between; align-items: center; margin: 2px 0 20px; font-size: .82rem; gap: 10px; flex-wrap: wrap; }
+  .fila { display: flex; justify-content: space-between; align-items: center; margin: 2px 0 12px; font-size: .76rem; gap: 10px; flex-wrap: wrap; }
   .fila label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-  .fila input { accent-color: var(--cian); width: 15px; height: 15px; }
-  .fila a { color: #cfe6ff; text-decoration: underline; text-underline-offset: 3px; }
-  .fila a:hover { color: #fff; }
+  .fila input { accent-color: var(--azul); width: 15px; height: 15px; }
+  .fila a { color: var(--azul); text-decoration: underline; text-underline-offset: 3px; }
+  .fila a:hover { color: var(--azul-osc); }
 
   /* Botón oscuro con corriente de luz recorriendo el borde */
   .btn {
     position: relative; overflow: hidden;
-    width: 100%; height: 50px; border-radius: 10px; cursor: pointer;
+    width: 100%; height: 42px; border-radius: 10px; cursor: pointer;
     border: 2px solid transparent;
     background:
-      linear-gradient(#071c47, #030f2b) padding-box,
-      conic-gradient(from var(--ang), rgba(53,196,255,.12) 0deg, rgba(53,196,255,.12) 240deg, #35c4ff 320deg, #ffffff 350deg, rgba(53,196,255,.12) 360deg) border-box;
-    color: var(--blanco); font: inherit; font-size: 1rem; font-weight: 600; letter-spacing: .2px;
-    box-shadow: 0 0 22px rgba(53,196,255,.22);
+      linear-gradient(#0a2f70, #051b44) padding-box,
+      conic-gradient(from var(--ang), rgba(11,99,214,.25) 0deg, rgba(11,99,214,.25) 240deg, #35c4ff 320deg, #ffffff 350deg, rgba(11,99,214,.25) 360deg) border-box;
+    color: #fff; font: inherit; font-size: .95rem; font-weight: 600; letter-spacing: .2px;
+    box-shadow: 0 8px 22px rgba(6,40,94,.35);
     animation: gira 3.2s linear infinite;
     transition: transform .15s, box-shadow .2s;
   }
@@ -184,27 +145,51 @@
     background: linear-gradient(100deg, transparent, rgba(255,255,255,.28), transparent);
     transform: skewX(-20deg);
   }
-  .btn:hover { transform: translateY(-1px); box-shadow: 0 0 30px rgba(53,196,255,.5); }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 28px rgba(11,99,214,.5); }
   .btn:hover::after { animation: destello .8s ease; }
   @keyframes destello { to { left: 130%; } }
   .btn:active { transform: translateY(0); }
-  .btn:focus-visible, .ojo:focus-visible, .fila a:focus-visible { outline: 3px solid var(--cian); outline-offset: 2px; }
+  .btn:focus-visible, .ojo:focus-visible, .fila a:focus-visible { outline: 3px solid var(--azul); outline-offset: 2px; }
 
-  .pie { margin-top: 18px; font-size: .8rem; color: #a9c8ee; }
-  .pie a { color: #fff; font-weight: 600; }
+  /* ---------- Cielo interactivo ---------- */
+  .estrella { transform-box: fill-box; transform-origin: center; transition: transform .3s, filter .3s, fill .3s; }
+  .estrella.brilla { animation: none; opacity: 1; fill: #fff; transform: scale(2.8); filter: drop-shadow(0 0 4px #7fd6ff) drop-shadow(0 0 8px #35c4ff); }
+  #halo { transition: opacity .35s; pointer-events: none; }
 
-  /* Celular: paneles apilados */
-  @media (max-width: 820px) {
-    .card { grid-template-columns: 1fr; max-width: 460px; margin-bottom: 0; }
-    .franja { display: none; }
-    .marca { width: auto; margin-right: 0; clip-path: none; padding: 20px 22px; border-bottom: 4px solid #d81e1a; }
-    .mapa, .marca-texto p + p { display: none; }
-    .sistema { font-size: 1.2rem; }
-    .acceso { padding: 26px 22px 24px; }
+  /* ---------- Chispas al escribir + descarga en los cables ---------- */
+  .chispa { position: absolute; left: 0; top: 0; width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px 1px currentColor; pointer-events: none; z-index: 6; will-change: transform, opacity; }
+  .chispa.est { width: 12px; height: 12px; border-radius: 0; box-shadow: none; clip-path: polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%); }
+  .anillo { position: absolute; pointer-events: none; z-index: 5; border: 2px solid #35c4ff; border-radius: 12px; box-shadow: 0 0 18px rgba(53,196,255,.8), inset 0 0 14px rgba(53,196,255,.5); }
+  .escena .cable-glow, .escena .cable-core { transition: stroke-width .12s, stroke .12s; }
+  .escena.surge .cable-glow { stroke-width: 18; }
+  .escena.surge .cable-core { stroke: #fff; stroke-width: 3.4; }
+  .escena.surge .pulsos { filter: drop-shadow(0 0 12px #35c4ff) drop-shadow(0 0 4px #fff); }
+  .card.tecleo { box-shadow: 0 30px 80px rgba(1,6,24,.7), 0 0 80px rgba(53,196,255,.45); }
+  .card { transition: box-shadow .15s; }
+
+  /* ---------- Animación cuando usuario y contraseña están llenos ---------- */
+  .input-wrap.ok input { border-color: var(--rojo); }
+  .input-wrap.ok .ico { color: var(--rojo); animation: pop .45s cubic-bezier(.2,1.6,.4,1); }
+  @keyframes pop { 0% { transform: translateY(-50%) scale(.5); } 100% { transform: translateY(-50%) scale(1); } }
+
+  .btn .flecha { display: inline-block; width: 0; opacity: 0; margin-left: 0; overflow: hidden; vertical-align: middle; transition: width .35s, opacity .35s, margin .35s; }
+  .listo .btn { animation: gira 1.6s linear infinite, brillo 1.8s ease-in-out infinite; }
+  @keyframes brillo {
+    0%,100% { box-shadow: 0 8px 22px rgba(6,40,94,.35), 0 0 0 0 rgba(53,196,255,.6); }
+    50%     { box-shadow: 0 8px 22px rgba(6,40,94,.35), 0 0 0 10px rgba(53,196,255,0); }
+  }
+
+  .btn.cargando { pointer-events: none; }
+  .btn.cargando .flecha { width: 1.1em; opacity: 1; margin-left: 8px; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 480px) {
+    .card { margin-bottom: 0; max-width: 310px; left: 0; }
+    .contenido { padding: 14px 18px 20px; }
     .input-wrap input { font-size: 1rem; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .estrella, .nube, .cable-glow, .cable-pulso, .luz-torre, .card, .btn, .ruta-viva, .onda { animation: none; }
+    .estrella, .nube, .cable-glow, .cable-pulso, .luz-torre, .card, .btn , .listo .btn, .ruta-viva, .onda { animation: none; }
     .cable-pulso, .punto-mov { display: none; }
     .ruta-viva { stroke-dashoffset: 0; }
   }
@@ -216,6 +201,16 @@
 <div class="escena" aria-hidden="true">
   <svg id="escenaSvg" viewBox="0 0 1600 800" preserveAspectRatio="xMidYMax slice">
     <defs>
+      <radialGradient id="haloGrad">
+        <stop offset="0" stop-color="#9fdcff" stop-opacity=".38"/>
+        <stop offset=".45" stop-color="#35c4ff" stop-opacity=".14"/>
+        <stop offset="1" stop-color="#35c4ff" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="colaGrad" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="-130" y2="-49">
+        <stop offset="0" stop-color="#fff" stop-opacity="1"/>
+        <stop offset=".35" stop-color="#9fdcff" stop-opacity=".6"/>
+        <stop offset="1" stop-color="#35c4ff" stop-opacity="0"/>
+      </linearGradient>
       <symbol id="torre" viewBox="0 0 100 300" overflow="visible">
         <g class="torre">
           <path d="M26 300 L45 62 L50 28 L55 62 L74 300"/>
@@ -267,7 +262,6 @@
       <circle class="estrella" cx="1189" cy="177" r="1.3"/>
       <circle class="estrella" cx="231" cy="116" r="1.6"/>
       <circle class="estrella" cx="219" cy="300" r="1.1"/>
-      <circle class="estrella" cx="1175" cy="50" r="1.3"/>
       <circle class="estrella" cx="1036" cy="292" r="1.9"/>
       <circle class="estrella" cx="663" cy="258" r="1.9"/>
       <circle class="estrella" cx="760" cy="173" r="1.3"/>
@@ -277,19 +271,16 @@
       <circle class="estrella" cx="1267" cy="57" r="1.1"/>
       <circle class="estrella" cx="1068" cy="234" r="1.3"/>
       <circle class="estrella" cx="1570" cy="195" r="1.3"/>
-      <circle class="estrella" cx="1021" cy="235" r="1.1"/>
       <circle class="estrella" cx="1388" cy="59" r="1.6"/>
       <circle class="estrella" cx="716" cy="199" r="1.9"/>
     </g>
+
+    <g id="cielo"><circle id="halo" r="120" fill="url(#haloGrad)" opacity="0"/></g>
 
     <ellipse class="nube"   cx="0" cy="560" rx="260" ry="34"/>
     <ellipse class="nube b" cx="0" cy="470" rx="210" ry="26"/>
     <ellipse class="nube"   cx="0" cy="650" rx="320" ry="30" style="animation-delay:-22s"/>
 
-    <!-- Torres lejanas (profundidad) -->
-
-
-    <!-- Cables -->
     <g fill="none" stroke-linecap="round" stroke-linejoin="round">
       <g class="cable-glow"><use href="#w0"/><use href="#w1"/><use href="#w2"/><use href="#w3"/><use href="#w4"/><use href="#w5"/><use href="#w6"/><use href="#w7"/><use href="#w8"/><use href="#w9"/><use href="#w10"/><use href="#w11"/><use href="#w12"/><use href="#w13"/><use href="#w14"/><use href="#w15"/><use href="#w16"/><use href="#w17"/></g>
       <g class="cable-core"><use href="#w0"/><use href="#w1"/><use href="#w2"/><use href="#w3"/><use href="#w4"/><use href="#w5"/><use href="#w6"/><use href="#w7"/><use href="#w8"/><use href="#w9"/><use href="#w10"/><use href="#w11"/><use href="#w12"/><use href="#w13"/><use href="#w14"/><use href="#w15"/><use href="#w16"/><use href="#w17"/></g>
@@ -315,10 +306,8 @@
       </g>
     </g>
 
-    <!-- Colinas traseras -->
     <path d="M0 800 V748 C 200 730 380 752 620 742 S 1000 728 1250 745 S 1500 738 1600 744 V800Z" fill="#0a1532"/>
 
-    <!-- Torres principales, completas -->
     <use href="#torre" transform="translate(72 335) scale(1.55)" width="100" height="300"/>
     <use href="#torre" transform="translate(395 462) scale(1.1)" width="100" height="300"/>
     <use href="#torre" transform="translate(705 566) scale(0.7)" width="100" height="300"/>
@@ -330,43 +319,34 @@
 </div>
 
 <main class="card">
-  <span class="franja" aria-hidden="true"></span>
-
-  <aside class="marca">
-    <div class="logo-placa">
+  <div class="contenido">
+    <div class="logo">
       <img src="{% static 'img/logo.png' %}" alt="Icon Ltda — Ingenieros Contratistas">
     </div>
 
-    <!-- Mapa animado: una ruta que se traza y un vehículo que la recorre -->
-    <svg class="mapa" viewBox="0 0 300 160" aria-hidden="true">
-      <g stroke="rgba(255,255,255,.08)" stroke-width="1">
+    <svg class="mapa" viewBox="0 0 300 160" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <g stroke="rgba(6,40,94,.12)" stroke-width="1">
         <path d="M0 30H300M0 60H300M0 90H300M0 120H300M0 150H300"/>
         <path d="M30 0V160M60 0V160M90 0V160M120 0V160M150 0V160M180 0V160M210 0V160M240 0V160M270 0V160"/>
       </g>
       <path class="ruta-base" d="M22 128 C 70 128 60 70 112 78 S 170 128 208 92 S 246 40 270 36"/>
       <path class="ruta-viva" pathLength="100" d="M22 128 C 70 128 60 70 112 78 S 170 128 208 92 S 246 40 270 36"/>
-      <circle cx="22" cy="128" r="4.5" fill="#fff"/>
+      <circle cx="22" cy="128" r="4.5" fill="#06285e"/>
       <circle cx="112" cy="78" r="3.2" fill="#0b63d6" stroke="#fff" stroke-width="1.6"/>
       <circle cx="208" cy="92" r="3.2" fill="#0b63d6" stroke="#fff" stroke-width="1.6"/>
       <circle class="onda"   cx="270" cy="36" r="5"/>
       <circle class="onda b" cx="270" cy="36" r="5"/>
       <circle cx="270" cy="36" r="6" fill="#e0201b" stroke="#fff" stroke-width="2"/>
       <g class="punto-mov">
-        <circle r="11" fill="#35c4ff" opacity=".3"/>
-        <circle r="5"  fill="#fff"/>
+        <circle r="11" fill="#0b63d6" opacity=".25"/>
+        <circle r="5"  fill="#0b63d6"/>
         <animateMotion dur="6s" repeatCount="indefinite" calcMode="linear" keyPoints="0;1;1" keyTimes="0;.7;1"
           path="M22 128 C 70 128 60 70 112 78 S 170 128 208 92 S 246 40 270 36"/>
       </g>
     </svg>
 
-    <div class="marca-texto">
-      <p class="sistema"><i class="fas fa-location-dot"></i> Rutas GPS</p>
-      
-    </div>
-  </aside>
+    <p class="sistema"><i class="fas fa-location-dot"></i> Rutas GPS</p>
 
-  <section class="acceso">
-    <h1>Iniciar sesión</h1>
     <p class="sub">Ingresa con tu usuario y contraseña.</p>
 
     <form method="post" autocomplete="off" novalidate>
@@ -416,14 +396,9 @@
         <a href="{% url 'password_reset' %}">¿Olvidaste tu contraseña?</a>
       </div>
 
-      <button type="submit" class="btn">Iniciar sesión</button>
+      <button type="submit" class="btn"><span id="btnTxt">Iniciar sesión</span><i class="fas fa-spinner flecha" id="btnIco"></i></button>
     </form>
-
-    <p class="pie">
-      ¿No tienes cuenta? <a href="#">Regístrate</a>
-      {# Cambia el "#" por {% url 'tu_ruta_de_registro' %} si tienes registro #}
-    </p>
-  </section>
+  </div>
 </main>
 
 <script>
@@ -437,7 +412,161 @@
     this.setAttribute('aria-label', ver ? 'Ocultar contraseña' : 'Mostrar contraseña');
   });
 
-  // En pantallas verticales (celular) se muestran las torres del lado izquierdo completas
+  (function () {
+    const form = document.querySelector('form');
+    const u = document.getElementById('id_username');
+    const p = document.getElementById('id_password');
+    function revisar() {
+      const uOk = u.value.trim().length > 0, pOk = p.value.length > 0;
+      u.closest('.input-wrap').classList.toggle('ok', uOk);
+      p.closest('.input-wrap').classList.toggle('ok', pOk);
+      form.classList.toggle('listo', uOk && pOk);
+    }
+    [u, p].forEach(el => el.addEventListener('input', revisar));
+    revisar(); setTimeout(revisar, 400);
+    form.addEventListener('submit', function () {
+      const b = form.querySelector('.btn');
+      b.classList.add('cargando');
+      document.getElementById('btnTxt').textContent = 'Ingresando...';
+          });
+  })();
+
+  /* ---------- Chispas al teclear ---------- */
+  (function () {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const card = document.querySelector('.card');
+    const escena = document.querySelector('.escena');
+    const form = document.querySelector('form');
+    const colores = ['#35c4ff', '#ffffff', '#e0201b', '#4fd0ff', '#ff6b4a'];
+    const cv = document.createElement('canvas').getContext('2d');
+    let tSurge, tCard, estabaListo = false;
+
+    function chispas(cont, x, y, n, alcance) {
+      for (let i = 0; i < n; i++) {
+        const el = document.createElement('span');
+        el.className = 'chispa' + (Math.random() < 0.45 ? ' est' : '');
+        el.style.color = colores[(Math.random() * colores.length) | 0];
+        cont.appendChild(el);
+        const ang = Math.random() * Math.PI * 2, d = alcance * (0.4 + Math.random() * 0.6);
+        const dx = Math.cos(ang) * d, dy = Math.sin(ang) * d - 8, giro = (Math.random() - .5) * 360;
+        el.animate([
+          { transform: `translate(${x}px,${y}px) translate(-50%,-50%) scale(1) rotate(0deg)`, opacity: 1 },
+          { transform: `translate(${x + dx}px,${y + dy}px) translate(-50%,-50%) scale(0) rotate(${giro}deg)`, opacity: 0 }
+        ], { duration: 450 + Math.random() * 450, easing: 'cubic-bezier(.15,.8,.3,1)' }).onfinish = () => el.remove();
+      }
+    }
+
+    function surge(ms) {
+      escena.classList.add('surge'); card.classList.add('tecleo');
+      clearTimeout(tSurge); tSurge = setTimeout(() => escena.classList.remove('surge'), ms);
+      clearTimeout(tCard);  tCard  = setTimeout(() => card.classList.remove('tecleo'), ms);
+    }
+
+    function caretX(inp) {
+      const cs = getComputedStyle(inp);
+      cv.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      const pos = inp.selectionStart == null ? inp.value.length : inp.selectionStart;
+      const txt = inp.type === 'password' ? '\u2022'.repeat(pos) : inp.value.slice(0, pos);
+      const w = inp.parentElement.clientWidth;
+      return Math.min(parseFloat(cs.paddingLeft) + cv.measureText(txt).width + 2, w - 46);
+    }
+
+    function rafagaBoton() {
+      const b = form.querySelector('.btn'), c = card.getBoundingClientRect(), r = b.getBoundingClientRect();
+      const x = r.left - c.left + r.width / 2, y = r.top - c.top + r.height / 2;
+      const anillo = document.createElement('span');
+      anillo.className = 'anillo';
+      Object.assign(anillo.style, { left: (r.left - c.left) + 'px', top: (r.top - c.top) + 'px', width: r.width + 'px', height: r.height + 'px' });
+      card.appendChild(anillo);
+      anillo.animate([{ transform: 'scale(1)', opacity: .9 }, { transform: 'scale(1.35,1.9)', opacity: 0 }],
+        { duration: 700, easing: 'ease-out' }).onfinish = () => anillo.remove();
+      for (let i = 0; i < 4; i++) chispas(card, r.left - c.left + Math.random() * r.width, y, 7, 70);
+      surge(900);
+    }
+
+    ['id_username', 'id_password'].forEach(id => {
+      const inp = document.getElementById(id);
+      inp.addEventListener('input', e => {
+        const wrap = inp.parentElement, borrando = (e.inputType || '').startsWith('delete');
+        const x = caretX(inp), y = wrap.clientHeight / 2;
+        chispas(wrap, x, y, borrando ? 4 : 10, borrando ? 22 : 38);
+        if (!borrando) {
+          const flash = document.createElement('span');
+          flash.className = 'chispa'; flash.style.color = '#fff';
+          wrap.appendChild(flash);
+          flash.animate([
+            { transform: `translate(${x}px,${y}px) translate(-50%,-50%) scale(1)`, opacity: 1 },
+            { transform: `translate(${x}px,${y}px) translate(-50%,-50%) scale(5)`, opacity: 0 }
+          ], { duration: 320, easing: 'ease-out' }).onfinish = () => flash.remove();
+        }
+        surge(160);
+        const listo = form.classList.contains('listo');
+        if (listo && !estabaListo) rafagaBoton();
+        estabaListo = listo;
+      });
+    });
+  })();
+
+  /* ---------- Cielo: brillo al pasar el mouse + estrella fugaz ---------- */
+  (function () {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const NS = 'http://www.w3.org/2000/svg';
+    const svg = document.getElementById('escenaSvg');
+    const cielo = svg.querySelector('#cielo'), halo = svg.querySelector('#halo');
+    const estrellas = [...svg.querySelectorAll('.estrella')].map(el => ({ el, x: +el.getAttribute('cx'), y: +el.getAttribute('cy') }));
+    const pt = svg.createSVGPoint();
+    const colores = ['#ffffff', '#9fdcff', '#35c4ff', '#ffd9a0'];
+    let ultimo = 0;
+
+    function aSvg(x, y) { pt.x = x; pt.y = y; return pt.matrixTransform(svg.getScreenCTM().inverse()); }
+    function apagar() { halo.style.opacity = 0; estrellas.forEach(s => s.el.classList.remove('brilla')); }
+
+    function destello(x, y) {
+      const el = document.createElementNS(NS, Math.random() < .5 ? 'circle' : 'path');
+      if (el.tagName === 'circle') el.setAttribute('r', 1.2 + Math.random() * 1.8);
+      else el.setAttribute('d', 'M0-6L1.6-1.6 6 0 1.6 1.6 0 6-1.6 1.6-6 0-1.6-1.6Z');
+      el.setAttribute('fill', colores[(Math.random() * colores.length) | 0]);
+      el.style.pointerEvents = 'none';
+      cielo.appendChild(el);
+      const dx = (Math.random() - .5) * 30, dy = 10 + Math.random() * 24;
+      el.animate([
+        { transform: `translate(${x}px,${y}px) scale(1) rotate(0deg)`, opacity: 1 },
+        { transform: `translate(${x + dx}px,${y + dy}px) scale(0) rotate(120deg)`, opacity: 0 }
+      ], { duration: 650 + Math.random() * 400, easing: 'ease-out' }).onfinish = () => el.remove();
+    }
+
+    window.addEventListener('mousemove', e => {
+      if (e.target.closest && e.target.closest('.card')) return apagar();
+      const p = aSvg(e.clientX, e.clientY);
+      if (p.y < 0 || p.y > 470) return apagar();
+      halo.setAttribute('cx', p.x); halo.setAttribute('cy', p.y); halo.style.opacity = 1;
+      estrellas.forEach(s => s.el.classList.toggle('brilla', Math.hypot(s.x - p.x, s.y - p.y) < 120));
+      const t = performance.now();
+      if (t - ultimo > 45) { ultimo = t; destello(p.x + (Math.random() - .5) * 16, p.y + (Math.random() - .5) * 16); }
+    });
+    document.addEventListener('mouseleave', apagar);
+
+    // Estrella fugaz de vez en cuando
+    function fugaz() {
+      if (!document.hidden) {
+        const g = document.createElementNS(NS, 'g');
+        g.style.pointerEvents = 'none';
+        g.innerHTML = '<line x1="0" y1="0" x2="-130" y2="-49" stroke="url(#colaGrad)" stroke-width="2.4" stroke-linecap="round"/>' +
+                      '<circle r="2.6" fill="#fff" style="filter:drop-shadow(0 0 5px #7fd6ff)"/>';
+        cielo.appendChild(g);
+        const x = 150 + Math.random() * 800, y = 30 + Math.random() * 150, dur = 900 + Math.random() * 500;
+        g.animate([
+          { transform: `translate(${x}px,${y}px)`, opacity: 0 },
+          { transform: `translate(${x + 120}px,${y + 45}px)`, opacity: 1, offset: .15 },
+          { transform: `translate(${x + 520}px,${y + 195}px)`, opacity: 1, offset: .7 },
+          { transform: `translate(${x + 700}px,${y + 262}px)`, opacity: 0 }
+        ], { duration: dur, easing: 'linear' }).onfinish = () => g.remove();
+      }
+      setTimeout(fugaz, 6000 + Math.random() * 9000);
+    }
+    setTimeout(fugaz, 2500);
+  })();
+
   (function () {
     const svg = document.getElementById('escenaSvg');
     function ajustar() {

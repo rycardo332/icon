@@ -7,7 +7,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Sistema de gestión{% endblock %}</title>
-
+    <link rel="icon" type="image/png" href="{% static 'img/logoo.png' %}">
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -22,7 +22,7 @@
 
         /* Fondo de la página */
         body {
-            background-image: url("{% static 'img/fondo.jpg' %}");
+            background-image: url("{% static 'img/fondo.png' %}");
         }
 
         /* =========================================================
@@ -38,7 +38,8 @@
            8. Paneles y tablas (.pn)
            9. Etiquetas, botones, alertas
            10. Formularios
-           11. Responsive
+           11. Barra de desplazamiento
+           12. Responsive
            ========================================================= */
 
 
@@ -150,18 +151,117 @@
         }
         .topbar-notification:hover { background: rgba(255, 255, 255, .14); color: #fff; }
 
-        .notification-dot {
+        /* Número sobre la campana */
+        .notification-count {
             position: absolute;
-            top: 9px;
-            right: 10px;
-            width: 8px;
-            height: 8px;
+            top: -3px;
+            right: -3px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            border-radius: 999px;
             background: var(--red);
-            border-radius: 50%;
+            color: #fff;
+            font-size: .65rem;
+            font-weight: 700;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             border: 2px solid var(--dark);
         }
 
-        /* Perfil */
+        /* Lista desplegable ------------------------------------- */
+        .notif-menu {
+            width: 360px;
+            max-width: 92vw;
+            padding: 0;
+            background: #0f1a2d;
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 18px 44px rgba(0, 0, 0, .5);
+            margin-top: 10px !important;
+        }
+        .notif-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: .95rem 1.15rem;
+            color: #f1f5f9;
+            font-weight: 600;
+            font-size: .92rem;
+            letter-spacing: .1px;
+            border-bottom: 1px solid rgba(255, 255, 255, .06);
+        }
+        .notif-head small { color: #8a9ab3; font-weight: 500; font-size: .76rem; }
+
+        /* Lista con scrollbar fino y oscuro (sin la barra blanca) */
+        .notif-list {
+            max-height: 380px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;                                   /* Firefox */
+            scrollbar-color: rgba(148, 163, 184, .28) transparent;   /* Firefox */
+        }
+        .notif-list::-webkit-scrollbar { width: 6px; }
+        .notif-list::-webkit-scrollbar-track { background: transparent; }
+        .notif-list::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, .28);
+            border-radius: 999px;
+        }
+        .notif-list::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, .5); }
+        .notif-list::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+
+        .notif-item {
+            position: relative;
+            display: block;
+            padding: .85rem 1.15rem .85rem 1.3rem;
+            border-bottom: 1px solid rgba(255, 255, 255, .05);
+            color: #e2e8f0;
+            text-decoration: none;
+            transition: background .15s;
+        }
+        .notif-item:last-child { border-bottom: 0; }
+        .notif-item:hover { background: rgba(255, 255, 255, .04); color: #fff; }
+
+        /* Vencidos: solo fondo rojo tenue, sin línea lateral */
+        .notif-item.vencido {
+            background: linear-gradient(90deg, rgba(239, 68, 68, .09), rgba(239, 68, 68, .015) 70%);
+        }
+        .notif-item.vencido:hover {
+            background: linear-gradient(90deg, rgba(239, 68, 68, .14), rgba(239, 68, 68, .03) 70%);
+        }
+        .notif-row { display: flex; justify-content: space-between; align-items: center; gap: .6rem; }
+        .notif-who { font-weight: 700; font-size: .9rem; letter-spacing: .2px; }
+        .notif-doc { font-size: .78rem; color: #8a9ab3; margin-top: .2rem; }
+        .notif-tag {
+            font-size: .68rem;
+            font-weight: 600;
+            padding: .15rem .6rem;
+            border-radius: 999px;
+            white-space: nowrap;
+            color: #e8c277;
+            background: rgba(232, 194, 119, .09);
+            border: 1px solid rgba(232, 194, 119, .28);
+        }
+        .notif-tag.bad {
+            color: #f0a0a0;
+            background: rgba(239, 68, 68, .09);
+            border-color: rgba(239, 68, 68, .32);
+        }
+        .notif-empty { padding: 1.6rem 1rem; text-align: center; color: #8a9ab3; font-size: .85rem; }
+        .notif-foot {
+            display: flex;
+            justify-content: space-around;
+            padding: .75rem;
+            background: rgba(255, 255, 255, .025);
+            border-top: 1px solid rgba(255, 255, 255, .06);
+        }
+        .notif-foot a { color: #b6c2d4; font-size: .8rem; font-weight: 600; text-decoration: none; transition: color .15s; }
+        .notif-foot a:hover { color: #fff; }
+
+        /* Perfil (ahora es un botón que abre el menú) */
         .topbar-profile {
             min-width: 160px;
             height: 52px;
@@ -174,8 +274,13 @@
             border-radius: 999px;
             cursor: pointer;
             transition: all .2s;
+            color: inherit;
+            font: inherit;
+            text-align: left;
         }
-        .topbar-profile:hover { background: rgba(255, 255, 255, .13); }
+        .topbar-profile:hover,
+        .topbar-profile.show { background: rgba(255, 255, 255, .13); }
+        .topbar-profile:focus-visible { outline: 2px solid #8fbf6a; outline-offset: 2px; }
 
         .profile-avatar {
             width: 36px;
@@ -208,6 +313,86 @@
         }
         .profile-role { font-size: .64rem; color: #94a3b8; margin-top: 4px; }
         .profile-arrow { font-size: .65rem; color: #94a3b8; }
+
+        /* Menú del perfil --------------------------------------- */
+        .profile-menu {
+            min-width: 230px;
+            padding: .4rem;
+            background: #0f1a2d;
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 16px;
+            box-shadow: 0 18px 44px rgba(0, 0, 0, .5);
+            margin-top: 10px !important;
+        }
+        .profile-item {
+            display: flex;
+            align-items: center;
+            gap: .65rem;
+            width: 100%;
+            padding: .6rem .8rem;
+            border: 0;
+            border-radius: 10px;
+            background: none;
+            color: #e2e8f0;
+            font-family: 'DM Sans', sans-serif;
+            font-size: .86rem;
+            font-weight: 500;
+            text-decoration: none;
+            text-align: left;
+            cursor: pointer;
+            transition: background .15s, color .15s;
+        }
+        .profile-item i { width: 16px; text-align: center; color: #94a3b8; transition: color .15s; }
+        .profile-item:hover { background: rgba(255, 255, 255, .07); color: #fff; }
+        .profile-item:hover i { color: #fff; }
+        .profile-item:focus-visible { outline: 2px solid #8fbf6a; outline-offset: -2px; }
+                /* Botón de cerrar sesión llamativo */
+                /* Cerrar sesión: contorno + ícono en trazo */
+        .profile-item.salir {
+            justify-content: center;
+            gap: .6rem;
+            padding: .65rem 1rem;
+            font-weight: 600;
+            font-size: .88rem;
+            color: #ff9b9b;
+            background: transparent;
+            border: 1px solid rgba(239, 68, 68, .45);
+            transition: background .2s, color .2s, border-color .2s;
+        }
+        .profile-item.salir:hover {
+            background: #ef4444;
+            border-color: #ef4444;
+            color: #fff;
+        }
+
+        .salir-ico {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            fill: none;
+            stroke: currentColor;      /* siempre toma el color del texto */
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            overflow: visible;
+        }
+        .salir-flecha { transition: transform .2s ease; }
+        .profile-item.salir:hover .salir-flecha { transform: translateX(3px); }
+
+        @media (prefers-reduced-motion: reduce) {
+            .salir-flecha { transition: none; }
+        }
+        .profile-item.salir i { color: #fff; }
+        .profile-item.salir:hover {
+            background: linear-gradient(135deg, #ef4444, var(--red));
+            color: #fff;
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(211, 20, 20, .5);
+        }
+        .profile-item.salir:hover i { color: #fff; }
+        .profile-sep { height: 1px; background: rgba(255, 255, 255, .07); margin: .35rem .2rem; }
+        .profile-menu form { margin: 0; }
 
 
         /* 4. ENCABEZADO DE PÁGINA -------------------------------- */
@@ -518,7 +703,30 @@
         .btn-guardar:hover { color: #fff; filter: brightness(.92); transform: translateY(-2px); }
 
 
-        /* 11. RESPONSIVE ----------------------------------------- */
+        /* 11. BARRA DE DESPLAZAMIENTO ---------------------------- */
+        /* Chrome, Edge, Safari */
+        ::-webkit-scrollbar { width: 12px; height: 12px; }
+        ::-webkit-scrollbar-track { background: var(--dark); }
+        ::-webkit-scrollbar-thumb {
+            background: #64748b;             /* gris azulado sólido: cambia este HEX si quieres otro color */
+            border-radius: 999px;
+            border: 3px solid var(--dark);   /* la hace ver más fina y flotante */
+            background-clip: padding-box;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+            background-clip: padding-box;
+        }
+        ::-webkit-scrollbar-button { display: none; }   /* quita las flechas */
+        ::-webkit-scrollbar-corner { background: var(--dark); }
+
+        /* Firefox (no soporta ::-webkit-scrollbar) */
+        @supports not selector(::-webkit-scrollbar) {
+            * { scrollbar-width: thin; scrollbar-color: #64748b var(--dark); }
+        }
+
+
+        /* 12. RESPONSIVE ----------------------------------------- */
         @media (max-width: 767px) {
             .topbar { padding: 0 12px; }
             .topbar-date { display: none; }
@@ -557,20 +765,76 @@
         <!-- Derecha -->
         <div class="topbar-right">
 
-            <button class="topbar-notification" type="button" title="Notificaciones">
-                <i class="fa-solid fa-bell"></i>
-                <span class="notification-dot"></span>
-            </button>
+            <!-- Campana de notificaciones (documentos por vencer) -->
+            <div class="dropdown">
+                <button class="topbar-notification" type="button" title="Notificaciones"
+                        data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    <i class="fa-solid fa-bell"></i>
+                    {% if alertas_n %}
+                    <span class="notification-count">{% if alertas_n > 9 %}9+{% else %}{{ alertas_n }}{% endif %}</span>
+                    {% endif %}
+                </button>
 
-            <div class="topbar-profile">
-                <div class="profile-avatar">A</div>
+                <div class="dropdown-menu dropdown-menu-end notif-menu">
+                    <div class="notif-head">
+                        <span>Notificaciones</span>
+                        {% if alertas_n %}
+                        <small>{{ alertas_n }} documento{{ alertas_n|pluralize }}{% if alertas_vencidas_n %} · {{ alertas_vencidas_n }} vencido{{ alertas_vencidas_n|pluralize }}{% endif %}</small>
+                        {% endif %}
+                    </div>
 
-                <div class="profile-info">
-                    <span class="profile-name">ADMIN</span>
-                    <span class="profile-role">Administrador</span>
+                    <div class="notif-list">
+                        {% for a in alertas_docs|slice:":8" %}
+                        <{% if a.url %}a href="{{ a.url }}"{% else %}div{% endif %} class="notif-item {% if a.vencido %}vencido{% endif %}">
+                            <div class="notif-row">
+                                <span class="notif-who">{{ a.quien }}</span>
+                                <span class="notif-tag {% if a.vencido %}bad{% endif %}">
+                                    {% if a.vencido %}Vencido hace {{ a.dias }} d{% else %}Vence en {{ a.dias }} d{% endif %}
+                                </span>
+                            </div>
+                            <div class="notif-doc">{{ a.doc }} · {{ a.fecha|date:"d/m/Y" }}</div>
+                        </{% if a.url %}a{% else %}div{% endif %}>
+                        {% empty %}
+                        <div class="notif-empty">Todo vigente por los próximos 30 días.</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="notif-foot">
+                        <a href="{% url 'listar_vehiculos' %}">Ver vehículos</a>
+                        <a href="{% url 'listar_conductores' %}">Ver conductores</a>
+                    </div>
                 </div>
+            </div>
 
-                <i class="fa-solid fa-chevron-down profile-arrow"></i>
+            <!-- Perfil con menú desplegable -->
+            <div class="dropdown">
+                <button class="topbar-profile" type="button" title="Mi cuenta"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="profile-avatar">{{ request.user.username|slice:":1"|upper|default:"A" }}</div>
+
+                    <div class="profile-info">
+                        <span class="profile-name">{{ request.user.username|upper|default:"ADMIN" }}</span>
+                        <span class="profile-role">{% if request.user.is_superuser or request.user.is_staff %}Administrador{% else %}Usuario{% endif %}</span>
+                    </div>
+
+                    <i class="fa-solid fa-chevron-down profile-arrow"></i>
+                </button>
+
+                <div class="dropdown-menu dropdown-menu-end profile-menu">
+                    <form method="post" action="{% url 'logout' %}">
+    {% csrf_token %}
+    <button type="submit" class="profile-item salir">
+        <svg class="salir-ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path class="salir-puerta" d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/>
+            <g class="salir-flecha">
+                <line x1="10" y1="12" x2="20" y2="12"/>
+                <polyline points="16 8 20 12 16 16"/>
+            </g>
+        </svg>
+        Cerrar sesión
+    </button>
+</form>
+                </div>
             </div>
 
         </div>
@@ -597,12 +861,15 @@
     </div>
 
 
-    <!-- Bootstrap -->
+        <!-- Bootstrap -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- SweetAlert2 y estilo de alertas -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
     {% include "_alertas.html" %}
+
+    <!-- Avisos de descargas e importaciones en segundo plano -->
+    {% include "gps/descargas_fondo.html" %}
 
     {% block extra_js %}{% endblock %}
 

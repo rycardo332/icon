@@ -1,106 +1,211 @@
 {% extends "base.html" %}
 {% load static %}
 
+{% block title %}{% if conductor %}Editar conductor{% else %}Nuevo conductor{% endif %}{% endblock %}
+
 {% block content %}
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+
 <style>
-  .cf-wrap{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:1.25rem}
-  .cf-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
-  .cf-title-box{display:flex;align-items:center;gap:.9rem}
-  .cf-title-box img{width:44px;height:44px;object-fit:contain;border-radius:10px}
-  .cf-title{font-family:'Space Mono',monospace;font-weight:700;font-size:1.7rem;color:#fff;margin:0;text-shadow:0 2px 8px rgba(0,0,0,.45)}
-  .cf-sub{color:#e2e8f0;font-size:.9rem;margin:0;text-shadow:0 1px 4px rgba(0,0,0,.4)}
-  .cf-actions{display:flex;gap:.6rem;flex-wrap:wrap}
+    /* FORMULARIO DE CONDUCTOR - mismo estilo del Panel de control (prefijo ic-) · sin animaciones */
+    .ic-dash {
+        --volt: #5bb5c8; --lime: #8fbf6a; --amber: #d9a840; --red2: #d9777a;
+        --ink: #dbe4f0; --mute: #8696ad; --line: rgba(91, 181, 200, .28);
+        --glass: rgba(6, 14, 28, .82);
+        --ic-fancy: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        --ic-mono: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        max-width: 1000px; margin: 0 auto;
+        color: var(--ink); font-family: var(--ic-fancy); font-variant-numeric: tabular-nums;
+        display: flex; flex-direction: column; gap: 1.5rem;
+    }
 
-  .cf-btn{display:inline-flex;align-items:center;gap:.4rem;border-radius:999px;padding:.55rem 1.3rem;font-size:.85rem;font-weight:600;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:transform .15s,filter .15s,background .15s,color .15s}
-  .cf-btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
-  .cf-btn-sec{background:rgba(255,255,255,.88);color:#0f172a;border-color:rgba(255,255,255,.7)}
-  .cf-btn-sec:hover{background:var(--dark-2);color:#fff}
-  .cf-btn-dark{background:var(--dark);color:#fff}
-  .cf-btn-dark:hover{color:#fff}
+    /* PANEL -------------------------------------------------- */
+    .ic-panel {
+        display: flex; flex-direction: column;
+        background: var(--glass);
+        -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%);
+        border: 1px solid rgba(91, 181, 200, .25); border-radius: 20px; overflow: hidden;
+        box-shadow: 0 14px 36px rgba(0, 0, 0, .4);
+    }
 
-  .cf-panel{background:rgba(255,255,255,.84);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(255,255,255,.7);border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.18)}
-  .cf-panel-head{display:flex;align-items:center;gap:.75rem;padding:.9rem 1.25rem;background:linear-gradient(90deg,var(--dark),var(--dark-2))}
-  .cf-step{font-family:'Space Mono',monospace;font-weight:700;color:#a3e635}
-  .cf-panel-title{font-family:'Space Mono',monospace;font-weight:700;font-size:.95rem;color:#fff;margin:0}
-  .cf-body{padding:1.25rem}
+    /* BARRA SUPERIOR ----------------------------------------- */
+    .ic-top {
+        display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;
+        padding: 1.1rem 1.5rem;
+        background: linear-gradient(100deg, rgba(91, 181, 200, .1), rgba(143, 191, 106, .03) 60%, transparent);
+    }
+    .ic-top-icon { width: 44px; height: 44px; flex: none; object-fit: contain; border-radius: 10px; }
+    .ic-title { font-family: var(--ic-fancy); font-weight: 700; font-size: 1.4rem; margin: 0; color: #fff; }
+    .ic-subtitle { margin: 0; color: var(--mute); font-size: .85rem; }
+    .ic-actions { margin-left: auto; display: flex; gap: .5rem; flex-wrap: wrap; }
 
-  .cf-body label{display:block;font-size:.82rem;font-weight:600;color:#334155;margin-bottom:.3rem}
-  .cf-body input:not([type=checkbox]),.cf-body select,.cf-body textarea{width:100%;border-radius:10px;border:1px solid rgba(15,23,42,.15);background:rgba(255,255,255,.9);padding:.5rem .75rem;font-size:.88rem;color:#0f172a}
-  .cf-body input:not([type=checkbox]):focus,.cf-body select:focus,.cf-body textarea:focus{outline:none;border-color:var(--dark-2);box-shadow:none}
-  .cf-err{color:#b91c1c;font-size:.78rem;margin-top:.2rem}
-  .cf-err ul{list-style:none;margin:0;padding:0}
-  .cf-alert{background:#fef2f2;color:#b91c1c;border-radius:14px;padding:.7rem 1rem;font-size:.88rem;margin-bottom:1rem}
-  .cf-alert ul{list-style:none;margin:0;padding:0}
+    /* BOTONES ------------------------------------------------ */
+    .ic-btn {
+        display: inline-flex; align-items: center; gap: .4rem; border-radius: 999px;
+        padding: .45rem 1.05rem; font-size: .83rem; font-weight: 600; text-decoration: none;
+        color: var(--ink); border: 1px solid var(--line); background: rgba(2, 8, 20, .5);
+        cursor: pointer; transition: all .15s;
+    }
+    .ic-btn:hover { border-color: var(--volt); color: #fff; box-shadow: 0 0 0 1px var(--volt); }
+    .ic-btn:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+    .ic-btn-main { background: var(--volt); border-color: var(--volt); color: #04141b; }
+    .ic-btn-main:hover { background: #7cc6d6; border-color: #7cc6d6; color: #04141b; box-shadow: none; }
+    .ic-btn-lg { padding: .6rem 1.6rem; font-size: .88rem; }
 
-  .cf-foot{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid rgba(15,23,42,.09)}
+    /* ENCABEZADO DE SECCIÓN: 01 Título --- ------------------- */
+    .ic-sec-head {
+        position: relative; display: flex; align-items: center; gap: .6rem;
+        padding: .95rem 1.5rem .7rem; border-bottom: 1px solid var(--line);
+        background: linear-gradient(100deg, rgba(91, 181, 200, .1), rgba(143, 191, 106, .03) 60%, transparent);
+    }
+    .ic-sec-head::after {
+        content: ""; position: absolute; left: 0; bottom: -1px; width: 64px; height: 2px; background: var(--lime);
+    }
+    .ic-step { font-family: var(--ic-mono); font-size: .8rem; font-weight: 700; color: var(--lime); }
+    .ic-panel-title { font-family: var(--ic-mono); font-weight: 700; font-size: .95rem; color: #fff; margin: 0; }
 
-  @media (max-width:767px){
-    .cf-title{font-size:1.3rem}
-    .cf-actions{width:100%}
-    .cf-foot .cf-btn{width:100%;justify-content:center}
-  }
+    /* FORMULARIO --------------------------------------------- */
+    .ic-body { padding: 1.4rem 1.5rem 1.6rem; }
+    .ic-body label { display: block; font-size: .8rem; font-weight: 600; color: var(--mute); margin-bottom: .3rem; }
+    .ic-body input:not([type=checkbox]):not([type=radio]),
+    .ic-body select,
+    .ic-body textarea {
+        width: 100%; border-radius: 10px; border: 1px solid var(--line);
+        background: rgba(2, 8, 20, .6); padding: .5rem .8rem; font-size: .88rem; color: var(--ink);
+        color-scheme: dark;
+    }
+    .ic-body input::placeholder, .ic-body textarea::placeholder { color: rgba(134, 150, 173, .7); }
+    .ic-body input:not([type=checkbox]):not([type=radio]):focus,
+    .ic-body select:focus,
+    .ic-body textarea:focus {
+        outline: none; border-color: var(--volt); box-shadow: 0 0 0 1px var(--volt);
+        background: rgba(2, 8, 20, .6); color: var(--ink);
+    }
+    .ic-body select option { background: #08121f; color: var(--ink); }
+    .ic-err { color: var(--red2); font-size: .78rem; margin-top: .25rem; }
+    .ic-err ul { list-style: none; margin: 0; padding: 0; }
+    .ic-alert {
+        background: rgba(217, 119, 122, .1); color: #f3c4c6; border: 1px solid rgba(217, 119, 122, .4);
+        border-radius: 14px; padding: .7rem 1rem; font-size: .88rem; margin-bottom: 1rem;
+    }
+    .ic-alert ul { list-style: none; margin: 0; padding: 0; }
+
+    .ic-foot {
+        display: flex; gap: .6rem; flex-wrap: wrap; margin-top: 1.5rem; padding-top: 1.25rem;
+        border-top: 1px solid var(--line);
+    }
+
+    /* CALENDARIO (Flatpickr) con los colores del panel.
+       Colores fijos: el calendario se agrega al body, fuera de .ic-dash */
+    .flatpickr-calendar {
+        font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        background: #0b1626; border: 1px solid rgba(91, 181, 200, .3); border-radius: 14px;
+        box-shadow: 0 14px 36px rgba(0, 0, 0, .5);
+    }
+    .flatpickr-calendar.arrowTop:before { border-bottom-color: rgba(91, 181, 200, .3); }
+    .flatpickr-calendar.arrowTop:after { border-bottom-color: #08121f; }
+    .flatpickr-calendar.arrowBottom:before { border-top-color: rgba(91, 181, 200, .3); }
+    .flatpickr-calendar.arrowBottom:after { border-top-color: #0b1626; }
+    .flatpickr-months .flatpickr-month { background: #08121f; color: #fff; fill: #fff; border-radius: 14px 14px 0 0; height: 44px; }
+    .flatpickr-current-month { font-size: 1rem; padding-top: 8px; }
+    .flatpickr-current-month input.cur-year,
+    .flatpickr-current-month span.cur-month { color: #fff; font-weight: 700; }
+    .flatpickr-current-month span.cur-month:hover { background: transparent; }
+    .numInputWrapper:hover { background: transparent; }
+    .numInputWrapper span.arrowUp:after { border-bottom-color: rgba(219, 228, 240, .7); }
+    .numInputWrapper span.arrowDown:after { border-top-color: rgba(219, 228, 240, .7); }
+    .flatpickr-months .flatpickr-prev-month,
+    .flatpickr-months .flatpickr-next-month { fill: #dbe4f0; color: #dbe4f0; }
+    .flatpickr-months .flatpickr-prev-month:hover svg,
+    .flatpickr-months .flatpickr-next-month:hover svg { fill: #5bb5c8; }
+    .flatpickr-weekdays, span.flatpickr-weekday { background: transparent; color: #8696ad; font-weight: 600; }
+    .flatpickr-day { border-radius: 10px; font-weight: 500; color: #dbe4f0; }
+    .flatpickr-day.prevMonthDay, .flatpickr-day.nextMonthDay { color: rgba(134, 150, 173, .5); }
+    .flatpickr-day:hover, .flatpickr-day:focus {
+        background: rgba(91, 181, 200, .18); border-color: rgba(91, 181, 200, .18); color: #fff;
+    }
+    .flatpickr-day.today { border-color: #5bb5c8; }
+    .flatpickr-day.today:hover { background: #5bb5c8; border-color: #5bb5c8; color: #04141b; }
+    .flatpickr-day.selected, .flatpickr-day.selected:hover {
+        background: #5bb5c8; border-color: #5bb5c8; color: #04141b;
+    }
+    .flatpickr-day.flatpickr-disabled, .flatpickr-day.flatpickr-disabled:hover {
+        color: rgba(134, 150, 173, .3); background: transparent; border-color: transparent;
+    }
+
+    @media (max-width: 767px) {
+        .ic-title { font-size: 1.2rem; }
+        .ic-actions { width: 100%; margin-left: 0; }
+        .ic-foot .ic-btn { width: 100%; justify-content: center; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .ic-btn { transition: none; }
+    }
 </style>
 
-<div class="cf-wrap">
+<div class="ic-dash">
 
-  <div class="cf-head">
-    <div class="cf-title-box">
-      <img src="{% static 'img/iconos/conductores.jpg' %}" alt="">
-      <div>
-        <h1 class="cf-title">{% if conductor %}Editar conductor {{ conductor.nombre }}{% else %}Nuevo conductor{% endif %}</h1>
-        <p class="cf-sub">{% if conductor %}Actualiza los datos del conductor{% else %}Registra un nuevo conductor en el sistema{% endif %}</p>
-      </div>
-    </div>
-    <div class="cf-actions">
-      <a href="{% url 'listar_conductores' %}" class="cf-btn cf-btn-sec">Volver a Conductores</a>
-      <a href="{% url 'panel' %}" class="cf-btn cf-btn-sec">Panel</a>
-    </div>
-  </div>
-
-  <form method="post" class="cf-panel">
-    {% csrf_token %}
-
-    <div class="cf-panel-head">
-      <span class="cf-step">01</span>
-      <h2 class="cf-panel-title">Datos del conductor</h2>
-    </div>
-
-    <div class="cf-body">
-      {% if form.non_field_errors %}
-        <div class="cf-alert">{{ form.non_field_errors }}</div>
-      {% endif %}
-
-      <div class="row g-3">
-        <div class="col-md-8">
-          <label for="{{ form.nombre.id_for_label }}">Nombre completo</label>
-          {{ form.nombre }}
-          <div class="cf-err">{{ form.nombre.errors }}</div>
+    <!-- Encabezado -->
+    <section class="ic-panel">
+        <div class="ic-top">
+            <img class="ic-top-icon" src="{% static 'img/iconos/conductores.jpg' %}" alt="">
+            <div>
+                <h1 class="ic-title">{% if conductor %}Editar conductor {{ conductor.nombre }}{% else %}Nuevo conductor{% endif %}</h1>
+                <p class="ic-subtitle">{% if conductor %}Actualiza los datos del conductor{% else %}Registra un nuevo conductor en el sistema{% endif %}</p>
+            </div>
+            <div class="ic-actions">
+                <a href="{% url 'listar_conductores' %}" class="ic-btn">Volver a Conductores</a>
+                <a href="{% url 'panel' %}" class="ic-btn">Panel</a>
+            </div>
         </div>
-        <div class="col-md-4">
-          <label for="{{ form.cargo.id_for_label }}">Cargo</label>
-          {{ form.cargo }}
-          <div class="cf-err">{{ form.cargo.errors }}</div>
+    </section>
+
+    <!-- Formulario -->
+    <form method="post" class="ic-panel">
+        {% csrf_token %}
+
+        <div class="ic-sec-head">
+            <span class="ic-step">01</span>
+            <h2 class="ic-panel-title">Datos del conductor</h2>
         </div>
 
-        <div class="col-md-6">
-          <label for="{{ form.licencia_conduccion_vigente_hasta.id_for_label }}">Licencia de conducción vigente hasta</label>
-          {{ form.licencia_conduccion_vigente_hasta }}
-          <div class="cf-err">{{ form.licencia_conduccion_vigente_hasta.errors }}</div>
-        </div>
-      </div>
+        <div class="ic-body">
+            {% if form.non_field_errors %}
+                <div class="ic-alert">{{ form.non_field_errors }}</div>
+            {% endif %}
 
-      <div class="cf-foot">
-        <button type="submit" class="cf-btn cf-btn-dark">Guardar conductor</button>
-        <a href="{% url 'listar_conductores' %}" class="cf-btn cf-btn-sec">Cancelar</a>
-      </div>
-    </div>
-  </form>
+            <div class="row g-3">
+                <div class="col-lg-5 col-md-12">
+                    <label for="{{ form.nombre.id_for_label }}">Nombre completo</label>
+                    {{ form.nombre }}
+                    <div class="ic-err">{{ form.nombre.errors }}</div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <label for="{{ form.cargo.id_for_label }}">Cargo</label>
+                    {{ form.cargo }}
+                    <div class="ic-err">{{ form.cargo.errors }}</div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <label for="{{ form.licencia_conduccion_vigente_hasta.id_for_label }}">Licencia vigente hasta</label>
+                    {{ form.licencia_conduccion_vigente_hasta }}
+                    <div class="ic-err">{{ form.licencia_conduccion_vigente_hasta.errors }}</div>
+                </div>
+            </div>
+
+            <div class="ic-foot">
+                <button type="submit" class="ic-btn ic-btn-main ic-btn-lg">Guardar conductor</button>
+                <a href="{% url 'listar_conductores' %}" class="ic-btn ic-btn-lg">Cancelar</a>
+            </div>
+        </div>
+    </form>
 
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
 <script>
   // Bloquea el Enter en las casillas de una línea para que no guarde el formulario.
   document.addEventListener("keydown", function (e) {
@@ -108,5 +213,36 @@
       e.preventDefault();
     }
   }, true);
+
+  // Calendario de la licencia: solo permite fechas con sentido.
+  // Hasta 2 años hacia atrás (licencia ya vencida) y 10 hacia adelante.
+  (function () {
+    var campo = document.getElementById("{{ form.licencia_conduccion_vigente_hasta.id_for_label }}");
+    if (!campo || typeof flatpickr === "undefined") return;
+
+    var hoy = new Date();
+    var minimo = new Date(hoy.getFullYear() - 2, hoy.getMonth(), hoy.getDate());
+    var maximo = new Date(hoy.getFullYear() + 10, hoy.getMonth(), hoy.getDate());
+
+    // Si al editar ya hay una fecha guardada más vieja que el mínimo, se respeta
+    // para no borrarla sin querer.
+    if (campo.value) {
+      var p = campo.value.split("-");
+      var guardada = new Date(+p[0], +p[1] - 1, +p[2]);
+      if (!isNaN(guardada) && guardada < minimo) minimo = guardada;
+    }
+
+    flatpickr(campo, {
+      locale: "es",
+      monthSelectorType: "static",  // mes como texto, se cambia con las flechas
+      dateFormat: "Y-m-d",   // lo que se envía al servidor
+      altInput: true,
+      altFormat: "d/m/Y",    // lo que ve el usuario
+      allowInput: true,
+      disableMobile: true,
+      minDate: minimo,
+      maxDate: maximo
+    });
+  })();
 </script>
 {% endblock %}

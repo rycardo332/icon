@@ -119,9 +119,9 @@ _CACHE_TTL_S = 3600
 _CACHE_TTL_VACIO_S = 60
 
 
-_TIMEOUT_HTTP = (5, 70)
-_PRESUPUESTO_S = 150
-_ENFRIAMIENTO_S = 180
+_TIMEOUT_HTTP = (5, 45)
+_PRESUPUESTO_S = 50
+_ENFRIAMIENTO_S = 30
 
 
 _ULTIMO_FALLO = {}
@@ -133,7 +133,7 @@ def _familia(etiqueta):
     return etiqueta.split("_tramo_")[0]
 
 
-def _consultar_overpass(query, reintentos=1, etiqueta="general"):
+def _consultar_overpass(query, reintentos=1, etiqueta="general", ignorar_enfriamiento=False):
     """POST a Overpass probando cada servidor `reintentos` veces, con tope de tiempo.
 
     `etiqueta` identifica el tipo de consulta (lugares, aguas, lagos, ubicacion_agua,
@@ -159,7 +159,7 @@ def _consultar_overpass(query, reintentos=1, etiqueta="general"):
 
     familia = _familia(etiqueta)
     momento_fallo, detalle_fallo = _ULTIMO_FALLO.get(familia, (0.0, ""))
-    if time.time() - momento_fallo < _ENFRIAMIENTO_S:
+    if not ignorar_enfriamiento and time.time() - momento_fallo < _ENFRIAMIENTO_S:
         raise ErrorOverpass(f"Overpass no responde (falló hace poco): {detalle_fallo}")
 
     headers = {"User-Agent": "ICON-LTDA-reportes/1.0 (uso interno)", "Accept": "application/json"}
@@ -327,24 +327,39 @@ def _buscar_lagos(ruta, radio_agua_m):
             lagos_por_nombre[nombre] = candidato
     return list(lagos_por_nombre.values())
 
-
 def _buscar_aguas(ruta, radio_agua_m):
     tramos = _dividir_en_tramos(ruta, largo_tramo_m=10000)
     margen = max(0.02, (radio_agua_m / 100000) * 2)
 
     aguas_por_nombre = {}
     fallos_tramo = []
+    seguidos = 0
+    inicio_aguas = time.time()
     for i, tramo in enumerate(tramos):
+        if time.time() - inicio_aguas > 90:
+            fallos_tramo.append(f"tramo {i}: tiempo máximo de búsqueda de aguas (90 s) agotado")
+            break
         query = (
             "[out:json][timeout:60];"
             f'way["waterway"~"^(river|stream|canal)$"]["name"]({_bbox(tramo, margen)});'
             "out geom;"
         )
-        try:
-            data = _consultar_overpass(query, etiqueta=f"aguas_tramo_{i}")
-        except ErrorOverpass as e:
-            fallos_tramo.append(f"tramo {i}: {e}")
+        data, ultimo_error = None, None
+        for intento in range(2):
+            try:
+                data = _consultar_overpass(query, etiqueta=f"aguas_tramo_{i}",
+                                           ignorar_enfriamiento=intento > 0)
+                break
+            except ErrorOverpass as e:
+                ultimo_error = e
+                time.sleep(3)
+        if data is None:
+            fallos_tramo.append(f"tramo {i}: {ultimo_error}")
+            seguidos += 1
+            if seguidos >= 2:
+                break
             continue
+        seguidos = 0
 
         for el in data.get("elements", []):
             tags = el.get("tags", {})
@@ -356,7 +371,7 @@ def _buscar_aguas(ruta, radio_agua_m):
                 continue
             geom = _adelgazar(geom, paso_m=60)
             d, punto = min(
-                ((distancia_metros(g[0], g[1], r[0], r[1]), g) for g in geom for r in ruta),
+                ((distancia_metros(g[0], g[1], r[0], r[1]), g) for g in geom for r in tramo),
                 key=lambda t: t[0],
             )
             if d > radio_agua_m:
@@ -387,7 +402,6 @@ def _buscar_aguas(ruta, radio_agua_m):
     aguas = sorted(aguas_por_nombre.values(), key=lambda p: p["distancia_a_ruta_m"])
     _poner_ubicaciones(aguas)
     return aguas
-
 
 def _poner_ubicaciones(aguas):
     """Rellena a['ubicacion'] con el puente o la vía donde la ruta cruza/bordea el agua.

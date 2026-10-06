@@ -1,5 +1,10 @@
+from datetime import datetime, timedelta
+
 from django import forms
-from .models import Conductor, Desplazamiento, Ruta, Vehiculo
+from django.utils import timezone
+
+from .descansos import descansos_desde_gps
+from .models import Conductor, Desplazamiento, Ruta, Vehiculo, Viaje
 
 
 CLIMA = [
@@ -20,8 +25,52 @@ ALCOHOLEMIA = [
 ]
 
 
+def _hora_local(dt):
+    """datetime (con o sin zona horaria) -> hora local sin segundos."""
+    if dt is None:
+        return None
+    if timezone.is_aware(dt):
+        dt = timezone.localtime(dt)
+    return dt.time().replace(second=0, microsecond=0)
+
+
+def horas_desde_gps(desplazamiento):
+    """Hora de salida y de llegada real según el reporte GPS de FILPAC.
+
+    Se toman TODOS los viajes del vehículo en la fecha del desplazamiento (el GPS parte el
+    recorrido en varios viajes cada vez que el vehículo se detiene):
+      - salida  = inicio del primer viaje del día
+      - llegada = fin del último viaje del día
+    Devuelve {"salida", "llegada", "origen"} o None si no hay datos GPS ese día.
+    """
+    if desplazamiento is None or not desplazamiento.pk:
+        return None
+
+    viajes = list(
+        Viaje.objects.filter(
+            vehiculo_id=desplazamiento.vehiculo_id,
+            fecha_hora_inicio__date=desplazamiento.fecha_desplazamiento,
+        ).order_by("fecha_hora_inicio")
+    )
+    if not viajes:
+        return None
+
+    primero = viajes[0]
+    ultimo = max(viajes, key=lambda v: v.fecha_hora_fin)
+    return {
+        "salida": _hora_local(primero.fecha_hora_inicio),
+        "llegada": _hora_local(ultimo.fecha_hora_fin),
+        "origen": f"del reporte de FILPAC (primer y último de {len(viajes)} viaje(s) del vehículo ese día)",
+    }
+
+
 class PlanificacionForm(forms.ModelForm):
-    """Datos del Control de Planificación (SIG-FT-77) que no salen del GPS."""
+    """Datos del Control de Planificación (SIG-FT-77).
+
+    La hora de salida y la de llegada real salen del reporte GPS de FILPAC (si hay viajes
+    importados de ese día); la llegada estimada se calcula con el tiempo estimado de la ruta.
+    Si no hay datos GPS, esos campos se pueden escribir a mano.
+    """
 
     class Meta:
         model = Desplazamiento
@@ -90,6 +139,50 @@ class PlanificacionForm(forms.ModelForm):
             actual = getattr(self.instance, nombre, "")
             if actual and actual not in dict(opciones):
                 self.fields[nombre].widget.choices = opciones + [(actual, actual)]
+
+        # --- Horas desde el GPS de FILPAC ---------------------------------
+        # gps_ok / gps_nota los usa la plantilla para mostrar el aviso.
+        self.gps_ok = False
+        self.gps_nota = ""
+        gps = horas_desde_gps(self.instance)
+        if gps and gps["salida"]:
+            self.gps_ok = True
+            self.initial["hora_salida"] = gps["salida"]
+            self.fields["hora_salida"].disabled = True
+            self.fields["hora_salida"].help_text = "Tomada del reporte de FILPAC."
+
+            if gps["llegada"]:
+                self.initial["hora_llegada_real"] = gps["llegada"]
+                self.fields["hora_llegada_real"].disabled = True
+                self.fields["hora_llegada_real"].help_text = "Tomada del reporte de FILPAC."
+
+            tiempo = self.instance.ruta.tiempo_estimado if self.instance.ruta_id else None
+            if tiempo:
+                estimada = (datetime.combine(self.instance.fecha_desplazamiento, gps["salida"]) + tiempo)
+                self.initial["hora_llegada_estimada"] = estimada.time().replace(second=0, microsecond=0)
+                self.fields["hora_llegada_estimada"].disabled = True
+                self.fields["hora_llegada_estimada"].help_text = "Salida + tiempo estimado de la ruta."
+
+            self.gps_nota = (f"La hora de salida y la de llegada real se toman {gps['origen']}. "
+                             "La llegada estimada se calcula con el tiempo estimado de la ruta.")
+        elif self.instance and self.instance.pk:
+            self.gps_nota = ("No hay viajes GPS de este vehículo en esta fecha. Importa el reporte de "
+                             "FILPAC o escribe las horas a mano.")
+
+        # --- Descansos y tiempo de conducción desde el GPS de FILPAC ---------
+        # Cada pausa entre un viaje y el siguiente se toma como un descanso (ver descansos.py).
+        if self.instance and self.instance.pk:
+            viajes_dia = list(Viaje.objects.filter(
+                vehiculo_id=self.instance.vehiculo_id,
+                fecha_hora_inicio__date=self.instance.fecha_desplazamiento,
+            ))
+            auto = descansos_desde_gps(viajes_dia)
+            if auto:
+                self.initial["tiempo_conduccion_sin_descanso"] = auto["sin_descanso"]
+                self.initial["tiempos_descanso_programados"] = "\n".join(auto["descansos"])
+                for nombre in ("tiempo_conduccion_sin_descanso", "tiempos_descanso_programados"):
+                    self.fields[nombre].disabled = True
+                    self.fields[nombre].help_text = "Calculado con el reporte de FILPAC."
 
         for campo in self.fields.values():
             es_select = isinstance(campo.widget, forms.Select)
@@ -162,3 +255,23 @@ class ConductorForm(forms.ModelForm):
                 format="%Y-%m-%d",
             ),
         }
+
+    def _validar_fecha_documento(self, campo):
+        fecha = self.cleaned_data.get(campo)
+        if fecha is None:
+            return fecha
+        hoy = timezone.localdate()
+        if fecha < hoy - timedelta(days=365 * 2):
+            raise forms.ValidationError("La fecha es demasiado antigua. Revisa el año.")
+        if fecha > hoy + timedelta(days=365 * 3):
+            raise forms.ValidationError("La fecha está demasiado lejos en el futuro. Revisa el año.")
+        return fecha
+
+    def clean_soat_vigente_hasta(self):
+        return self._validar_fecha_documento("soat_vigente_hasta")
+
+    def clean_revision_tecnomecanica_hasta(self):
+        return self._validar_fecha_documento("revision_tecnomecanica_hasta")
+
+    def clean_seguro_carga_hasta(self):
+        return self._validar_fecha_documento("seguro_carga_hasta")

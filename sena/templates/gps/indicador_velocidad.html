@@ -1,0 +1,484 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% load static %}
+
+{% block title %}Indicador de velocidad{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* INDICADOR DE VELOCIDAD - mismo estilo del Panel de control (prefijo ic-) · sin animaciones */
+    .ic-dash {
+        --volt: #5bb5c8; --lime: #8fbf6a; --amber: #d9a840; --red2: #d9777a;
+        --ink: #dbe4f0; --mute: #8696ad; --line: rgba(91, 181, 200, .28);
+        --glass: rgba(6, 14, 28, .82);
+        --ic-fancy: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        --ic-mono: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        max-width: 1200px; margin: 0 auto;
+        color: var(--ink); font-family: var(--ic-fancy); font-variant-numeric: tabular-nums;
+        display: flex; flex-direction: column; gap: 1.5rem;
+    }
+
+    /* PANEL -------------------------------------------------- */
+    .ic-panel {
+        display: flex; flex-direction: column;
+        background: var(--glass);
+        -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%);
+        border: 1px solid rgba(91, 181, 200, .25); border-radius: 20px; overflow: hidden;
+        box-shadow: 0 14px 36px rgba(0, 0, 0, .4);
+    }
+
+    /* BARRA SUPERIOR ----------------------------------------- */
+    .ic-top {
+        display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;
+        padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--line);
+        background: linear-gradient(100deg, rgba(91, 181, 200, .1), rgba(143, 191, 106, .03) 60%, transparent);
+    }
+    .ic-top-icon { width: 44px; height: 44px; flex: none; object-fit: contain; border-radius: 10px; }
+    .ic-title { font-family: var(--ic-fancy); font-weight: 700; font-size: 1.4rem; margin: 0; color: #fff; }
+    .ic-subtitle { margin: 0; color: var(--mute); font-size: .85rem; }
+    .ic-actions { margin-left: auto; display: flex; gap: .5rem; flex-wrap: wrap; }
+
+    /* BOTONES ------------------------------------------------ */
+    .ic-btn {
+        display: inline-flex; align-items: center; gap: .5rem; border-radius: 999px;
+        padding: .45rem 1.05rem; font-size: .83rem; font-weight: 600; text-decoration: none;
+        color: var(--ink); border: 1px solid var(--line); background: rgba(2, 8, 20, .5);
+        cursor: pointer; transition: all .15s;
+    }
+    .ic-btn:hover { border-color: var(--volt); color: #fff; box-shadow: 0 0 0 1px var(--volt); }
+    .ic-btn:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+    .ic-btn-main { background: var(--volt); border-color: var(--volt); color: #04141b; }
+    .ic-btn-main:hover { background: #7cc6d6; border-color: #7cc6d6; color: #04141b; box-shadow: none; }
+
+    /* Botón de Excel: verde */
+    .ic-btn-excel { background: #1f8f55; border-color: #1f8f55; color: #fff; padding-left: .7rem; }
+    .ic-btn-excel:hover { background: #26a566; border-color: #26a566; color: #fff; box-shadow: none; }
+    .ic-btn-excel img { width: 22px; height: 22px; object-fit: contain; border-radius: 4px; }
+
+    /* FILTROS (franja dentro del panel) ---------------------- */
+    .ic-filtros {
+        display: flex; gap: 1rem; flex-wrap: wrap; padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--line); background: rgba(91, 181, 200, .04);
+    }
+    .ic-filtros label {
+        display: block; font-size: .75rem; font-weight: 600; color: var(--mute);
+        margin-bottom: .3rem; letter-spacing: .02em;
+    }
+    .ic-select {
+        min-width: 220px; padding: .5rem .8rem; border-radius: 10px; font-size: .88rem;
+        color: var(--ink); background: rgba(2, 8, 20, .6); border: 1px solid var(--line);
+        color-scheme: dark; cursor: pointer;
+    }
+    .ic-select:focus { outline: none; border-color: var(--volt); box-shadow: 0 0 0 1px var(--volt); }
+    .ic-select:disabled { opacity: .5; cursor: not-allowed; }
+    .ic-select option { background: #08121f; color: var(--ink); }
+
+    /* RESUMEN (franja dentro del panel) ---------------------- */
+    .ic-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: 1px solid var(--line); }
+    .ic-stat { padding: 1.1rem 1.5rem; border-right: 1px solid rgba(91, 181, 200, .14); }
+    .ic-stat:last-child { border-right: 0; }
+    .ic-stat-num { font-size: 2rem; font-weight: 700; line-height: 1.1; color: #fff; letter-spacing: -.01em; }
+    .ic-stat-label { font-size: .82rem; color: var(--mute); margin-top: .35rem; }
+    .ic-stat:nth-child(1) .ic-stat-num { color: var(--volt); }
+    .ic-stat:nth-child(2) .ic-stat-num { color: var(--lime); }
+    .ic-stat:nth-child(3) .ic-stat-num { color: var(--red2); }
+
+    /* ENCABEZADO DE SECCIÓN: 01 Título ........ [contador] --- */
+    .ic-sec-head {
+        position: relative; display: flex; align-items: center; gap: .6rem;
+        padding: .95rem 1.5rem .7rem; border-bottom: 1px solid var(--line);
+        background: linear-gradient(100deg, rgba(91, 181, 200, .1), rgba(143, 191, 106, .03) 60%, transparent);
+    }
+    .ic-sec-head::after {
+        content: ""; position: absolute; left: 0; bottom: -1px; width: 64px; height: 2px; background: var(--lime);
+    }
+    .ic-step { font-family: var(--ic-mono); font-size: .8rem; font-weight: 700; color: var(--lime); }
+    .ic-panel-title { font-family: var(--ic-mono); font-weight: 700; font-size: .95rem; color: #fff; margin: 0; }
+    .ic-head-right { margin-left: auto; display: flex; align-items: center; gap: .5rem; }
+
+    /* TABLA -------------------------------------------------- */
+    .ic-scroll { max-height: 640px; overflow: auto; }
+    .ic-table { width: 100%; margin: 0; border-collapse: collapse; color: var(--ink); }
+    .ic-table thead th {
+        position: sticky; top: 0; z-index: 1;
+        background: #08121f; color: var(--mute);
+        font-size: .78rem; font-weight: 600; padding: .75rem 1.2rem; text-align: left;
+        border-bottom: 1px solid var(--line); white-space: nowrap;
+    }
+    .ic-table tbody td {
+        padding: .75rem 1.2rem; border-top: 1px solid rgba(91, 181, 200, .12);
+        vertical-align: middle; font-size: .88rem; background: transparent; color: var(--ink);
+    }
+    .ic-table tbody tr:hover td { background: rgba(91, 181, 200, .06); }
+    .ic-right { text-align: right !important; }
+    .ic-name { color: #fff; font-weight: 600; }
+    .ic-vacia td { color: var(--mute); }
+
+    /* ETIQUETAS ---------------------------------------------- */
+    .ic-tag {
+        display: inline-flex; align-items: center; gap: .3rem; padding: .15rem .7rem; border-radius: 999px;
+        font-size: .74rem; font-weight: 600; white-space: nowrap;
+        color: var(--mute); background: rgba(138, 160, 189, .08); border: 1px solid rgba(138, 160, 189, .4);
+    }
+    .ic-tag.ok   { color: var(--lime);  background: rgba(143, 191, 106, .1); border-color: rgba(143, 191, 106, .4); }
+    .ic-tag.warn { color: var(--amber); background: rgba(217, 168, 64, .1);  border-color: rgba(217, 168, 64, .4); }
+    .ic-tag.bad  { color: var(--red2);  background: rgba(217, 119, 122, .1); border-color: rgba(217, 119, 122, .4); }
+    .ic-tag.info { color: var(--volt);  background: rgba(91, 181, 200, .1);  border-color: rgba(91, 181, 200, .4); }
+
+    /* GRÁFICAS ----------------------------------------------- */
+    .ic-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    .ic-chart { position: relative; height: 320px; padding: 1rem 1.2rem 1.2rem; }
+
+    /* VACÍO -------------------------------------------------- */
+    .ic-emptybox { text-align: center; color: var(--mute); padding: 2.5rem 1rem; font-size: .9rem; }
+    .ic-emptybox .ic-btn { margin-top: 1rem; }
+
+    @media (max-width: 991px) {
+        .ic-charts { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 767px) {
+        .ic-title { font-size: 1.2rem; }
+        .ic-actions { width: 100%; margin-left: 0; }
+        .ic-stats { grid-template-columns: 1fr; }
+        .ic-stat { border-right: 0; border-bottom: 1px solid rgba(91, 181, 200, .14); }
+        .ic-stat:last-child { border-bottom: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .ic-btn { transition: none; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ic-dash">
+
+    <!-- Panel único: encabezado + filtros + resumen + tabla -->
+    <section class="ic-panel">
+
+        <!-- Barra superior -->
+        <div class="ic-top">
+            <img class="ic-top-icon" src="{% static 'img/iconos/indicador-velocidad.jpg' %}" alt="">
+            <div>
+                <h1 class="ic-title">Indicador de velocidad</h1>
+                <p class="ic-subtitle">Excesos de velocidad laboral. Meta: {{ meta_pct }} % o menos. Límite: {{ limite }} km/h.</p>
+            </div>
+            <div class="ic-actions">
+                <a href="{% url 'panel' %}" class="ic-btn">Volver al panel</a>
+                <a href="{% url 'descargar_indicador_velocidad' %}?anio={{ anio|unlocalize }}" class="ic-btn ic-btn-excel">
+                    <img src="{% static 'img/iconos/excel.jpg' %}" alt="">
+                    Descargar Excel {{ anio|unlocalize }}
+                </a>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <form method="get" class="ic-filtros">
+            <div>
+                <label for="anio">Año</label>
+                <select name="anio" id="anio" class="ic-select" onchange="this.form.submit()">
+                    {% for a in anios %}
+                    <option value="{{ a|unlocalize }}" {% if a == anio %}selected{% endif %}>{{ a|unlocalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="placa">Vehículo</label>
+                <select name="placa" id="placa" class="ic-select" onchange="this.form.submit()" {% if not placas %}disabled{% endif %}>
+                    {% for p in placas %}
+                    <option value="{{ p }}" {% if p == placa %}selected{% endif %}>{{ p }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+
+        {% if info %}
+
+        <!-- Resumen del año -->
+        <div class="ic-stats">
+            <div class="ic-stat">
+                <div class="ic-stat-num">
+                    {% if info.pct_anual100 is not None %}{{ info.pct_anual100|floatformat:2 }} %{% else %}—{% endif %}
+                </div>
+                <div class="ic-stat-label">
+                    Exceso acumulado {{ anio|unlocalize }}
+                    {% if info.pct_anual100 is not None %}
+                        {% if info.cumple_anual %}<span class="ic-tag ok ms-1">Cumple</span>{% else %}<span class="ic-tag bad ms-1">No cumple</span>{% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="ic-stat">
+                <div class="ic-stat-num">{{ info.total|floatformat:2 }}</div>
+                <div class="ic-stat-label">Km recorridos en el año</div>
+            </div>
+            <div class="ic-stat">
+                <div class="ic-stat-num">{{ info.exceso|floatformat:2 }}</div>
+                <div class="ic-stat-label">Km con exceso de velocidad</div>
+            </div>
+        </div>
+
+        <!-- Tabla mensual -->
+        <div class="ic-sec-head">
+            <span class="ic-step">01</span>
+            <h2 class="ic-panel-title">{{ placa }} · {{ anio|unlocalize }}</h2>
+        </div>
+        <div class="ic-scroll">
+            <table class="ic-table">
+                <thead>
+                    <tr>
+                        <th>Mes</th>
+                        <th class="ic-right">Km totales</th>
+                        <th class="ic-right">Km con exceso</th>
+                        <th class="ic-right">% exceso</th>
+                        <th>Origen</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in info.meses %}
+                    <tr {% if f.pct is None %}class="ic-vacia"{% endif %}>
+                        <td class="ic-name">{{ f.mes }}</td>
+                        <td class="ic-right">{% if f.total is not None %}{{ f.total|floatformat:2 }}{% else %}—{% endif %}</td>
+                        <td class="ic-right">{% if f.exceso is not None %}{{ f.exceso|floatformat:2 }}{% else %}—{% endif %}</td>
+                        <td class="ic-right">{% if f.pct100 is not None %}{{ f.pct100|floatformat:2 }} %{% else %}—{% endif %}</td>
+                        <td>
+                            {% if f.fuente == "gps" %}<span class="ic-tag info">GPS</span>
+                            {% elif f.fuente == "plantilla" %}<span class="ic-tag">Plantilla</span>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td>
+                            {% if f.cumple is None %}<span class="ic-tag">Sin datos</span>
+                            {% elif f.cumple %}<span class="ic-tag ok">Cumple</span>
+                            {% else %}<span class="ic-tag bad">No cumple</span>{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% else %}
+
+        <div class="ic-emptybox">
+            No hay datos en {{ anio|unlocalize }}. Importa un reporte de FILPAC o elige otro año.
+            <div><a href="{% url 'importar_gps' %}" class="ic-btn ic-btn-main">Importar reporte</a></div>
+        </div>
+
+        {% endif %}
+
+    </section>
+
+    {% if info %}
+
+    <!-- Gráficas (paneles aparte) -->
+    <div class="ic-charts">
+        <section class="ic-panel">
+            <div class="ic-sec-head">
+                <span class="ic-step">02</span>
+                <h2 class="ic-panel-title">% de exceso por mes</h2>
+                <div class="ic-head-right">
+                    <span class="ic-tag ok">Cumple</span>
+                    <span class="ic-tag bad">Supera la meta</span>
+                </div>
+            </div>
+            <div class="ic-chart"><canvas id="grafica-pct" aria-label="Porcentaje de exceso por mes frente a la meta"></canvas></div>
+        </section>
+        <section class="ic-panel">
+            <div class="ic-sec-head">
+                <span class="ic-step">03</span>
+                <h2 class="ic-panel-title">Km totales y km con exceso</h2>
+            </div>
+            <div class="ic-chart"><canvas id="grafica-km" aria-label="Kilómetros totales y con exceso por mes"></canvas></div>
+        </section>
+    </div>
+
+    {{ grafica|json_script:"datos-grafica" }}
+
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if info %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    const g = JSON.parse(document.getElementById('datos-grafica').textContent);
+    if (!g) return;
+
+    const VERDE = '#8fbf6a', ROJO = '#d9777a', CIAN = '#5bb5c8', AMBAR = '#d9a840';
+    const TEXTO = '#8696ad', REJILLA = 'rgba(91, 181, 200, .12)';
+
+    // Estilo general: oscuro, limpio y sin animaciones
+    Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+    Chart.defaults.font.size = 12;
+    Chart.defaults.color = TEXTO;
+    Chart.defaults.animation = false;
+    Chart.defaults.plugins.legend.labels.usePointStyle = true;
+    Chart.defaults.plugins.legend.labels.boxWidth = 8;
+    Chart.defaults.plugins.legend.labels.boxHeight = 8;
+    Chart.defaults.plugins.legend.labels.padding = 16;
+    Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(6, 14, 28, .95)';
+    Chart.defaults.plugins.tooltip.titleColor = '#fff';
+    Chart.defaults.plugins.tooltip.bodyColor = '#dbe4f0';
+    Chart.defaults.plugins.tooltip.borderColor = 'rgba(91, 181, 200, .35)';
+    Chart.defaults.plugins.tooltip.borderWidth = 1;
+    Chart.defaults.plugins.tooltip.padding = 10;
+    Chart.defaults.plugins.tooltip.cornerRadius = 10;
+    Chart.defaults.plugins.tooltip.boxPadding = 4;
+
+    const fmt = (v, dec) => Number(v).toLocaleString('es-CO', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+
+    // Degradado vertical para rellenos
+    function degradado(chart, color, a1, a2) {
+        const area = chart.chartArea;
+        if (!area) return 'rgba(' + color + ',' + a1 + ')';
+        const gr = chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
+        gr.addColorStop(0, 'rgba(' + color + ',' + a1 + ')');
+        gr.addColorStop(1, 'rgba(' + color + ',' + a2 + ')');
+        return gr;
+    }
+
+    // ---------- 1. % de exceso por mes vs meta ----------
+    new Chart(document.getElementById('grafica-pct'), {
+        data: {
+            labels: g.labels,
+            datasets: [
+                {
+                    type: 'bar',
+                    label: '% de exceso',
+                    data: g.pct,
+                    backgroundColor: function (ctx) {
+                        const v = g.pct[ctx.dataIndex];
+                        const rojo = v !== null && v > g.meta;
+                        return degradado(ctx.chart, rojo ? '217,119,122' : '143,191,106', .95, .35);
+                    },
+                    borderColor: function (ctx) {
+                        const v = g.pct[ctx.dataIndex];
+                        return v !== null && v > g.meta ? ROJO : VERDE;
+                    },
+                    borderWidth: 1,
+                    borderRadius: 8,
+                    borderSkipped: false,
+                    maxBarThickness: 36,
+                    order: 2,
+                },
+                {
+                    type: 'line',
+                    label: 'Meta (' + g.meta + ' %)',
+                    data: g.labels.map(() => g.meta),
+                    borderColor: AMBAR,
+                    borderDash: [6, 5],
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 0,
+                    order: 1,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+                x: { grid: { display: false }, border: { color: REJILLA } },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: REJILLA },
+                    border: { display: false },
+                    ticks: { callback: v => v + ' %', maxTicksLimit: 6 },
+                },
+            },
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { filter: item => item.datasetIndex === 1 },   // solo la meta; los colores se explican arriba
+                },
+                tooltip: {
+                    callbacks: {
+                        label: c => c.dataset.type === 'line'
+                            ? ' ' + c.dataset.label
+                            : (c.parsed.y === null ? ' Sin datos' : ' ' + fmt(c.parsed.y, 2) + ' %'),
+                    },
+                },
+            },
+        },
+    });
+
+    // ---------- 2. Km totales (área) y km con exceso (barras, eje derecho) ----------
+    new Chart(document.getElementById('grafica-km'), {
+        data: {
+            labels: g.labels,
+            datasets: [
+                {
+                    type: 'line',
+                    label: 'Km totales',
+                    data: g.total,
+                    yAxisID: 'y',
+                    borderColor: CIAN,
+                    borderWidth: 2.5,
+                    backgroundColor: ctx => degradado(ctx.chart, '91,181,200', .35, .02),
+                    fill: true,
+                    tension: .35,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    pointBackgroundColor: '#08121f',
+                    pointBorderColor: CIAN,
+                    pointBorderWidth: 2,
+                    order: 1,
+                },
+                {
+                    type: 'bar',
+                    label: 'Km con exceso',
+                    data: g.exceso,
+                    yAxisID: 'y1',
+                    backgroundColor: 'rgba(217, 119, 122, .75)',
+                    borderColor: ROJO,
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    borderSkipped: false,
+                    maxBarThickness: 28,
+                    order: 2,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+                x: { grid: { display: false }, border: { color: REJILLA } },
+                y: {
+                    beginAtZero: true,
+                    position: 'left',
+                    grid: { color: REJILLA },
+                    border: { display: false },
+                    ticks: { maxTicksLimit: 6, callback: v => fmt(v, 0) },
+                    title: { display: true, text: 'Km totales', color: CIAN, font: { size: 11, weight: '600' } },
+                },
+                y1: {
+                    beginAtZero: true,
+                    position: 'right',
+                    grid: { drawOnChartArea: false },
+                    border: { display: false },
+                    ticks: { maxTicksLimit: 6, callback: v => fmt(v, 0) },
+                    title: { display: true, text: 'Km con exceso', color: ROJO, font: { size: 11, weight: '600' } },
+                },
+            },
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                    callbacks: {
+                        label: c => c.parsed.y === null
+                            ? ' ' + c.dataset.label + ': sin datos'
+                            : ' ' + c.dataset.label + ': ' + fmt(c.parsed.y, 2) + ' km',
+                    },
+                },
+            },
+        },
+    });
+})();
+</script>
+{% endif %}
+{% endblock %}

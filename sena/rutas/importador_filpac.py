@@ -18,6 +18,7 @@ from django.utils import timezone
 from .models import RegistroGPS, ReporteGPSImportado, Vehiculo, Viaje
 
 UMBRAL_VIAJE_KM = Decimal("0.15")
+MAX_FILAS = 50_000   # tope de filas por archivo; súbelo si un reporte legítimo lo supera
 
 
 class ErrorImportacion(Exception):
@@ -26,6 +27,13 @@ class ErrorImportacion(Exception):
 
 def _texto(v):
     return "" if v is None else str(v).strip()
+
+
+def _direccion(v):
+    """Dirección recortada a 300 caracteres y sin '=' al inicio: openpyxl convierte en
+    fórmula cualquier texto que empiece por '=', y ese texto termina en los Excel que se
+    generan y que otras personas abren."""
+    return _texto(v).lstrip("=").strip()[:300]
 
 
 def _decimal(v):
@@ -62,6 +70,11 @@ def leer_filas_excel(archivo):
     wb = openpyxl.load_workbook(archivo, data_only=True)
     ws = wb.active
 
+    if ws.max_row and ws.max_row > MAX_FILAS + 15:
+        raise ErrorImportacion(
+            f"El archivo tiene demasiadas filas (máximo {MAX_FILAS}). Divídelo e importa por partes."
+        )
+
     fila_enc = None
     for i, row in enumerate(ws.iter_rows(min_row=1, max_row=15, values_only=True), start=1):
         if row and row[0] == "(A) Id Objeto":
@@ -84,8 +97,8 @@ def leer_filas_excel(archivo):
             "objeto": _texto(row[0]),
             "inicio": inicio,
             "fin": fin,
-            "dir_inicio": _texto(row[3])[:300],
-            "dir_fin": _texto(row[5])[:300],
+            "dir_inicio": _direccion(row[3]),
+            "dir_fin": _direccion(row[5]),
             "coords_inicio": _texto(row[6]),
             "coords_fin": _texto(row[7]),
             "duracion": _duracion(row[8]),

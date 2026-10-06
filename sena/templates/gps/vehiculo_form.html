@@ -1,146 +1,271 @@
 {% extends "base.html" %}
 {% load static %}
 
+{% block title %}{% if vehiculo %}Editar vehículo{% else %}Nuevo vehículo{% endif %}{% endblock %}
+
 {% block content %}
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
 <style>
-  .vf-wrap{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:1.25rem}
-  .vf-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
-  .vf-title-box{display:flex;align-items:center;gap:.9rem}
-  .vf-title-box img{width:44px;height:44px;object-fit:contain;border-radius:10px}
-  .vf-title{font-family:'Space Mono',monospace;font-weight:700;font-size:1.7rem;color:#fff;margin:0;text-shadow:0 2px 8px rgba(0,0,0,.45)}
-  .vf-sub{color:#e2e8f0;font-size:.9rem;margin:0;text-shadow:0 1px 4px rgba(0,0,0,.4)}
-  .vf-actions{display:flex;gap:.6rem;flex-wrap:wrap}
+  /* FORMULARIO DE VEHÍCULO - mismo estilo eléctrico suave del panel (prefijo ic-) */
+  .ic-form {
+    --volt: #5bb5c8; --lime: #8fbf6a; --amber: #d9a840; --red2: #d9777a;
+    --ink: #dbe4f0; --mute: #8696ad; --line: rgba(91, 181, 200, .28);
+    --glass: rgba(6, 14, 28, .82);
+    --ic-fancy: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    max-width: 1000px; margin: 0 auto;
+    color: var(--ink); font-family: var(--ic-fancy); font-variant-numeric: tabular-nums;
+    display: flex; flex-direction: column; gap: 1.5rem;
+  }
 
-  .vf-btn{display:inline-flex;align-items:center;gap:.4rem;border-radius:999px;padding:.55rem 1.3rem;font-size:.85rem;font-weight:600;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:transform .15s,filter .15s,background .15s,color .15s}
-  .vf-btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
-  .vf-btn-sec{background:rgba(255,255,255,.88);color:#0f172a;border-color:rgba(255,255,255,.7)}
-  .vf-btn-sec:hover{background:var(--dark-2);color:#fff}
-  .vf-btn-dark{background:var(--dark);color:#fff}
-  .vf-btn-dark:hover{color:#fff}
+  /* PANEL --------------------------------------------------- */
+  .ic-panel {
+    display: flex; flex-direction: column;
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%);
+    border: 1px solid rgba(91, 181, 200, .25); border-radius: 20px; overflow: hidden;
+    box-shadow: 0 14px 36px rgba(0, 0, 0, .4);
+  }
 
-  .vf-panel{background:rgba(255,255,255,.84);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(255,255,255,.7);border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.18)}
-  .vf-panel-head{display:flex;align-items:center;gap:.75rem;padding:.9rem 1.25rem;background:linear-gradient(90deg,var(--dark),var(--dark-2))}
-  .vf-step{font-family:'Space Mono',monospace;font-weight:700;color:#a3e635}
-  .vf-panel-title{font-family:'Space Mono',monospace;font-weight:700;font-size:.95rem;color:#fff;margin:0}
-  .vf-body{padding:1.25rem}
+  /* BARRA SUPERIOR (dentro del panel de vidrio) ------------- */
+  .ic-top {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;
+    padding: 1.1rem 1.5rem;
+    background: linear-gradient(100deg, rgba(91, 181, 200, .1), rgba(143, 191, 106, .03) 60%, transparent);
+  }
+  .ic-top-icon { width: 44px; height: 44px; flex: none; object-fit: contain; border-radius: 10px; }
+  .ic-title { font-weight: 700; font-size: 1.4rem; margin: 0; color: #fff; }
+  .ic-subtitle { margin: 0; color: var(--mute); font-size: .85rem; }
+  .ic-actions { margin-left: auto; display: flex; gap: .5rem; flex-wrap: wrap; }
 
-  .vf-body label:not(.form-check-label){display:block;font-size:.82rem;font-weight:600;color:#334155;margin-bottom:.3rem}
-  .vf-body input:not([type=checkbox]),.vf-body select,.vf-body textarea{width:100%;border-radius:10px;border:1px solid rgba(15,23,42,.15);background:rgba(255,255,255,.9);padding:.5rem .75rem;font-size:.88rem;color:#0f172a}
-  .vf-body input:not([type=checkbox]):focus,.vf-body select:focus,.vf-body textarea:focus{outline:none;border-color:var(--dark-2);box-shadow:none}
-  .vf-body .form-check{display:flex;align-items:center;gap:.6rem;padding-left:0;margin:0}
-  .vf-body .form-check-input{float:none;margin:0;width:1.1rem;height:1.1rem;border:1px solid rgba(15,23,42,.3);cursor:pointer;flex-shrink:0}
-  .vf-body .form-check-input:checked{background-color:var(--dark-2);border-color:var(--dark-2)}
-  .vf-body .form-check-input:focus{box-shadow:none;border-color:var(--dark-2)}
-  .vf-body .form-check-label{font-size:.88rem;color:#334155;cursor:pointer}
-  .vf-hint{color:#64748b;font-size:.78rem;margin-top:.2rem}
-  .vf-err{color:#b91c1c;font-size:.78rem;margin-top:.2rem}
-  .vf-err ul{list-style:none;margin:0;padding:0}
-  .vf-alert{background:#fef2f2;color:#b91c1c;border-radius:14px;padding:.7rem 1rem;font-size:.88rem;margin-bottom:1rem}
-  .vf-alert ul{list-style:none;margin:0;padding:0}
+  /* BOTONES ------------------------------------------------- */
+  .ic-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+    border-radius: 999px; padding: .45rem 1.05rem; font-size: .83rem; font-weight: 600;
+    text-decoration: none; color: var(--ink); border: 1px solid var(--line);
+    background: rgba(2, 8, 20, .5); cursor: pointer; font-family: var(--ic-fancy);
+    transition: all .15s;
+  }
+  .ic-btn:hover { border-color: var(--volt); color: #fff; box-shadow: 0 0 0 1px var(--volt); }
+  .ic-btn:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+  .ic-btn-main { background: var(--volt); border-color: var(--volt); color: #04141b; }
+  .ic-btn-main:hover { background: #7cc6d6; border-color: #7cc6d6; color: #04141b; box-shadow: none; }
+  .ic-btn-lg { padding: .6rem 1.6rem; font-size: .88rem; }
 
-  .vf-img-preview{width:100%;aspect-ratio:4/3;border-radius:16px;overflow:hidden;background:rgba(15,23,42,.06);border:1px solid rgba(15,23,42,.12);display:flex;align-items:center;justify-content:center;margin-bottom:.75rem}
-  .vf-img-preview img{width:100%;height:100%;object-fit:cover}
-  .vf-img-preview img.vf-img-vacia{width:72px;height:72px;object-fit:contain;opacity:.55;border-radius:14px}
+  /* ENCABEZADO DE SECCIÓN ----------------------------------- */
+  .ic-sec-head {
+    position: relative; display: flex; align-items: center; gap: .6rem;
+    padding: .95rem 1.5rem .7rem; border-bottom: 1px solid var(--line);
+    background: linear-gradient(100deg, rgba(91, 181, 200, .1), rgba(143, 191, 106, .03) 60%, transparent);
+  }
+  .ic-sec-head::after {
+    content: ""; position: absolute; left: 0; bottom: -1px; width: 64px; height: 2px; background: var(--lime);
+  }
+  .ic-step { font-size: .8rem; font-weight: 700; color: var(--lime); }
+  .ic-panel-title { font-weight: 700; font-size: .95rem; color: #fff; margin: 0; }
+  .ic-body { padding: 1.5rem; }
 
-  .vf-foot{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid rgba(15,23,42,.09)}
+  /* CAMPOS -------------------------------------------------- */
+  .ic-body label:not(.form-check-label) {
+    display: block; font-size: .78rem; font-weight: 600; color: var(--mute); margin-bottom: .35rem;
+  }
+  .ic-body input:not([type=checkbox]):not([type=file]),
+  .ic-body select,
+  .ic-body textarea {
+    width: 100%; border-radius: 10px; border: 1px solid var(--line);
+    background: rgba(2, 8, 20, .6); color: var(--ink);
+    padding: .55rem .8rem; font-size: .88rem; font-family: var(--ic-fancy);
+  }
+  .ic-body input::placeholder { color: rgba(134, 150, 173, .6); }
+  .ic-body input:not([type=checkbox]):focus,
+  .ic-body select:focus,
+  .ic-body textarea:focus {
+    outline: none; border-color: var(--volt); box-shadow: 0 0 0 1px var(--volt);
+  }
+  .ic-body input[type=file] {
+    width: 100%; font-size: .82rem; color: var(--mute);
+    border: 1px dashed var(--line); border-radius: 10px; padding: .5rem; background: rgba(2, 8, 20, .4);
+  }
+  .ic-body input[type=file]::file-selector-button {
+    margin-right: .75rem; border: 1px solid var(--line); border-radius: 999px;
+    background: rgba(91, 181, 200, .1); color: var(--volt);
+    font-weight: 600; font-size: .78rem; padding: .3rem .9rem; cursor: pointer; font-family: var(--ic-fancy);
+  }
+  .ic-body input[type=file]::file-selector-button:hover { color: #fff; border-color: var(--volt); }
 
-  @media (max-width:767px){
-    .vf-title{font-size:1.3rem}
-    .vf-actions{width:100%}
-    .vf-foot .vf-btn{width:100%;justify-content:center}
+  .ic-body .form-check { display: flex; align-items: center; gap: .6rem; padding-left: 0; margin: 0; }
+  .ic-body .form-check-input {
+    float: none; margin: 0; width: 1.1rem; height: 1.1rem; flex-shrink: 0; cursor: pointer;
+    background-color: rgba(2, 8, 20, .6); border: 1px solid var(--line);
+  }
+  .ic-body .form-check-input:checked { background-color: var(--lime); border-color: var(--lime); }
+  .ic-body .form-check-input:focus { box-shadow: 0 0 0 1px var(--volt); border-color: var(--volt); }
+  .ic-body .form-check-label { font-size: .88rem; color: var(--ink); cursor: pointer; }
+  .ic-check-box {
+    display: flex; align-items: center; min-height: 40px; border-radius: 10px;
+    border: 1px solid var(--line); background: rgba(2, 8, 20, .6); padding: .5rem .8rem;
+  }
+
+  .ic-hint { color: var(--mute); font-size: .78rem; margin-top: .3rem; }
+  .ic-err { color: var(--red2); font-size: .78rem; margin-top: .3rem; }
+  .ic-err ul { list-style: none; margin: 0; padding: 0; }
+  .ic-alert {
+    color: #f3c4c6; background: rgba(217, 119, 122, .1); border: 1px solid rgba(217, 119, 122, .4);
+    border-radius: 14px; padding: .7rem 1rem; font-size: .88rem; margin-bottom: 1rem;
+  }
+  .ic-alert ul { list-style: none; margin: 0; padding: 0; }
+
+  /* IMAGEN -------------------------------------------------- */
+  .ic-img-preview {
+    width: 100%; aspect-ratio: 4/3; border-radius: 16px; overflow: hidden; margin-bottom: .75rem;
+    background: rgba(2, 8, 20, .6); border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ic-img-preview img { width: 100%; height: 100%; object-fit: cover; }
+  .ic-img-preview img.ic-img-vacia { width: 72px; height: 72px; object-fit: contain; opacity: .5; border-radius: 14px; }
+
+  .ic-foot {
+    display: flex; gap: .6rem; flex-wrap: wrap; margin-top: 1.5rem; padding-top: 1.25rem;
+    border-top: 1px solid var(--line);
+  }
+
+  /* CALENDARIO (Flatpickr) en tema oscuro ------------------- */
+  .flatpickr-calendar {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #0b1626; border: 1px solid rgba(91, 181, 200, .3); border-radius: 14px;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, .55);
+  }
+  .flatpickr-calendar.arrowTop::before, .flatpickr-calendar.arrowTop::after { border-bottom-color: #0b1626; }
+  .flatpickr-calendar.arrowBottom::before, .flatpickr-calendar.arrowBottom::after { border-top-color: #0b1626; }
+  .flatpickr-months .flatpickr-month {
+    background: #08121f; color: #fff; fill: #fff; border-radius: 14px 14px 0 0; height: 44px;
+    border-bottom: 1px solid rgba(91, 181, 200, .28);
+  }
+  .flatpickr-current-month { font-size: 1rem; padding-top: 8px; }
+  .flatpickr-current-month input.cur-year, .flatpickr-current-month span.cur-month { color: #fff; font-weight: 700; }
+  .flatpickr-current-month .numInputWrapper span.arrowUp:after { border-bottom-color: #8696ad; }
+  .flatpickr-current-month .numInputWrapper span.arrowDown:after { border-top-color: #8696ad; }
+  .flatpickr-months .flatpickr-prev-month, .flatpickr-months .flatpickr-next-month { fill: #fff; color: #fff; }
+  .flatpickr-months .flatpickr-prev-month:hover svg, .flatpickr-months .flatpickr-next-month:hover svg { fill: #8fbf6a; }
+  span.flatpickr-weekday { background: transparent; color: #8696ad; font-weight: 600; }
+  .flatpickr-weekdays { background: transparent; }
+  .flatpickr-day { color: #dbe4f0; border-radius: 10px; font-weight: 500; }
+  .flatpickr-day.prevMonthDay, .flatpickr-day.nextMonthDay { color: rgba(134, 150, 173, .45); }
+  .flatpickr-day:hover, .flatpickr-day.prevMonthDay:hover, .flatpickr-day.nextMonthDay:hover {
+    background: rgba(91, 181, 200, .15); border-color: rgba(91, 181, 200, .15); color: #fff;
+  }
+  .flatpickr-day.today { border-color: #5bb5c8; }
+  .flatpickr-day.today:hover { background: #5bb5c8; border-color: #5bb5c8; color: #08121f; }
+  .flatpickr-day.selected, .flatpickr-day.selected:hover {
+    background: #5bb5c8; border-color: #5bb5c8; color: #04141b; font-weight: 700;
+  }
+  .flatpickr-day.flatpickr-disabled, .flatpickr-day.flatpickr-disabled:hover { color: rgba(134, 150, 173, .25); background: transparent; }
+
+  @media (max-width: 767px) {
+    .ic-title { font-size: 1.2rem; }
+    .ic-actions { width: 100%; margin-left: 0; }
+    .ic-foot .ic-btn { width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ic-btn { transition: none; }
   }
 </style>
 
-<div class="vf-wrap">
+<div class="ic-form">
 
-  <div class="vf-head">
-    <div class="vf-title-box">
-      <img src="{% static 'img/iconos/vehiculos.jpg' %}" alt="">
+  <!-- Encabezado -->
+  <section class="ic-panel">
+    <div class="ic-top">
+      <img class="ic-top-icon" src="{% static 'img/iconos/vehiculos.jpg' %}" alt="">
       <div>
-        <h1 class="vf-title">{% if vehiculo %}Editar vehículo {{ vehiculo.placa }}{% else %}Nuevo vehículo{% endif %}</h1>
-        <p class="vf-sub">{% if vehiculo %}Actualiza los datos y documentos del vehículo{% else %}Registra un nuevo vehículo en el sistema{% endif %}</p>
+        <h1 class="ic-title">{% if vehiculo %}Editar vehículo {{ vehiculo.placa }}{% else %}Nuevo vehículo{% endif %}</h1>
+        <p class="ic-subtitle">{% if vehiculo %}Actualiza los datos y documentos del vehículo{% else %}Registra un nuevo vehículo en el sistema{% endif %}</p>
+      </div>
+      <div class="ic-actions">
+        <a href="{% url 'listar_vehiculos' %}" class="ic-btn">Volver a Vehículos</a>
+        <a href="{% url 'panel' %}" class="ic-btn">Panel</a>
       </div>
     </div>
-    <div class="vf-actions">
-      <a href="{% url 'listar_vehiculos' %}" class="vf-btn vf-btn-sec">Volver a Vehículos</a>
-      <a href="{% url 'panel' %}" class="vf-btn vf-btn-sec">Panel</a>
-    </div>
-  </div>
+  </section>
 
-  <form method="post" enctype="multipart/form-data" class="vf-panel">
+  <!-- Formulario -->
+  <form method="post" enctype="multipart/form-data" class="ic-panel">
     {% csrf_token %}
 
-    <div class="vf-panel-head">
-      <span class="vf-step">01</span>
-      <h2 class="vf-panel-title">Datos del vehículo</h2>
+    <div class="ic-sec-head">
+      <span class="ic-step">01</span>
+      <h2 class="ic-panel-title">Datos del vehículo</h2>
     </div>
 
-    <div class="vf-body">
+    <div class="ic-body">
       {% if form.non_field_errors %}
-        <div class="vf-alert">{{ form.non_field_errors }}</div>
+        <div class="ic-alert">{{ form.non_field_errors }}</div>
       {% endif %}
 
       <div class="row g-4">
 
         <div class="col-md-5">
           <label for="{{ form.imagen.id_for_label }}">Imagen del vehículo</label>
-          <div class="vf-img-preview">
+          <div class="ic-img-preview">
             {% if vehiculo and vehiculo.imagen %}
               <img id="vf-preview-img" src="{{ vehiculo.imagen.url }}" alt="">
             {% else %}
-              <img id="vf-preview-img" class="vf-img-vacia" src="{% static 'img/iconos/camion.jpg' %}" alt="">
+              <img id="vf-preview-img" class="ic-img-vacia" src="{% static 'img/iconos/camion.jpg' %}" alt="">
             {% endif %}
           </div>
           <input type="file" name="{{ form.imagen.html_name }}" id="{{ form.imagen.id_for_label }}" accept="image/*">
-          <div class="vf-hint">Opcional. JPG o PNG. Al elegir una nueva se reemplaza la actual.</div>
-          <div class="vf-err">{{ form.imagen.errors }}</div>
+          <div class="ic-hint">Opcional. JPG o PNG. Al elegir una nueva se reemplaza la actual.</div>
+          <div class="ic-err">{{ form.imagen.errors }}</div>
         </div>
 
         <div class="col-md-7">
           <div class="row g-3">
-            <div class="col-sm-5">
+            <div class="col-sm-6">
               <label for="{{ form.placa.id_for_label }}">Placa</label>
               {{ form.placa }}
-              <div class="vf-err">{{ form.placa.errors }}</div>
+              <div class="ic-err">{{ form.placa.errors }}</div>
             </div>
-            <div class="col-sm-7">
+            <div class="col-sm-6">
               <label for="{{ form.tipo.id_for_label }}">Marca, modelo y tipo</label>
               {{ form.tipo }}
-              <div class="vf-err">{{ form.tipo.errors }}</div>
+              <div class="ic-err">{{ form.tipo.errors }}</div>
             </div>
 
             <div class="col-sm-6">
               <label for="{{ form.soat_vigente_hasta.id_for_label }}">SOAT vigente hasta</label>
               {{ form.soat_vigente_hasta }}
-              <div class="vf-err">{{ form.soat_vigente_hasta.errors }}</div>
+              <div class="ic-err">{{ form.soat_vigente_hasta.errors }}</div>
             </div>
             <div class="col-sm-6">
               <label for="{{ form.revision_tecnomecanica_hasta.id_for_label }}">Tecnomecánica hasta</label>
               {{ form.revision_tecnomecanica_hasta }}
-              <div class="vf-err">{{ form.revision_tecnomecanica_hasta.errors }}</div>
+              <div class="ic-err">{{ form.revision_tecnomecanica_hasta.errors }}</div>
             </div>
 
             <div class="col-sm-6">
               <label for="{{ form.seguro_carga_hasta.id_for_label }}">Seguro de carga hasta</label>
               {{ form.seguro_carga_hasta }}
-              <div class="vf-hint">Déjalo vacío si no aplica.</div>
-              <div class="vf-err">{{ form.seguro_carga_hasta.errors }}</div>
+              <div class="ic-hint">Déjalo vacío si no aplica.</div>
+              <div class="ic-err">{{ form.seguro_carga_hasta.errors }}</div>
             </div>
-            <div class="col-sm-6 d-flex align-items-center">
-              <div class="form-check">
-                {{ form.licencia_transito_vigente }}
-                <label class="form-check-label" for="{{ form.licencia_transito_vigente.id_for_label }}">Licencia de tránsito (tarjeta de propiedad) vigente</label>
+            <div class="col-sm-6">
+              <label>Licencia de tránsito</label>
+              <div class="ic-check-box">
+                <div class="form-check">
+                  {{ form.licencia_transito_vigente }}
+                  <label class="form-check-label" for="{{ form.licencia_transito_vigente.id_for_label }}">Tarjeta de propiedad vigente</label>
+                </div>
               </div>
+              <div class="ic-err">{{ form.licencia_transito_vigente.errors }}</div>
             </div>
           </div>
         </div>
 
       </div>
 
-      <div class="vf-foot">
-        <button type="submit" class="vf-btn vf-btn-dark">Guardar vehículo</button>
-        <a href="{% url 'listar_vehiculos' %}" class="vf-btn vf-btn-sec">Cancelar</a>
+      <div class="ic-foot">
+        <button type="submit" class="ic-btn ic-btn-main ic-btn-lg">Guardar vehículo</button>
+        <a href="{% url 'listar_vehiculos' %}" class="ic-btn ic-btn-lg">Cancelar</a>
       </div>
     </div>
   </form>
@@ -149,6 +274,8 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
 <script>
   // Bloquea el Enter en las casillas de una línea para que no guarde el formulario.
   document.addEventListener("keydown", function (e) {
@@ -165,8 +292,47 @@
     input.addEventListener("change", function () {
       var f = input.files && input.files[0];
       if (!f) return;
-      img.classList.remove("vf-img-vacia");
+      img.classList.remove("ic-img-vacia");
       img.src = URL.createObjectURL(f);
+    });
+  })();
+
+  // Calendarios de los documentos: solo permiten fechas con sentido.
+  // Hasta 2 años hacia atrás (documento ya vencido) y 3 hacia adelante.
+  (function () {
+    if (typeof flatpickr === "undefined") return;
+    var ids = [
+      "{{ form.soat_vigente_hasta.id_for_label }}",
+      "{{ form.revision_tecnomecanica_hasta.id_for_label }}",
+      "{{ form.seguro_carga_hasta.id_for_label }}"
+    ];
+    var hoy = new Date();
+    var maximo = new Date(hoy.getFullYear() + 3, hoy.getMonth(), hoy.getDate());
+
+    ids.forEach(function (id) {
+      var campo = document.getElementById(id);
+      if (!campo) return;
+
+      var minimo = new Date(hoy.getFullYear() - 2, hoy.getMonth(), hoy.getDate());
+      // Si al editar ya hay una fecha guardada más vieja que el mínimo, se respeta
+      // para no borrarla sin querer.
+      if (campo.value) {
+        var p = campo.value.split("-");
+        var guardada = new Date(+p[0], +p[1] - 1, +p[2]);
+        if (!isNaN(guardada) && guardada < minimo) minimo = guardada;
+      }
+
+      flatpickr(campo, {
+        locale: "es",
+        monthSelectorType: "static",
+        dateFormat: "Y-m-d",   // lo que se envía al servidor
+        altInput: true,
+        altFormat: "d/m/Y",    // lo que ve el usuario
+        allowInput: true,
+        disableMobile: true,
+        minDate: minimo,
+        maxDate: maximo
+      });
     });
   })();
 </script>

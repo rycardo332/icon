@@ -4,18 +4,17 @@ from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import include, path
 
-from rutas.views import tarjeta_ruta_inicio
+from rutas.views import LoginRecordarme, tarjeta_ruta_inicio
 
 urlpatterns = [
     # Admin
     path('admin/', admin.site.urls),
 
-    # Login (diseño nuevo) y logout
-    path('login/', auth_views.LoginView.as_view(
-        template_name='login_rutas.html',
-        redirect_authenticated_user=True,
-    ), name='login'),
+    # Login y logout
+    path('login/', LoginRecordarme.as_view(), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+
+
 
     # Recuperación de contraseña
     path('password-reset/',

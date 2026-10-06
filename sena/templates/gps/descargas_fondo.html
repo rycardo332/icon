@@ -1,0 +1,119 @@
+{% if user.is_authenticated %}
+<style>
+    #df-caja { position: fixed; right: 1rem; bottom: 1rem; z-index: 2000; display: flex; flex-direction: column; align-items: flex-end; gap: .4rem;
+               max-width: calc(100vw - 2rem); font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+    .df-card { display: flex; align-items: center; gap: .55rem; background: rgba(6, 14, 28, .95); color: #dbe4f0;
+               border: 1px solid rgba(91, 181, 200, .4); border-radius: 999px; padding: .4rem .5rem .4rem .8rem;
+               box-shadow: 0 6px 18px rgba(0, 0, 0, .45); font-size: .78rem; line-height: 1.2; }
+    .df-card.listo { border-color: rgba(143, 191, 106, .6); }
+    .df-card.error { border-color: rgba(217, 119, 122, .6); }
+    .df-texto { font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px; }
+    .df-tiempo { color: #8696ad; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .df-x { background: none; border: 0; color: #8696ad; font-size: 1rem; line-height: 1; cursor: pointer; padding: 0 .35rem; }
+    .df-x:hover { color: #fff; }
+    .df-btn { padding: .22rem .75rem; border-radius: 999px; font-weight: 600; font-size: .74rem; white-space: nowrap;
+              text-decoration: none; color: #fff; background: rgba(143, 191, 106, .25); border: 1px solid #8fbf6a; }
+    .df-btn:hover { background: #8fbf6a; color: #0a1a05; }
+    .df-spin { flex: none; width: .8rem; height: .8rem;
+               border: 2px solid rgba(91, 181, 200, .35); border-top-color: #5bb5c8; border-radius: 50%; animation: df-giro .8s linear infinite; }
+    @keyframes df-giro { to { transform: rotate(360deg); } }
+</style>
+<div id="df-caja" aria-live="polite"></div>
+<script>
+(function () {
+    const URL_ESTADO = "{% url 'excel_fondo_estado' %}";
+    const caja = document.getElementById('df-caja');
+    const previos = {};      // clave -> último estado visto en esta página
+    let autoPendiente = 0;   // clics que esperan descarga automática
+    let timer = null;
+
+    const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const tiempo = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+
+    function descargar(url) {
+        const a = document.createElement('a');
+        a.href = url; a.style.display = 'none';
+        document.body.appendChild(a); a.click(); a.remove();
+    }
+
+    // "Excel de la tarjeta de ruta R-001 (16/09/2026)" -> "Excel R-001 (16/09/2026)"
+    const corto = t => esc(String(t).replace('Excel de la tarjeta de ruta', 'Excel'));
+
+    function pintar(trabajos) {
+        caja.innerHTML = trabajos.map(t => {
+            if (t.estado === 'procesando') {
+                return '<div class="df-card" title="Puedes seguir navegando: se descargará solo al terminar.">' +
+                    '<span class="df-spin"></span>' +
+                    '<span class="df-texto">Generando ' + corto(t.titulo) + '</span>' +
+                    '<span class="df-tiempo">' + tiempo(t.segundos) + '</span>&nbsp;</div>';
+            }
+            if (t.estado === 'listo') {
+                return '<div class="df-card listo"><span class="df-texto">' + corto(t.titulo) + ' listo</span>' +
+                    '<a class="df-btn" href="' + esc(t.url) + '" data-cerrar="' + esc(t.cerrar) + '">Descargar</a>' +
+                    '<button class="df-x" data-cerrar="' + esc(t.cerrar) + '" title="Cerrar">&times;</button></div>';
+            }
+            return '<div class="df-card error" title="' + esc(t.error) + '"><span class="df-texto">No se pudo generar ' + corto(t.titulo) + '</span>' +
+                '<button class="df-x" data-cerrar="' + esc(t.cerrar) + '" title="Cerrar">&times;</button></div>';
+        }).join('');
+    }
+
+    async function consultar() {
+        let datos;
+        try {
+            const r = await fetch(URL_ESTADO, { credentials: 'same-origin' });
+            datos = await r.json();
+        } catch (e) { return; }
+
+        const trabajos = datos.trabajos || [];
+        pintar(trabajos);
+
+        // Descarga automática: el Excel que vimos generándose (o que acabo de pedir) y ya está listo
+        trabajos.forEach(t => {
+            if (t.estado === 'listo') {
+                const venia = previos[t.clave] === 'procesando';
+                if ((venia || (previos[t.clave] === undefined && autoPendiente > 0)) && previos[t.clave] !== 'descargado') {
+                    if (!venia) autoPendiente--;
+                    previos[t.clave] = 'descargado';
+                    descargar(t.url);
+                    return;
+                }
+            }
+            if (previos[t.clave] !== 'descargado') previos[t.clave] = t.estado;
+        });
+
+        const activos = trabajos.some(t => t.estado === 'procesando');
+        if (activos && !timer) timer = setInterval(consultar, 3000);
+        if (!activos && timer) { clearInterval(timer); timer = null; }
+    }
+
+    // Cerrar avisos (o descargar manualmente y ocultar)
+    caja.addEventListener('click', ev => {
+        const el = ev.target.closest('[data-cerrar]');
+        if (!el) return;
+        const url = el.getAttribute('data-cerrar');
+        setTimeout(() => { fetch(url, { credentials: 'same-origin' }).then(consultar); }, 1500);
+    });
+
+    // El botón de "Excel" de la tarjeta de ruta ahora genera en segundo plano
+    document.addEventListener('click', async ev => {
+        const a = ev.target.closest('a[href*="/exportar-excel/"]');
+        if (!a || ev.ctrlKey || ev.metaKey || ev.shiftKey) return;
+        ev.preventDefault();
+        autoPendiente++;
+        try {
+            const r = await fetch(a.href, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            const j = await r.json();
+            if (!j.ok) throw new Error('fallo');
+        } catch (e) {
+            autoPendiente--;
+            window.location.href = a.href;   // plan B: descarga normal
+            return;
+        }
+        consultar();
+    });
+
+    // En cada página: si hay un Excel en curso o listo, se muestra el aviso
+    consultar();
+})();
+</script>
+{% endif %}

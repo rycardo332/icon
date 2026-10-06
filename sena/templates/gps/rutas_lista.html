@@ -1,145 +1,418 @@
 {% extends "base.html" %}
 {% load static %}
 
+{% block title %}Rutas{% endblock %}
+
 {% block content %}
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+
 <style>
-  .rt-wrap{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:1.25rem}
-  .rt-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
-  .rt-title-box{display:flex;align-items:center;gap:.9rem}
-  .rt-title-box img{width:44px;height:44px;object-fit:contain;border-radius:10px}
-  .rt-title{font-family:'Space Mono',monospace;font-weight:700;font-size:1.7rem;color:#fff;margin:0;text-shadow:0 2px 8px rgba(0,0,0,.45)}
-  .rt-sub{color:#e2e8f0;font-size:.9rem;margin:0;text-shadow:0 1px 4px rgba(0,0,0,.4)}
-  .rt-actions{display:flex;gap:.6rem;flex-wrap:wrap}
+    /* RUTAS - mismo estilo suave del panel (prefijo rt-) · todo en un solo cuadro */
+    .rt-wrap {
+        --volt: #5bb5c8; --lime: #8fbf6a; --amber: #d9a840; --red2: #d9777a;
+        --ink: #dbe4f0; --mute: #8696ad; --line: rgba(91, 181, 200, .28);
+        --rt-fancy: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        max-width: 1200px; margin: 0 auto; color: var(--ink);
+        font-family: var(--rt-fancy); font-variant-numeric: tabular-nums;
+    }
+    .rt-card {
+        background: rgba(6, 14, 28, .82);
+        -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%);
+        border: 1px solid rgba(91, 181, 200, .25); border-radius: 20px; overflow: hidden;
+        box-shadow: 0 14px 36px rgba(0, 0, 0, .4);
+    }
+    .rt-head {
+        display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem;
+        padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--line);
+        background: linear-gradient(100deg, rgba(91, 181, 200, .1), rgba(143, 191, 106, .03) 60%, transparent);
+    }
+    .rt-title-row { display: flex; align-items: center; gap: .8rem; }
+    .rt-title-ico { width: 44px; height: 44px; object-fit: contain; border-radius: 10px; }
+    .rt-title { font-size: 1.35rem; font-weight: 700; color: #fff; margin: 0; line-height: 1.15; }
+    .rt-sub { display: block; color: var(--mute); font-size: .85rem; margin-top: .15rem; }
+    .rt-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+    .rt-btn {
+        display: inline-flex; align-items: center; padding: .4rem 1rem; border-radius: 999px; cursor: pointer;
+        font-size: .82rem; font-weight: 600; text-decoration: none; color: var(--volt);
+        border: 1px solid var(--line); background: rgba(91, 181, 200, .1); transition: all .15s;
+    }
+    .rt-btn:hover { color: #fff; border-color: var(--volt); transform: translateY(-1px); }
+    .rt-btn.primary { color: #fff; border-color: var(--volt); background: rgba(91, 181, 200, .22); }
+    .rt-btn.primary:hover { background: var(--volt); color: #02131c; }
+    .rt-btn:focus-visible, .rt-act:focus-visible, .rt-pg:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
 
-  .rt-btn{display:inline-flex;align-items:center;gap:.4rem;border-radius:999px;padding:.5rem 1.1rem;font-size:.85rem;font-weight:600;text-decoration:none;border:1px solid transparent;cursor:pointer;transition:transform .15s,filter .15s,background .15s,color .15s}
-  .rt-btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
-  .rt-btn-sec{background:rgba(255,255,255,.88);color:#0f172a;border-color:rgba(255,255,255,.7)}
-  .rt-btn-sec:hover{background:var(--dark-2);color:#fff}
-  .rt-btn-main{background:var(--red);color:#fff}
-  .rt-btn-main:hover{color:#fff}
-  .rt-btn-dark{background:var(--dark);color:#fff}
-  .rt-btn-dark:hover{color:#fff}
-  .rt-btn-sm{padding:.3rem .85rem;font-size:.78rem}
+    .rt-msgs { padding: 1rem 1.5rem 0; display: flex; flex-direction: column; gap: .6rem; }
+    .rt-msg {
+        padding: .65rem 1rem; border-radius: 12px; font-size: .88rem;
+        background: rgba(138, 160, 189, .08); color: var(--ink); border: 1px solid rgba(138, 160, 189, .4);
+    }
+    .rt-msg.success { color: var(--lime); background: rgba(143, 191, 106, .1); border-color: rgba(143, 191, 106, .4); }
+    .rt-msg.error, .rt-msg.danger { color: var(--red2); background: rgba(217, 119, 122, .1); border-color: rgba(217, 119, 122, .4); }
+    .rt-msg.info, .rt-msg.debug { color: var(--volt); background: rgba(91, 181, 200, .1); border-color: rgba(91, 181, 200, .4); }
+    .rt-msg.warning { color: var(--amber); background: rgba(217, 168, 64, .1); border-color: rgba(217, 168, 64, .4); }
 
-  .rt-panel{background:rgba(255,255,255,.84);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border:1px solid rgba(255,255,255,.7);border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.18)}
-  .rt-panel-head{display:flex;align-items:center;gap:.75rem;padding:.9rem 1.25rem;background:linear-gradient(90deg,var(--dark),var(--dark-2))}
-  .rt-step{font-family:'Space Mono',monospace;font-weight:700;color:#a3e635}
-  .rt-panel-title{font-family:'Space Mono',monospace;font-weight:700;font-size:.95rem;color:#fff;margin:0}
-  .rt-count{margin-left:auto;background:rgba(255,255,255,.12);color:#fff;border-radius:999px;padding:.2rem .75rem;font-size:.78rem;font-weight:600}
+    .rt-sec-head {
+        position: relative; display: flex; align-items: center; gap: .6rem;
+        padding: .85rem 1.5rem .65rem; border-bottom: 1px solid rgba(91, 181, 200, .14);
+        margin-top: 1rem; border-top: 1px solid var(--line);
+    }
+    .rt-sec-head::after {
+        content: ""; position: absolute; left: 0; bottom: -1px; width: 64px; height: 2px; background: var(--lime);
+    }
+    .rt-step { font-size: .8rem; font-weight: 700; color: var(--lime); }
+    .rt-sec-title { font-size: .95rem; font-weight: 700; color: #fff; margin: 0; }
+    .rt-count {
+        margin-left: auto; font-size: .78rem; font-weight: 600; color: var(--volt);
+        padding: .15rem .75rem; border-radius: 999px; border: 1px solid var(--line); background: rgba(91, 181, 200, .1);
+    }
 
-  .rt-scroll{max-height:640px;overflow:auto}
-  .rt-table{width:100%;border-collapse:collapse;font-size:.88rem;color:#334155}
-  .rt-table thead th{position:sticky;top:0;z-index:1;background:rgba(248,250,252,.92);color:#64748b;font-size:.78rem;font-weight:600;text-align:left;padding:.75rem 1rem;white-space:nowrap}
-  .rt-table td{padding:.7rem 1rem;border-top:1px solid rgba(15,23,42,.09);vertical-align:middle}
-  .rt-table tbody tr:hover{background:rgba(255,255,255,.6)}
-  .rt-right{text-align:right!important}
-  .rt-code{font-family:'Space Mono',monospace;font-weight:700;color:#0f172a}
-  .rt-name{color:#0f172a;font-weight:600}
-  .rt-row-actions{display:flex;gap:.4rem;justify-content:flex-end;align-items:center}
-  .rt-row-actions form{margin:0}
-  .rt-empty{text-align:center;color:#64748b;padding:2rem 1rem!important}
+    /* Listado de rutas plegable ("Gestionar rutas") */
+    .rt-gest > summary { cursor: pointer; list-style: none; }
+    .rt-gest > summary::-webkit-details-marker { display: none; }
+    .rt-gest:not([open]) > summary .rt-sec-title::after { content: "  ▸"; color: var(--mute); }
+    .rt-gest[open] > summary .rt-sec-title::after { content: "  ▾"; color: var(--mute); }
 
-  .rt-pill{display:inline-block;border-radius:999px;padding:.2rem .7rem;font-size:.75rem;font-weight:600;border:1px solid}
-  .rt-ok{background:#f0fdf4;color:#15803d;border-color:#bbf7d0}
-  .rt-neutral{background:#f1f5f9;color:#475569;border-color:#e2e8f0}
+    /* Filtro de fecha */
+    .rt-filtro { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; padding: 1rem 1.5rem; }
+    .rt-filtro label { color: var(--mute); font-size: .85rem; }
+    .rt-input {
+        background: rgba(2, 8, 20, .6); color: var(--ink); border: 1px solid var(--line);
+        border-radius: 10px; padding: .35rem .7rem; font-size: .85rem; font-family: inherit; color-scheme: dark;
+    }
+    .rt-filtro label { margin: 0; flex: 0 0 auto; }
+    .rt-filtro .rt-input, .rt-filtro input.flatpickr-input {
+        width: 170px; min-width: 0; max-width: 100%; flex: 0 0 auto; cursor: pointer; padding: .45rem .8rem;
+    }
+    .rt-filtro .rt-btn { flex: 0 0 auto; padding: .5rem 1.4rem; }
+    .rt-input:focus { outline: none; border-color: var(--volt); box-shadow: 0 0 0 3px rgba(91, 181, 200, .18); }
 
-  .rt-msg{border-radius:14px;padding:.75rem 1rem;font-size:.88rem;font-weight:500;backdrop-filter:blur(10px)}
-  .rt-msg-success{background:#f0fdf4;color:#15803d}
-  .rt-msg-error,.rt-msg-danger{background:#fef2f2;color:#b91c1c}
-  .rt-msg-warning{background:#fffbeb;color:#b45309}
-  .rt-msg-info,.rt-msg-debug{background:#eff6ff;color:#1d4ed8}
+    .rt-table { width: 100%; margin: 0; border-collapse: collapse; color: var(--ink); }
+    .rt-table thead th {
+        background: #08121f; color: var(--mute); font-size: .78rem; font-weight: 600;
+        padding: .7rem 1.2rem; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap;
+    }
+    .rt-table thead th.text-end { text-align: right; }
+    .rt-table tbody td {
+        padding: .75rem 1.2rem; border-top: 1px solid rgba(91, 181, 200, .12);
+        vertical-align: middle; font-size: .88rem; color: var(--ink); background: transparent;
+    }
+    .rt-table tbody tr:hover td { background: rgba(91, 181, 200, .06); }
+    .rt-table tbody tr.rt-off td:not(:last-child) { opacity: .6; }
+    .rt-route { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .2rem .5rem; }
+    .rt-route i { font-style: normal; color: var(--volt); }
+    .rt-meta { display: block; color: var(--mute); font-size: .8rem; margin-top: .15rem; }
+    .rt-row-actions { display: inline-flex; flex-wrap: wrap; gap: .4rem; justify-content: flex-end; align-items: center; }
+    .rt-row-actions form { margin: 0; }
 
-  @media (max-width:767px){
-    .rt-title{font-size:1.3rem}
-    .rt-actions{width:100%}
-  }
+    .rt-tag {
+        display: inline-flex; align-items: center; padding: .15rem .7rem; border-radius: 999px;
+        font-size: .74rem; font-weight: 600; white-space: nowrap;
+        color: var(--mute); background: rgba(138, 160, 189, .08); border: 1px solid rgba(138, 160, 189, .4);
+    }
+    .rt-tag.ok { color: var(--lime); background: rgba(143, 191, 106, .1); border-color: rgba(143, 191, 106, .4); }
+    .rt-tag.warn { color: var(--amber); background: rgba(217, 168, 64, .1); border-color: rgba(217, 168, 64, .4); }
+
+    .rt-act {
+        display: inline-flex; align-items: center; padding: .3rem .9rem; border-radius: 999px; cursor: pointer;
+        font-size: .78rem; font-weight: 600; text-decoration: none; color: var(--ink);
+        border: 1px solid var(--line); background: rgba(2, 8, 20, .5); transition: all .15s;
+    }
+    .rt-act:hover { border-color: var(--volt); color: #fff; transform: translateY(-1px); }
+    .rt-act.primary { color: #fff; border-color: var(--volt); background: rgba(91, 181, 200, .22); }
+    .rt-act.primary:hover { background: var(--volt); color: #02131c; }
+    .rt-act.danger { color: var(--red2); border-color: rgba(217, 119, 122, .4); background: rgba(217, 119, 122, .08); }
+    .rt-act.danger:hover { background: rgba(217, 119, 122, .2); border-color: var(--red2); color: #fff; }
+
+    .rt-empty { padding: 2rem 1.2rem; text-align: center; color: var(--mute); font-size: .9rem; }
+
+    .rt-pager {
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem;
+        padding: .8rem 1.5rem; border-top: 1px solid var(--line); background: rgba(91, 181, 200, .04);
+    }
+    .rt-pager[hidden] { display: none; }
+    .rt-pager-info { font-size: .82rem; color: var(--mute); }
+    .rt-pager-info b { color: var(--volt); font-weight: 700; }
+    .rt-pages { display: flex; flex-wrap: wrap; gap: .35rem; }
+    .rt-pg {
+        min-width: 34px; height: 34px; padding: 0 .7rem; border-radius: 10px; cursor: pointer;
+        font-weight: 600; font-size: .82rem; color: var(--ink);
+        border: 1px solid var(--line); background: rgba(2, 8, 20, .5); transition: all .15s;
+    }
+    .rt-pg:hover:not(:disabled):not(.on) { border-color: var(--volt); }
+    .rt-pg.on { background: var(--volt); border-color: var(--volt); color: #02131c; cursor: default; }
+    .rt-pg:disabled { opacity: .35; cursor: not-allowed; }
+    .rt-dots { align-self: center; color: var(--mute); padding: 0 .2rem; }
+
+    /* Calendario (Flatpickr) - igual al del mapa */
+    .flatpickr-calendar { font-family: 'Inter', system-ui, sans-serif; border-radius: 14px; box-shadow: 0 14px 34px rgba(0, 0, 0, .4); border: 1px solid rgba(91, 181, 200, .4); }
+    .flatpickr-months .flatpickr-month { background: #06101e; color: #fff; fill: #fff; border-radius: 14px 14px 0 0; height: 44px; }
+    .flatpickr-current-month { font-size: 1rem; padding-top: 8px; }
+    .flatpickr-current-month input.cur-year, .flatpickr-current-month span.cur-month { color: #fff; font-weight: 700; }
+    .flatpickr-months .flatpickr-prev-month, .flatpickr-months .flatpickr-next-month { fill: #fff; color: #fff; }
+    .flatpickr-months .flatpickr-prev-month:hover svg, .flatpickr-months .flatpickr-next-month:hover svg { fill: #8fbf6a; }
+    span.flatpickr-weekday { color: #64748b; font-weight: 700; }
+    .flatpickr-day { border-radius: 10px; font-weight: 500; }
+    .flatpickr-day:hover { background: #e0f2f6; border-color: #e0f2f6; }
+    .flatpickr-day.today { border-color: #5bb5c8; }
+    .flatpickr-day.selected, .flatpickr-day.selected:hover { background: #5bb5c8; border-color: #5bb5c8; color: #02131c; }
+    .flatpickr-day.flatpickr-disabled, .flatpickr-day.flatpickr-disabled:hover { color: #cbd5e1; }
+
+    @media (max-width: 767px) { .rt-title { font-size: 1.15rem; } }
 </style>
 
 <div class="rt-wrap">
+    <div class="rt-card">
 
-  <div class="rt-head">
-    <div class="rt-title-box">
-      <img src="{% static 'img/iconos/rutas.jpg' %}" alt="">
-      <div>
-        <h1 class="rt-title">Rutas</h1>
-        <p class="rt-sub">Administra las rutas registradas en el sistema</p>
-      </div>
-    </div>
-    <div class="rt-actions">
-      <a href="{% url 'panel' %}" class="rt-btn rt-btn-sec">Volver al panel</a>
-      <a href="{% url 'crear_ruta' %}" class="rt-btn rt-btn-main">+ Nueva ruta</a>
-    </div>
-  </div>
+        <!-- Encabezado -->
+        <div class="rt-head">
+            <div class="rt-title-row">
+                <img class="rt-title-ico" src="{% static 'img/iconos/rutas.jpg' %}" alt="">
+                <div>
+                    <h1 class="rt-title">Rutas</h1>
+                    <span class="rt-sub">Lo que hizo cada vehículo según el GPS y las rutas registradas</span>
+                </div>
+            </div>
+            <div class="rt-actions">
+                <a href="{% url 'panel' %}" class="rt-btn">Volver al panel</a>
+                <a href="{% url 'crear_ruta' %}" class="rt-btn primary">+ Nueva ruta</a>
+            </div>
+        </div>
 
-  {% if messages %}
-    {% for message in messages %}
-      <div class="rt-msg rt-msg-{{ message.tags|default:'info' }}">{{ message }}</div>
-    {% endfor %}
-  {% endif %}
+        {% if messages %}
+        <div class="rt-msgs">
+            {% for message in messages %}
+            <div class="rt-msg {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
 
-  <div class="rt-panel">
-    <div class="rt-panel-head">
-      <span class="rt-step">01</span>
-      <h2 class="rt-panel-title">Listado de rutas</h2>
-      <span class="rt-count">{{ rutas|length }}</span>
-    </div>
-    <div class="rt-scroll">
-      <table class="rt-table">
-        <thead>
-          <tr>
-            <th>Código</th>
-            <th>Nombre</th>
-            <th>Origen</th>
-            <th>Destino</th>
-            <th class="rt-right">Distancia (km)</th>
-            <th>Tiempo</th>
-            <th>Estado</th>
-            <th class="rt-right">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for ruta in rutas %}
-          <tr>
-            <td class="rt-code">{{ ruta.codigo }}</td>
-            <td class="rt-name">{{ ruta.nombre }}</td>
-            <td>{{ ruta.origen }}</td>
-            <td>{{ ruta.destino }}</td>
-            <td class="rt-right">{{ ruta.distancia_km|default_if_none:"—" }}</td>
-            <td>{{ ruta.tiempo_estimado|default_if_none:"—" }}</td>
-            <td>
-              {% if ruta.activa %}<span class="rt-pill rt-ok">Activa</span>
-              {% else %}<span class="rt-pill rt-neutral">Inactiva</span>{% endif %}
-            </td>
-            <td class="rt-right">
-              <div class="rt-row-actions">
-                <a href="{% url 'editar_ruta' ruta.id %}" class="rt-btn rt-btn-sec rt-btn-sm">Editar</a>
-                <form method="post" action="{% url 'alternar_ruta' ruta.id %}"
-                      data-titulo="{% if ruta.activa %}¿Desactivar ruta?{% else %}¿Activar ruta?{% endif %}"
-                      data-confirmar="¿Seguro que quieres {% if ruta.activa %}desactivar{% else %}activar{% endif %} la ruta {{ ruta.codigo }}?"
-                      data-si="{% if ruta.activa %}Sí, desactivar{% else %}Sí, activar{% endif %}"
-                      data-no="Cancelar"{% if ruta.activa %} data-peligro{% endif %}>
-                  {% csrf_token %}
-                  {% if ruta.activa %}
-                    <button type="submit" class="rt-btn rt-btn-sec rt-btn-sm">Desactivar</button>
-                  {% else %}
-                    <button type="submit" class="rt-btn rt-btn-dark rt-btn-sm">Activar</button>
-                  {% endif %}
-                </form>
-              </div>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="8" class="rt-empty">
-              Aún no hay rutas registradas. Crea la primera con «Nueva ruta».
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
+        <!-- 01 SALIDAS DEL DÍA (GPS) -->
+        <div class="rt-sec-head">
+            <span class="rt-step">01</span>
+            <h2 class="rt-sec-title">Salidas desde Duitama · {{ fecha|date:"d/m/Y" }}</h2>
+            <span class="rt-count">{{ salidas|length }}</span>
+        </div>
+        <form method="get" class="rt-filtro">
+            <label for="fecha">Fecha</label>
+            <input class="rt-input" type="date" id="fecha" name="fecha" value="{{ fecha|date:'Y-m-d' }}">
+            <button type="submit" class="rt-btn primary">Ver</button>
+        </form>
+        <div class="table-responsive">
+            <table class="rt-table">
+                <thead>
+                    <tr>
+                        <th>Vehículo</th>
+                        <th>Recorrido</th>
+                        <th>Horario</th>
+                        <th>Distancia</th>
+                        <th>Estado</th>
+                        <th>Trazado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in salidas %}
+                    <tr>
+                        <td><strong>{{ s.placa }}</strong></td>
+                        <td>
+                            <span class="rt-route"><span>{{ s.origen }}</span><i>→</i><span>{{ s.destino }}</span></span>
+                            {% if s.pasando_por %}<span class="rt-meta">Pasando por {{ s.pasando_por|join:", " }}</span>{% endif %}
+                        </td>
+                        <td>{{ s.hora_salida|time:"H:i" }} a {{ s.hora_fin|time:"H:i" }}</td>
+                        <td>{{ s.km_gps|floatformat:0 }} km</td>
+                        <td>
+                            {% if s.regreso_a_base %}
+                                <span class="rt-tag ok">Regresó a Duitama</span>
+                            {% else %}
+                                <span class="rt-tag warn">Sin regreso aún</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if s.vehiculo %}
+                            <a class="rt-btn primary"
+                               href="{% url 'mapa_gps' %}?vehiculo={{ s.vehiculo.id }}&fecha={{ fecha|date:'Y-m-d' }}&riesgos=1">
+                                Usar este viaje
+                            </a>
+                            {% else %}
+                                <span class="rt-meta">Vehículo no registrado</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="rt-empty">No hay salidas desde Duitama registradas para esta fecha.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
+        <!-- 02 GESTIONAR RUTAS (plegado) -->
+        <details class="rt-gest">
+        <summary class="rt-sec-head">
+            <span class="rt-step">02</span>
+            <h2 class="rt-sec-title">Gestionar rutas</h2>
+            <span class="rt-count">{{ rutas|length }}</span>
+        </summary>
+        <div class="table-responsive">
+            <table class="rt-table" id="rt-catalogo">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Recorrido</th>
+                        <th>Distancia y tiempo</th>
+                        <th>Estado</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ruta in rutas %}
+                    <tr {% if not ruta.activa %}class="rt-off"{% endif %}>
+                        <td><strong>{{ ruta.codigo }}</strong></td>
+                        <td>{{ ruta.nombre }}</td>
+                        <td><span class="rt-route"><span>{{ ruta.origen }}</span><i>→</i><span>{{ ruta.destino }}</span></span></td>
+                        <td>
+                            {{ ruta.distancia_km|default_if_none:"—" }} km
+                            <span class="rt-meta">{{ ruta.tiempo_estimado|default_if_none:"—" }}</span>
+                        </td>
+                        <td>
+                            {% if ruta.activa %}
+                                <span class="rt-tag ok">Activa</span>
+                            {% else %}
+                                <span class="rt-tag">Inactiva</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <div class="rt-row-actions">
+                                <a href="{% url 'editar_ruta' ruta.id %}" class="rt-act">Editar</a>
+                                <form method="post" action="{% url 'alternar_ruta' ruta.id %}"
+                                      data-titulo="{% if ruta.activa %}¿Desactivar ruta?{% else %}¿Activar ruta?{% endif %}"
+                                      data-confirmar="¿Seguro que quieres {% if ruta.activa %}desactivar{% else %}activar{% endif %} la ruta {{ ruta.codigo }}?"
+                                      data-si="{% if ruta.activa %}Sí, desactivar{% else %}Sí, activar{% endif %}"
+                                      data-no="Cancelar"{% if ruta.activa %} data-peligro{% endif %}>
+                                    {% csrf_token %}
+                                    {% if ruta.activa %}
+                                        <button type="submit" class="rt-act">Desactivar</button>
+                                    {% else %}
+                                        <button type="submit" class="rt-act primary">Activar</button>
+                                    {% endif %}
+                                </form>
+                                {% if not ruta.n_desp and not ruta.n_docs and not ruta.n_viajes %}
+                                <form method="post" action="{% url 'eliminar_ruta' ruta.id %}"
+                                      data-titulo="¿Eliminar ruta?"
+                                      data-confirmar="¿Seguro que quieres eliminar la ruta {{ ruta.codigo }}? Esta acción no se puede deshacer."
+                                      data-si="Sí, eliminar"
+                                      data-no="Cancelar" data-peligro>
+                                    {% csrf_token %}
+                                    <button type="submit" class="rt-act danger">Eliminar</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="rt-empty">
+                            Aún no hay rutas registradas. Se crean solas al guardar un trazado, o con «Nueva ruta».
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <nav class="rt-pager" id="rt-pager" aria-label="Paginación" hidden>
+            <span class="rt-pager-info" id="rt-info"></span>
+            <div class="rt-pages" id="rt-pages"></div>
+        </nav>
+        </details>
+
+    </div>
 </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
+<script>
+  // Calendario del filtro de fecha (solo hasta hoy: el GPS no tiene salidas del futuro)
+  (function () {
+    if (typeof flatpickr === "undefined") return;
+    var campo = document.getElementById("fecha");
+    if (!campo) return;
+
+    flatpickr(campo, {
+      locale: "es",
+      monthSelectorType: "static",
+      dateFormat: "Y-m-d",   // lo que se envía al servidor
+      altInput: true,
+      altFormat: "d/m/Y",    // lo que ve el usuario
+      allowInput: true,
+      disableMobile: true,
+      maxDate: "today"
+    });
+  })();
+</script>
+<script>
+(function () {
+    var POR_PAGINA = 10;
+    // Solo pagina el listado de rutas (la tabla de salidas del día no se pagina)
+    var filas = Array.prototype.slice.call(document.querySelectorAll('#rt-catalogo tbody tr'))
+        .filter(function (f) { return !f.querySelector('.rt-empty'); });
+    var pager = document.getElementById('rt-pager');
+    if (!pager || filas.length <= POR_PAGINA) return;
+
+    var total = Math.ceil(filas.length / POR_PAGINA);
+    var actual = 1;
+    var info = document.getElementById('rt-info');
+    var cont = document.getElementById('rt-pages');
+    pager.hidden = false;
+
+    function boton(texto, pagina, op) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'rt-pg' + (op && op.on ? ' on' : '');
+        b.textContent = texto;
+        if (op && op.label) b.setAttribute('aria-label', op.label);
+        if (op && op.on) b.setAttribute('aria-current', 'page');
+        if (op && op.off) b.disabled = true;
+        else b.addEventListener('click', function () { ir(pagina); });
+        return b;
+    }
+
+    function visibles() {
+        var lista = [];
+        for (var p = 1; p <= total; p++) {
+            if (p === 1 || p === total || Math.abs(p - actual) <= 1) lista.push(p);
+        }
+        return lista;
+    }
+
+    function ir(pagina) {
+        actual = Math.min(Math.max(pagina, 1), total);
+        var desde = (actual - 1) * POR_PAGINA;
+        filas.forEach(function (f, i) {
+            f.style.display = (i >= desde && i < desde + POR_PAGINA) ? '' : 'none';
+        });
+        var hasta = Math.min(desde + POR_PAGINA, filas.length);
+        info.innerHTML = 'Mostrando <b>' + (desde + 1) + '–' + hasta + '</b> de <b>' + filas.length + '</b>';
+
+        cont.innerHTML = '';
+        cont.appendChild(boton('Anterior', actual - 1, { off: actual === 1, label: 'Página anterior' }));
+        var previa = 0;
+        visibles().forEach(function (p) {
+            if (previa && p - previa > 1) {
+                var puntos = document.createElement('span');
+                puntos.className = 'rt-dots';
+                puntos.textContent = '…';
+                cont.appendChild(puntos);
+            }
+            cont.appendChild(boton(p, p, { on: p === actual, label: 'Página ' + p }));
+            previa = p;
+        });
+        cont.appendChild(boton('Siguiente', actual + 1, { off: actual === total, label: 'Página siguiente' }));
+    }
+
+    ir(1);
+})();
+</script>
 {% endblock %}
